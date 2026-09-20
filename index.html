@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGOPI DULU - Sistem Pesanan Meja</title>
+    
+    <!-- Firebase App (Compat) & Firestore (Compat) SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Konfigurasi Firebase NGOPI DULU
+        const firebaseConfig = {
+            apiKey: "AIzaSyA55KAmYlP7nPaAXavrFsU5G4GnQtB2Bqc",
+            authDomain: "nikopi-operation.firebaseapp.com",
+            databaseURL: "https://nikopi-operation-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "nikopi-operation",
+            storageBucket: "nikopi-operation.firebasestorage.app",
+            messagingSenderId: "922893888263",
+            appId: "1:922893888263:web:2c113a2db29960044e73a2",
+            measurementId: "G-WGEZB8BFW0"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        window.addEventListener('DOMContentLoaded', () => {
+            togglePaymentView();
+            loadMenuRealtime();
+            updateCart();
+        });
+    </script>
+
+    <style>
+        :root {
+            --primary-color: #6F4E37;
+            --primary-dark: #4A3324;
+            --accent-color: #D2B48C;
+            --bg-color: #FDFBF7;
+            --card-bg: #ffffff;
+            --text-main: #2C221E;
+            --border-color: #E6DED5;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: auto;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(111, 78, 55, 0.08);
+            border: 1px solid var(--border-color);
+        }
+
+        .header-section {
+            text-align: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .logo-img {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            margin: 5px 0;
+            color: var(--primary-color);
+            font-size: 24px;
+            letter-spacing: 0.5px;
+        }
+
+        .selection-panel {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            background: #F4EFEA;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .row-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .selection-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--primary-dark);
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: white;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-main);
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        select:focus, input[type="text"]:focus {
+            border-color: var(--primary-color);
+        }
+
+        .category-title {
+            color: var(--primary-color);
+            font-size: 18px;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 5px;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .menu-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .menu-img {
+            width: 55px;
+            height: 55px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: #eee;
+        }
+
+        .menu-details strong {
+            font-size: 15px;
+            color: var(--text-main);
+        }
+
+        .menu-details .price {
+            font-size: 13px;
+            color: #776b63;
+            margin-top: 2px;
+            display: block;
+        }
+
+        .sold-out {
+            color: #d9534f;
+            font-weight: bold;
+            font-size: 13px;
+            background: #fdf2f2;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+        }
+
+        .cart-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px dashed var(--border-color);
+        }
+
+        .cart-section h2 {
+            font-size: 18px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        #cart-items {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 15px 0;
+        }
+
+        #cart-items li {
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--border-color);
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cart-item-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .qty-btn {
+            background: var(--accent-color);
+            color: var(--primary-dark);
+            padding: 2px 8px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+
+        .qty-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .total-display {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            text-align: right;
+        }
+
+        #qr-code-box {
+            display: none;
+            text-align: center;
+            margin: 15px 0;
+            background: #FDF6EC;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #EEDCC5;
+        }
+
+        #qr-code-box img {
+            width: 160px;
+            height: 160px;
+            margin-top: 8px;
+            border-radius: 4px;
+            object-fit: cover;
+        }
+
+        #counter-note {
+            display: none;
+            text-align: center;
+            margin: 15px 0;
+            background: #F4EFEA;
+            padding: 12px;
+            border-radius: 8px;
+            color: var(--primary-dark);
+            font-weight: 500;
+            font-size: 14px;
+            border: 1px solid var(--border-color);
+        }
+
+        .order-btn {
+            width: 100%;
+            background: #5A7247;
+            color: white;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 2px 6px rgba(90, 114, 71, 0.3);
+        }
+
+        .order-btn:hover {
+            background: #445635;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="header-section">
+            <img src="https://cdn.phototourl.com/free/2026-09-20-34e97ec4-2e83-4024-be24-0ac4468494d6.jpg" class="logo-img" alt="Logo NGOPI DULU">
+            <h1>NGOPI DULU</h1>
+            <p style="font-size: 13px; color: #776b63; margin: 0;">
+                Sila buat pesanan anda di bawah
+            </p>
+        </div>
+
+        <div class="selection-panel">
+
+            <div class="selection-group">
+                <label id="lang-label">Bahasa / Language</label>
+
+                <select id="lang-select" onchange="changeLanguage()">
+                    <option value="ms">Bahasa Melayu</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+
+            <div class="row-group">
+
+                <div class="selection-group">
+                    <label id="name-label">Nama Anda</label>
+
+                    <input
+                        type="text"
+                        id="customer-name"
+                        placeholder="Cth: Ali"
+                    >
+                </div>
+
+                <div class="selection-group">
+                    <label id="table-label">Pilih Meja</label>
+
+                    <select id="table-select">
+                        <option value="1">Meja 1</option>
+                        <option value="2">Meja 2</option>
+                        <option value="3">Meja 3</option>
+                        <option value="4">Meja 4</option>
+                        <option value="5">Meja 5</option>
+                        <option value="6">Meja 6</option>
+                        <option value="7">Meja 7</option>
+                        <option value="8">Meja 8</option>
+                        <option value="9">Meja 9</option>
+                        <option value="10">Meja 10</option>
+                    </select>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="menu-container"></div>
+
+        <div class="cart-section">
+
+            <h2 id="cart-title">Troli Pesanan</h2>
+
+            <ul id="cart-items"></ul>
+
+            <div class="total-display">
+                <span id="total-text">Jumlah Keseluruhan</span>:
+                RM <span id="cart-total">0.00</span>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+
+                <label
+                    id="payment-label"
+                    style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--primary-dark);"
+                >
+                    Kaedah Pembayaran:
+                </label>
+
+                <select
+                    id="payment-method"
+                    onchange="togglePaymentView()"
+                >
+                    <option value="DuitNow QR">
+                        DuitNow QR (Online Payment)
+                    </option>
+
+                    <option value="Tunai di Kaunter">
+                        Tunai di Kaunter (Cash at Counter)
+                    </option>
+                </select>
+
+            </div>
+
+            <div id="qr-code-box">
+
+                <strong style="font-size: 14px; color: var(--primary-dark);">
+                    Imbas Kod QR DuitNow
+                </strong>
+
+                <br>
+
+                <img
+                    src="https://cdn.phototourl.com/free/2026-09-20-0220995b-d93e-4068-b464-44cc50c06b4d.jpg"
+                    alt="DuitNow QR"
+                >
+
+                <p style="font-size: 12px; color: #776b63; margin: 5px 0 0 0;">
+                    Sila buat bayaran sebelum menghantar pesanan.
+                </p>
+
+            </div>
+
+            <div id="counter-note">
+                Sila buat pembayaran di
+                <strong>Kaunter Utama</strong>
+                selepas menghantar pesanan. Terima kasih!
+            </div>
+
+            <button
+                class="order-btn"
+                id="order-btn-text"
+                onclick="placeOrder()"
+            >
+                Hantar Pesanan Sekarang
+            </button>
+
+        </div>
+    </div>
+
+    <script>
+
+        let currentLang = 'ms';
+
+        function changeLanguage() {
+
+            currentLang = document.getElementById('lang-select').value;
+
+            if(currentLang === 'en') {
+
+                document.getElementById('lang-label').innerText = "Language";
+
+                document.getElementById('name-label').innerText = "Your Name";
+
+                document.getElementById('table-label').innerText = "Select Table";
+
+                document.getElementById('cart-title').innerText = "Order Cart";
+
+                document.getElementById('total-text').innerText = "Grand Total";
+
+                document.getElementById('payment-label').innerText = "Payment Method:";
+
+                document.getElementById('order-btn-text').innerText = "Place Order Now";
+
+            } else {
+
+                document.getElementById('lang-label').innerText = "Bahasa / Language";
+
+                document.getElementById('name-label').innerText = "Nama Anda";
+
+                document.getElementById('table-label').innerText = "Pilih Meja";
+
+                document.getElementById('cart-title').innerText = "Troli Pesanan";
+
+                document.getElementById('total-text').innerText = "Jumlah Keseluruhan";
+
+                document.getElementById('payment-label').innerText = "Kaedah Pembayaran:";
+
+                document.getElementById('order-btn-text').innerText = "Hantar Pesanan Sekarang";
+
+            }
+
+            renderMenu(cachedMenuCategories);
+        }
+
+
+        function togglePaymentView() {
+
+            let payment =
+                document.getElementById('payment-method').value;
+
+            let qrBox =
+                document.getElementById('qr-code-box');
+
+            let counterNote =
+                document.getElementById('counter-note');
+
+            if(payment === 'DuitNow QR') {
+
+                qrBox.style.display = 'block';
+
+                counterNote.style.display = 'none';
+
+            } else {
+
+                qrBox.style.display = 'none';
+
+                counterNote.style.display = 'block';
+
+            }
+        }
+
+
+        let defaultMenuCategories = [
+
+            {
+                category: "COFFEE",
+
+                items: [
+
+                    {
+                        id: 1,
+                        name: 'Cinnamon Latte',
+                        price: 15.00,
+                        img: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=150',
+                        available: true
+                    },
+
+                    {
+                        id: 2,
+                        name: 'Spanish Latte',
+                        price: 15.00,
+                        img: 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=150',
+                        available: true
+                    },
+
+                    {
+                        id: 3,
+                        name: 'Hazelnut Latte',
+                        price: 15.00,
+                        img: 'https://images.unsplash.com/photo-1570968915860-54d5c301fa9f?w=150',
+                        available: true
+                    },
+
+                    {
+                        id: 4,
+                        name: 'Caramel Latte',
+                        price: 15.00,
+                        img: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=150',
+                        available: true
+                    },
+
+                    {
+                        id: 5,
+                        name: 'Cafe Latte / Flat White',
+                        price: 12.00,
+                        img: 'https://images.unsplash.com/photo-1577968897966-3d4325b36b61?w=150',
+                        available: true
+                    },
+
+                    {
+                        id: 6,
+                        name: 'Cappuccino',
+                        price: 12.00,
+                        img: 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=150',
+                        available: true
+                    },
+
+                    {
+                        id: 7,
+                        name: 'Americano / Long Black',
+                        price: 10.00,
+                        img: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=150',
+                        available: true
+                    },
+
+                    {
+                        id: 8,
+                        name: 'Sparkling Americano',
+                        price: 12.00,
+                        img: 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?w=150',
+                        available: true
+                    },
+
+                    {
+                        id: 9,
+                        name: 'Mocha',
+                        price: 17.00,
+                        img: 'https://images.unsplash.com/photo-1578314675249-a6919f3cbce3?w=150',
+                        available: true
+                    },
+
+                    {
+                        id: 10,
+                        name: 'Espresso',
+                        price: 5.00,
+                        img: 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=150',
+                        available: true
+                    }
+
+                ]
+            },
+
+            {
+                category: "NON COFFEE",
+
+                items: [
+
+                    {
+                        id: 11,
+                        name: 'Chocolate',
+                        price: 12.00,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 12,
+                        name: 'Chocolate Hazelnut',
+                        price: 14.00,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 13,
+                        name: 'Sparkling Yuzu',
+                        price: 14.00,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 14,
+                        name: 'Sparkling Ribena',
+                        price: 10.00,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 15,
+                        name: 'Ribena',
+                        price: 6.00,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 16,
+                        name: 'Belgium Choc with Apple Fiber',
+                        price: 10.00,
+                        img: '',
+                        available: true
+                    }
+
+                ]
+            },
+
+            {
+                category: "MATCHA",
+
+                items: [
+
+                    {
+                        id: 17,
+                        name: 'Matcha Latte',
+                        price: 15.00,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 18,
+                        name: 'Matcha Strawberry',
+                        price: 17.00,
+                        img: '',
+                        available: true
+                    }
+
+                ]
+            },
+
+            {
+                category: "SOFT COOKIES",
+
+                items: [
+
+                    {
+                        id: 19,
+                        name: 'Classic Choc Chip',
+                        price: 11.90,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 20,
+                        name: 'S\'mores',
+                        price: 12.90,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 21,
+                        name: 'Red Velvet Cheesecake',
+                        price: 14.90,
+                        img: '',
+                        available: true
+                    }
+
+                ]
+            },
+
+            {
+                category: "BITES",
+
+                items: [
+
+                    {
+                        id: 22,
+                        name: 'Bagel with Cream Cheese',
+                        price: 12.00,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 23,
+                        name: 'Mini Croissant',
+                        price: 6.00,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 24,
+                        name: 'Koko Crunch with Milk',
+                        price: 5.00,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 25,
+                        name: 'Ramen',
+                        price: 9.00,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 26,
+                        name: 'Kaya Toast with Hard Boiled Egg',
+                        price: 7.00,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 27,
+                        name: 'Kaya Toast',
+                        price: 5.50,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 28,
+                        name: 'Nutella Toast',
+                        price: 5.50,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 29,
+                        name: 'Maggie Cup',
+                        price: 4.50,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 30,
+                        name: 'Indo Mee',
+                        price: 6.00,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 31,
+                        name: 'Hard Boiled Egg',
+                        price: 2.00,
+                        img: '',
+                        available: true
+                    }
+
+                ]
+            },
+
+            {
+                category: "ADD ON",
+
+                items: [
+
+                    {
+                        id: 32,
+                        name: 'Oatmilk',
+                        price: 3.00,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 33,
+                        name: 'Extra Shot',
+                        price: 4.00,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 34,
+                        name: 'Extra Syrup',
+                        price: 2.00,
+                        img: '',
+                        available: true
+                    },
+
+                    {
+                        id: 35,
+                        name: 'Ice Water',
+                        price: 2.00,
+                        img: '',
+                        available: true
+                    }
+
+                ]
+            }
+
+        ];
+
+
+        let cart = [];
+
+        let cachedMenuCategories = defaultMenuCategories;
+
+
+        function renderMenu(menuCategories) {
+
+            const container =
+                document.getElementById('menu-container');
+
+            container.innerHTML = '';
+
+            menuCategories.forEach(cat => {
+
+                let html =
+                    `<div class="category-title">${cat.category}</div>`;
+
+                cat.items.forEach(item => {
+
+                    if(item.available) {
+
+                        let imgTag = item.img
+                            ? `<img src="${item.img}" class="menu-img" alt="${item.name}">`
+                            : '';
+
+                        html += `
+
+                            <div class="menu-item">
+
+                                <div class="menu-info">
+
+                                    ${imgTag}
+
+                                    <div class="menu-details">
+
+                                        <strong>${item.name}</strong>
+
+                                        <span class="price">
+                                            RM ${Number(item.price).toFixed(2)}
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                                <button onclick="addToCart(${item.id})">
+                                    ${currentLang === 'en' ? 'Add' : 'Tambah'}
+                                </button>
+
+                            </div>
+
+                        `;
+
+                    } else {
+
+                        let imgTag = item.img
+                            ? `<img src="${item.img}" class="menu-img" alt="${item.name}" style="opacity: 0.4;">`
+                            : '';
+
+                        html += `
+
+                            <div class="menu-item">
+
+                                <div class="menu-info">
+
+                                    ${imgTag}
+
+                                    <div class="menu-details">
+
+                                        <span style="color: #999; text-decoration: line-through;">
+                                            ${item.name}
+                                        </span>
+
+                                        <span class="price">
+                                            RM ${Number(item.price).toFixed(2)}
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                                <span class="sold-out">
+                                    ${currentLang === 'en' ? 'SOLD OUT' : 'HABIS'}
+                                </span>
+
+                            </div>
+
+                        `;
+                    }
+
+                });
+
+                container.innerHTML += html;
+
+            });
+        }
+
+
+        function loadMenuRealtime() {
+
+            db.collection("settings")
+                .doc("menu")
+                .onSnapshot((docSnap) => {
+
+                    if (
+                        docSnap.exists &&
+                        docSnap.data().categories
+                    ) {
+
+                        cachedMenuCategories =
+                            docSnap.data().categories;
+
+                    } else {
+
+                        cachedMenuCategories =
+                            defaultMenuCategories;
+
+                        db.collection("settings")
+                            .doc("menu")
+                            .set({
+                                categories: defaultMenuCategories
+                            })
+                            .catch((error) => {
+
+                                console.error(
+                                    "Gagal simpan menu default:",
+                                    error
+                                );
+
+                            });
+                    }
+
+                    renderMenu(cachedMenuCategories);
+
+                }, (error) => {
+
+                    console.error(
+                        "Gagal muat menu real-time:",
+                        error
+                    );
+
+                    renderMenu(defaultMenuCategories);
+
+                });
+        }
+
+
+        function addToCart(id) {
+
+            let foundItem = null;
+
+            cachedMenuCategories.forEach(cat => {
+
+                let item =
+                    cat.items.find(m => m.id === id);
+
+                if(item) foundItem = item;
+
+            });
+
+            if(foundItem && foundItem.available) {
+
+                let existing =
+                    cart.find(i => i.id === id);
+
+                if(existing) {
+
+                    existing.qty += 1;
+
+                } else {
+
+                    cart.push({
+
+                        id: foundItem.id,
+
+                        name: foundItem.name,
+
+                        price: Number(foundItem.price),
+
+                        qty: 1
+
+                    });
+
+                }
+
+                updateCart();
+
+            }
+        }
+
+
+        function changeQty(id, change) {
+
+            let item =
+                cart.find(i => i.id === id);
+
+            if(item) {
+
+                item.qty += change;
+
+                if(item.qty <= 0) {
+
+                    cart =
+                        cart.filter(i => i.id !== id);
+
+                }
+
+                updateCart();
+
+            }
+        }
+
+
+        function updateCart() {
+
+            const cartList =
+                document.getElementById('cart-items');
+
+            cartList.innerHTML = '';
+
+            let total = 0;
+
+            if(cart.length === 0) {
+
+                cartList.innerHTML = `
+
+                    <li style="color: #888; justify-content: center;">
+
+                        ${
+                            currentLang === 'en'
+                            ? 'Your cart is empty'
+                            : 'Troli masih kosong'
+                        }
+
+                    </li>
+
+                `;
+
+            }
+
+            cart.forEach((item) => {
+
+                let itemTotal =
+                    item.price * item.qty;
+
+                total += itemTotal;
+
+                cartList.innerHTML += `
+
+                    <li>
+
+                        <span>
+                            ${item.name} (x${item.qty})
+                        </span>
+
+                        <div class="cart-item-controls">
+
+                            <span>
+                                RM ${itemTotal.toFixed(2)}
+                            </span>
+
+                            <button
+                                class="qty-btn"
+                                onclick="changeQty(${item.id}, -1)"
+                            >
+                                -
+                            </button>
+
+                            <button
+                                class="qty-btn"
+                                onclick="changeQty(${item.id}, 1)"
+                            >
+                                +
+                            </button>
+
+                        </div>
+
+                    </li>
+
+                `;
+
+            });
+
+            document.getElementById('cart-total').innerText =
+                total.toFixed(2);
+        }
+
+
+        function placeOrder() {
+
+            if(cart.length === 0) {
+
+                alert(
+                    currentLang === 'en'
+                    ? 'Your cart is empty!'
+                    : 'Troli anda kosong!'
+                );
+
+                return;
+            }
+
+
+            let customerName =
+                document.getElementById('customer-name')
+                .value
+                .trim();
+
+
+            if(!customerName) {
+
+                alert(
+                    currentLang === 'en'
+                    ? 'Please enter your name!'
+                    : 'Sila masukkan nama anda!'
+                );
+
+                document.getElementById('customer-name').value = '';
+
+                document.getElementById('customer-name').focus();
+
+                return;
+            }
+
+
+            let selectedTable =
+                document.getElementById('table-select').value;
+
+
+            let orderNum =
+                Math.floor(100 + Math.random() * 900);
+
+
+            let payment =
+                document.getElementById('payment-method').value;
+
+
+            let formattedItems =
+                cart.map(i => ({
+
+                    id: i.id,
+
+                    name: `${i.name} x${i.qty}`,
+
+                    price: i.price * i.qty,
+
+                    qty: i.qty
+
+                }));
+
+
+            let newOrder = {
+
+                orderId: `#${orderNum}`,
+
+                customerName: customerName,
+
+                table: `Meja ${selectedTable}`,
+
+                items: formattedItems,
+
+                total: cart.reduce(
+                    (sum, i) =>
+                        sum + (i.price * i.qty),
+                    0
+                ),
+
+                paymentMethod: payment,
+
+                // PENTING:
+                // Cashier akan membaca status "Pending"
+                status: 'Pending',
+
+                timestamp:
+                    firebase.firestore.FieldValue.serverTimestamp()
+
+            };
+
+
+            db.collection("orders")
+                .add(newOrder)
+
+                .then(() => {
+
+                    if(currentLang === 'en') {
+
+                        alert(
+                            `Order successfully placed for ${customerName} (Table ${selectedTable})! Order ID: #${orderNum}`
+                        );
+
+                    } else {
+
+                        alert(
+                            `Pesanan berjaya dihantar untuk ${customerName} (Meja ${selectedTable})! Nombor Pesanan: #${orderNum}`
+                        );
+
+                    }
+
+
+                    cart = [];
+
+                    document.getElementById('customer-name').value = '';
+
+                    updateCart();
+
+                })
+
+                .catch((error) => {
+
+                    console.error(
+                        "Ralat menghantar pesanan: ",
+                        error
+                    );
+
+                    alert(
+                        "Gagal menghantar pesanan. Sila cuba lagi."
+                    );
+
+                });
+
+        }
+
+    </script>
+
+</body>
+</html>

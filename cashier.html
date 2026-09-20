@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cashier Counter - NGOPI DULU</title>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #3e2723;
+            --accent-color: #d7ccc8;
+            --bg-color: #f7f5f0;
+            --card-bg: #ffffff;
+            --text-main: #2c2c2c;
+            --border-color: #e0d9d0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 18px;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 8px;
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--primary-color);
+        }
+
+        .order-card {
+            background: #fff8e1;
+            border: 1px solid #ffe0b2;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            transition: all 0.3s ease;
+        }
+
+        .order-card.delayed {
+            background: #ffebee !important;
+            border-color: #ffcdd2 !important;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ffe0b2;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+
+        .delayed .order-header {
+            border-bottom-color: #ffcdd2;
+        }
+
+        .order-id {
+            font-weight: bold;
+            color: #3e2723;
+            font-size: 16px;
+        }
+
+        .table-tag {
+            background: #d32f2f;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .item-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 10px 0;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 14px;
+            border-bottom: 1px dashed #f0e6d2;
+        }
+
+        .delayed .item-row {
+            border-bottom-color: #ffecb3;
+        }
+
+        .item-name {
+            font-weight: 500;
+        }
+
+        .item-qty {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+
+        .order-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #ffe0b2;
+        }
+
+        .delayed .order-footer {
+            border-top-color: #ffcdd2;
+        }
+
+        .total-price {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+
+        .timer-display {
+            font-size: 13px;
+            font-weight: bold;
+            color: #e65100;
+            background: #fff3e0;
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid #ffe0b2;
+        }
+
+        .delayed .timer-display {
+            color: #c62828;
+            background: #ffcdd2;
+            border-color: #ef9a9a;
+        }
+
+        .btn-accept {
+            background: #2e7d32;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .btn-accept:hover {
+            opacity: 0.9;
+        }
+
+        .btn-done {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .btn-done:hover {
+            opacity: 0.9;
+        }
+
+        .empty-text {
+            text-align: center;
+            color: #777;
+            font-size: 14px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>🖥️ NGOPI DULU - Cashier Counter</h1>
+
+        <p class="subtitle">
+            Sistem Pengesahan & Kawalan Pesanan Masuk (Firebase Real-time)
+        </p>
+
+        <!-- Pesanan Baru Masuk -->
+        <div class="card">
+
+            <h2 class="section-title">
+                Pesanan Baru Masuk (Pending Acceptance)
+            </h2>
+
+            <div id="cashier-orders-container">
+                <p class="empty-text">
+                    Tiada pesanan baru buat masa ini.
+                </p>
+            </div>
+
+        </div>
+
+
+        <!-- Sejarah Pesanan Aktif -->
+        <div class="card">
+
+            <h2 class="section-title">
+                Sejarah Pesanan Aktif (Diterima / Proses Dapur)
+            </h2>
+
+            <div id="accepted-orders-container">
+                <p class="empty-text">
+                    Tiada pesanan dalam proses.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        // ==========================================
+        // FIREBASE CONFIG
+        // ==========================================
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA55AmYlP7nPaAXavrFsU5G4GnQtB2Bqc",
+            authDomain: "nikopi-operation.firebaseapp.com",
+            databaseURL: "https://nikopi-operation-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "nikopi-operation",
+            storageBucket: "nikopi-operation.firebasestorage.app",
+            messagingSenderId: "922893888263",
+            appId: "1:922893888263:web:2c113a2db29960044e73a2",
+            measurementId: "G-WGEZB8BFW0"
+        };
+
+
+        // ==========================================
+        // INITIALIZE FIREBASE
+        // ==========================================
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const db = firebase.firestore();
+
+
+        // ==========================================
+        // GLOBAL VARIABLES
+        // ==========================================
+
+        let liveCashierOrders = [];
+        let liveAcceptedOrders = [];
+
+
+        // ==========================================
+        // REAL-TIME ORDER LISTENER
+        // ==========================================
+
+        function loadCashierDataRealtime() {
+
+            db.collection("orders")
+                .orderBy("timestamp", "desc")
+                .onSnapshot(
+
+                    (snapshot) => {
+
+                        liveCashierOrders = [];
+                        liveAcceptedOrders = [];
+
+                        snapshot.forEach((doc) => {
+
+                            let ord = {
+                                firebaseId: doc.id,
+                                ...doc.data()
+                            };
+
+
+                            // ==============================
+                            // PENDING ORDERS
+                            // ==============================
+
+                            if (ord.status === 'Pending') {
+
+                                liveCashierOrders.push(ord);
+
+                            }
+
+
+                            // ==============================
+                            // ACCEPTED ORDERS
+                            // ==============================
+
+                            else if (ord.status === 'Accepted') {
+
+                                liveAcceptedOrders.push(ord);
+
+                            }
+
+                        });
+
+
+                        renderCashierOrders();
+                        renderAcceptedOrders();
+
+                    },
+
+                    (error) => {
+
+                        console.error(
+                            "Firebase error:",
+                            error
+                        );
+
+                        document.getElementById(
+                            'cashier-orders-container'
+                        ).innerHTML =
+                            '<p class="empty-text">Gagal sambung ke Firebase. Sila refresh page.</p>';
+
+                    }
+
+                );
+
+        }
+
+
+        // ==========================================
+        // RENDER PENDING ORDERS
+        // ==========================================
+
+        function renderCashierOrders() {
+
+            let container =
+                document.getElementById(
+                    'cashier-orders-container'
+                );
+
+
+            if (liveCashierOrders.length === 0) {
+
+                container.innerHTML =
+                    '<p class="empty-text">Tiada pesanan baru buat masa ini.</p>';
+
+                return;
+
+            }
+
+
+            container.innerHTML = '';
+
+
+            liveCashierOrders.forEach((ord) => {
+
+                let itemCounts = {};
+
+
+                if (Array.isArray(ord.items)) {
+
+                    ord.items.forEach((i) => {
+
+                        let cleanName =
+                            String(i.name || '')
+                            .replace(/ x\d+$/, '');
+
+                        itemCounts[cleanName] =
+                            (itemCounts[cleanName] || 0)
+                            + Number(i.qty || 0);
+
+                    });
+
+                }
+
+
+                let itemsHTML = '';
+
+
+                for (
+                    let [name, qty]
+                    of Object.entries(itemCounts)
+                ) {
+
+                    itemsHTML += `
+                        <li class="item-row">
+                            <span class="item-name">
+                                ${name}
+                            </span>
+
+                            <span class="item-qty">
+                                x${qty}
+                            </span>
+                        </li>
+                    `;
+
+                }
+
+
+                let total =
+                    Number(ord.total || 0);
+
+
+                container.innerHTML += `
+
+                    <div class="order-card">
+
+                        <div class="order-header">
+
+                            <span class="order-id">
+                                Pesanan ${ord.orderId || ''}
+                                (${ord.customerName || 'Umum'})
+                            </span>
+
+                            <span class="table-tag">
+                                ${ord.table || ''}
+                            </span>
+
+                        </div>
+
+
+                        <ul class="item-list">
+
+                            ${itemsHTML}
+
+                        </ul>
+
+
+                        <p style="
+                            margin: 5px 0;
+                            font-size: 13px;
+                            color: #555;
+                        ">
+
+                            <strong>Kaedah Bayaran:</strong>
+                            ${ord.paymentMethod || '-'}
+
+                        </p>
+
+
+                        <div class="order-footer">
+
+                            <span class="total-price">
+                                Jumlah: RM ${total.toFixed(2)}
+                            </span>
+
+
+                            <button
+                                class="btn-accept"
+                                onclick="acceptOrder('${ord.firebaseId}')"
+                            >
+                                Accept Order (Terima)
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+            });
+
+        }
+
+
+        // ==========================================
+        // CONVERT FIRESTORE TIMESTAMP
+        // ==========================================
+
+        function getTimestampMillis(timestamp) {
+
+            if (!timestamp) {
+                return null;
+            }
+
+
+            // Firestore Timestamp
+            if (
+                typeof timestamp.toMillis === 'function'
+            ) {
+
+                return timestamp.toMillis();
+
+            }
+
+
+            // JavaScript Date
+            if (
+                timestamp instanceof Date
+            ) {
+
+                return timestamp.getTime();
+
+            }
+
+
+            // Number
+            if (
+                typeof timestamp === 'number'
+            ) {
+
+                return timestamp;
+
+            }
+
+
+            return null;
+
+        }
+
+
+        // ==========================================
+        // RENDER ACCEPTED ORDERS
+        // ==========================================
+
+        function renderAcceptedOrders() {
+
+            let container =
+                document.getElementById(
+                    'accepted-orders-container'
+                );
+
+
+            if (liveAcceptedOrders.length === 0) {
+
+                container.innerHTML =
+                    '<p class="empty-text">Tiada pesanan dalam proses.</p>';
+
+                return;
+
+            }
+
+
+            let now = Date.now();
+
+            container.innerHTML = '';
+
+
+            liveAcceptedOrders.forEach((ord) => {
+
+
+                // ==================================
+                // GET START TIME
+                // ==================================
+
+                let acceptedTime =
+                    getTimestampMillis(
+                        ord.acceptedAt
+                    );
+
+
+                let orderTimestamp =
+                    getTimestampMillis(
+                        ord.timestamp
+                    );
+
+
+                let startTime =
+                    acceptedTime ||
+                    orderTimestamp ||
+                    now;
+
+
+                let elapsedTimeSec =
+                    Math.floor(
+                        (now - startTime) / 1000
+                    );
+
+
+                if (elapsedTimeSec < 0) {
+                    elapsedTimeSec = 0;
+                }
+
+
+                // ==================================
+                // FORMAT TIMER
+                // ==================================
+
+                let minutes =
+                    Math.floor(
+                        elapsedTimeSec / 60
+                    );
+
+
+                let seconds =
+                    elapsedTimeSec % 60;
+
+
+                let timeString =
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+
+                // ==================================
+                // DELAY STATUS
+                // ==================================
+
+                let isDelayed =
+                    elapsedTimeSec > 300;
+
+
+                let cardClass =
+                    isDelayed
+                        ? 'order-card delayed'
+                        : 'order-card';
+
+
+                // ==================================
+                // ITEMS
+                // ==================================
+
+                let itemCounts = {};
+
+
+                if (Array.isArray(ord.items)) {
+
+                    ord.items.forEach((i) => {
+
+                        let cleanName =
+                            String(i.name || '')
+                            .replace(/ x\d+$/, '');
+
+                        itemCounts[cleanName] =
+                            (itemCounts[cleanName] || 0)
+                            + Number(i.qty || 0);
+
+                    });
+
+                }
+
+
+                let itemsHTML = '';
+
+
+                for (
+                    let [name, qty]
+                    of Object.entries(itemCounts)
+                ) {
+
+                    itemsHTML += `
+
+                        <li class="item-row">
+
+                            <span class="item-name">
+                                ${name}
+                            </span>
+
+                            <span class="item-qty">
+                                x${qty}
+                            </span>
+
+                        </li>
+
+                    `;
+
+                }
+
+
+                let total =
+                    Number(ord.total || 0);
+
+
+                container.innerHTML += `
+
+                    <div class="${cardClass}">
+
+                        <div class="order-header">
+
+                            <span class="order-id">
+                                Pesanan ${ord.orderId || ''}
+                                (${ord.customerName || 'Umum'})
+                            </span>
+
+                            <span class="table-tag">
+                                ${ord.table || ''}
+                            </span>
+
+                        </div>
+
+
+                        <ul class="item-list">
+
+                            ${itemsHTML}
+
+                        </ul>
+
+
+                        <div style="
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            margin-bottom: 8px;
+                        ">
+
+                            <span style="
+                                font-size: 13px;
+                                color: #555;
+                            ">
+
+                                <strong>Bayaran:</strong>
+                                ${ord.paymentMethod || '-'}
+
+                            </span>
+
+
+                            <span class="timer-display">
+
+                                ⏱️ Masa:
+                                ${timeString}
+
+                                ${isDelayed
+                                    ? '(LEWAT!)'
+                                    : ''
+                                }
+
+                            </span>
+
+                        </div>
+
+
+                        <div class="order-footer">
+
+                            <span class="total-price">
+                                Jumlah: RM ${total.toFixed(2)}
+                            </span>
+
+
+                            <button
+                                class="btn-done"
+                                onclick="completeOrder('${ord.firebaseId}')"
+                            >
+                                Done (Selesai)
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+            });
+
+        }
+
+
+        // ==========================================
+        // ACCEPT ORDER
+        // ==========================================
+
+        function acceptOrder(firebaseId) {
+
+            db.collection("orders")
+                .doc(firebaseId)
+                .update({
+
+                    status: 'Accepted',
+
+                    acceptedAt: Date.now()
+
+                })
+                .then(() => {
+
+                    console.log(
+                        "Order accepted:",
+                        firebaseId
+                    );
+
+                })
+                .catch((error) => {
+
+                    console.error(
+                        "Ralat menerima pesanan:",
+                        error
+                    );
+
+                    alert(
+                        "Gagal menerima pesanan. Sila cuba lagi."
+                    );
+
+                });
+
+        }
+
+
+        // ==========================================
+        // COMPLETE ORDER
+        // ==========================================
+
+        function completeOrder(firebaseId) {
+
+            db.collection("orders")
+                .doc(firebaseId)
+                .update({
+
+                    status: 'Selesai (Completed)',
+
+                    completedAt: Date.now()
+
+                })
+                .then(() => {
+
+                    console.log(
+                        "Order completed:",
+                        firebaseId
+                    );
+
+                })
+                .catch((error) => {
+
+                    console.error(
+                        "Ralat menyiapkan pesanan:",
+                        error
+                    );
+
+                    alert(
+                        "Gagal menyiapkan pesanan. Sila cuba lagi."
+                    );
+
+                });
+
+        }
+
+
+        // ==========================================
+        // START FIREBASE LISTENER
+        // ==========================================
+
+        loadCashierDataRealtime();
+
+
+        // ==========================================
+        // LIVE TIMER
+        // ==========================================
+
+        setInterval(() => {
+
+            if (
+                liveAcceptedOrders.length > 0
+            ) {
+
+                renderAcceptedOrders();
+
+            }
+
+        }, 1000);
+
+    </script>
+
+</body>
+</html>

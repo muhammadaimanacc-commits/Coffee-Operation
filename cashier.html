@@ -1,0 +1,3815 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>NGOPI DULU - Cashier</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+
+/* =========================================================
+   GENERAL
+========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f1eb;
+    color: #222;
+}
+
+.container {
+    max-width: 1100px;
+    margin: auto;
+    padding: 20px;
+}
+
+.header {
+    background: #2b1d14;
+    color: white;
+    padding: 22px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 25px;
+}
+
+.header p {
+    margin: 7px 0 0;
+    opacity: .8;
+}
+
+.card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 3px 12px rgba(0,0,0,.08);
+}
+
+.section-title {
+    margin-top: 0;
+    margin-bottom: 7px;
+}
+
+.section-subtitle {
+    color: #777;
+    margin-top: 0;
+    margin-bottom: 18px;
+}
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+.page-navigation {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.nav-btn {
+    flex: 1;
+    border: none;
+    padding: 13px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    background: #2b1d14;
+    color: white;
+}
+
+.nav-btn.manual {
+    background: #6f4e37;
+}
+
+
+/* =========================================================
+   CASHIER ORDERS
+========================================================= */
+
+.order-card {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 12px;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.order-id {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.customer {
+    font-weight: bold;
+    margin-top: 3px;
+}
+
+.meta {
+    color: #666;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.items {
+    background: #faf8f5;
+    padding: 10px;
+    border-radius: 9px;
+    margin: 12px 0;
+}
+
+.item-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.item-line:last-child {
+    margin-bottom: 0;
+}
+
+.total {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: right;
+    margin-top: 10px;
+}
+
+.accept-btn,
+.done-btn {
+    border: none;
+    border-radius: 9px;
+    padding: 13px 16px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 12px;
+}
+
+.accept-btn {
+    background: #2e7d32;
+    color: white;
+}
+
+.done-btn {
+    background: #6f4e37;
+    color: white;
+}
+
+.empty {
+    text-align: center;
+    color: #777;
+    padding: 25px 10px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 5px 9px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.badge-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.badge-accepted {
+    background: #d4edda;
+    color: #155724;
+}
+
+.manual-label {
+    display: inline-block;
+    background: #2b1d14;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.timer {
+    font-weight: bold;
+}
+
+.delayed {
+    color: #c0392b;
+}
+
+
+/* =========================================================
+   MANUAL ORDER
+========================================================= */
+
+.manual-page {
+    display: none;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 7px;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 9px;
+    font-size: 15px;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+
+/* =========================================================
+   MENU 2 COLUMN
+========================================================= */
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.menu-item {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 12px;
+    background: #fff;
+}
+
+.menu-item.sold-out {
+    opacity: .5;
+    background: #eee;
+}
+
+.menu-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.menu-price {
+    color: #6f4e37;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.menu-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.qty-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: #2b1d14;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.qty-btn:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+.qty {
+    font-weight: bold;
+    min-width: 30px;
+    text-align: center;
+}
+
+
+/* =========================================================
+   DISCOUNT
+========================================================= */
+
+.discount-box {
+    background: #faf7f3;
+    padding: 15px;
+    border-radius: 12px;
+    margin-top: 20px;
+}
+
+
+/* =========================================================
+   SUMMARY
+========================================================= */
+
+.summary {
+    margin-top: 20px;
+    border-top: 1px solid #ddd;
+    padding-top: 15px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.discount-row {
+    color: #c0392b;
+}
+
+.total-row {
+    font-size: 21px;
+    font-weight: bold;
+    border-top: 1px solid #ddd;
+    padding-top: 12px;
+    margin-top: 12px;
+}
+
+
+/* =========================================================
+   MANUAL BUTTON
+========================================================= */
+
+.submit-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    background: #2b1d14;
+    color: white;
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+
+/* =========================================================
+   SUCCESS
+========================================================= */
+
+.success-box {
+    display: none;
+    background: #eaf8ed;
+    border: 1px solid #9bd2a5;
+    border-radius: 15px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.success-box h2 {
+    margin-top: 0;
+    color: #237a35;
+}
+
+.receipt-btn {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 10px;
+    background: #6f4e37;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 12px;
+}
+
+.new-order-btn {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid #2b1d14;
+    border-radius: 10px;
+    background: white;
+    color: #2b1d14;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.error-box {
+    display: none;
+    background: #ffecec;
+    border: 1px solid #e5a1a1;
+    color: #9b2226;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media(max-width:600px) {
+
+    .container {
+        padding: 12px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .menu-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .menu-item {
+        padding: 9px;
+    }
+
+    .menu-name {
+        font-size: 14px;
+    }
+
+    .menu-price {
+        font-size: 14px;
+    }
+
+    .qty-btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .order-header {
+        flex-direction: column;
+    }
+
+    .page-navigation {
+        flex-direction: column;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<div class="container">
+
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
+<div class="header">
+
+    <h1>
+        ☕ NGOPI DULU - Cashier
+    </h1>
+
+    <p id="header-subtitle">
+        Tengok dan approve pesanan customer
+    </p>
+
+</div>
+
+
+<!-- =====================================================
+     NAVIGATION
+===================================================== -->
+
+<div class="page-navigation">
+
+    <button
+        type="button"
+        class="nav-btn"
+        id="approve-nav-btn"
+        onclick="showApprovePage()">
+
+        📋 Tengok / Approve Order
+
+    </button>
+
+
+    <button
+        type="button"
+        class="nav-btn manual"
+        id="manual-nav-btn"
+        onclick="showManualPage()">
+
+        ➕ Manual Order
+
+    </button>
+
+</div>
+
+
+<!-- =====================================================
+     APPROVE PAGE
+===================================================== -->
+
+<div id="approve-page">
+
+
+    <!-- PENDING -->
+
+    <div class="card">
+
+        <h2 class="section-title">
+            📋 Pesanan Baru Masuk
+        </h2>
+
+        <p class="section-subtitle">
+            Pending Approval
+        </p>
+
+        <div id="pending-orders">
+
+            <div class="empty">
+                Loading order...
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ACCEPTED -->
+
+    <div class="card">
+
+        <h2 class="section-title">
+            ☕ Pesanan Diterima / Proses Dapur
+        </h2>
+
+        <p class="section-subtitle">
+            Order yang sudah di-approve
+        </p>
+
+        <div id="accepted-orders">
+
+            <div class="empty">
+                Loading order...
+            </div>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<!-- =====================================================
+     MANUAL ORDER PAGE
+===================================================== -->
+
+<div
+    id="manual-page"
+    class="manual-page">
+
+
+    <!-- BACK BUTTON -->
+
+    <div style="margin-bottom:20px;">
+
+        <button
+            type="button"
+            class="nav-btn"
+            onclick="showApprovePage()"
+            style="width:100%;">
+
+            ← Kembali ke Tengok / Approve Order
+
+        </button>
+
+    </div>
+
+
+    <!-- ERROR -->
+
+    <div
+        id="error-box"
+        class="error-box">
+    </div>
+
+
+    <!-- CUSTOMER INFO -->
+
+    <div class="card">
+
+        <h2 class="section-title">
+            Maklumat Customer
+        </h2>
+
+        <div class="form-row">
+
+            <div class="form-group">
+
+                <label>
+                    Nama Customer
+                </label>
+
+                <input
+                    type="text"
+                    id="customer-name"
+                    placeholder="Cth: Ali">
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Pilih Meja
+                </label>
+
+                <select id="table-select">
+
+                    <option value="1">
+                        Meja 1
+                    </option>
+
+                    <option value="2">
+                        Meja 2
+                    </option>
+
+                    <option value="3">
+                        Meja 3
+                    </option>
+
+                    <option value="4">
+                        Meja 4
+                    </option>
+
+                    <option value="5">
+                        Meja 5
+                    </option>
+
+                    <option value="6">
+                        Meja 6
+                    </option>
+
+                    <option value="7">
+                        Meja 7
+                    </option>
+
+                    <option value="8">
+                        Meja 8
+                    </option>
+
+                    <option value="9">
+                        Meja 9
+                    </option>
+
+                    <option value="10">
+                        Meja 10
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                Payment Method
+            </label>
+
+            <select id="payment-method">
+
+                <option value="Cash">
+                    Cash
+                </option>
+
+                <option value="DuitNow QR">
+                    DuitNow QR
+                </option>
+
+                <option value="QR">
+                    QR
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                Special Request
+            </label>
+
+            <textarea
+                id="special-request"
+                placeholder="Contoh: kurang ais, kurang manis...">
+            </textarea>
+
+        </div>
+
+    </div>
+
+
+    <!-- MENU -->
+
+    <div class="card">
+
+        <h2 class="section-title">
+            Pilih Menu
+        </h2>
+
+        <div id="menu-container">
+
+            Loading menu...
+
+        </div>
+
+    </div>
+
+
+    <!-- DISCOUNT -->
+
+    <div class="card">
+
+        <h2 class="section-title">
+            Diskaun Cashier
+        </h2>
+
+
+        <div class="discount-box">
+
+            <label
+                style="
+                    font-weight:bold;
+                    display:block;
+                    margin-bottom:8px;
+                ">
+
+                Pilih Diskaun
+
+            </label>
+
+
+            <select
+                id="discount-select"
+                onchange="updateTotal()">
+
+                <option value="0">
+                    No Discount
+                </option>
+
+                <option value="5">
+                    5% Discount
+                </option>
+
+                <option value="10">
+                    10% Discount
+                </option>
+
+                <option value="15">
+                    15% Discount
+                </option>
+
+                <option value="20">
+                    20% Discount
+                </option>
+
+                <option value="50">
+                    50% Discount
+                </option>
+
+                <option value="100">
+                    100% Discount
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- SUMMARY -->
+
+        <div class="summary">
+
+
+            <div class="summary-row">
+
+                <span>
+                    Subtotal
+                </span>
+
+                <span id="subtotal">
+                    RM0.00
+                </span>
+
+            </div>
+
+
+            <div class="summary-row discount-row">
+
+                <span>
+
+                    Discount
+                    <span id="discount-percent">
+                        0%
+                    </span>
+
+                </span>
+
+                <span id="discount-amount">
+                    - RM0.00
+                </span>
+
+            </div>
+
+
+            <div class="summary-row total-row">
+
+                <span>
+                    Total
+                </span>
+
+                <span id="final-total">
+                    RM0.00
+                </span>
+
+            </div>
+
+
+        </div>
+
+
+        <button
+            type="button"
+            class="submit-btn"
+            onclick="submitManualOrder()">
+
+            ✅ Buat Manual Order
+
+        </button>
+
+    </div>
+
+
+    <!-- SUCCESS -->
+
+    <div
+        id="success-box"
+        class="success-box">
+
+        <h2>
+            ✅ Order Berjaya
+        </h2>
+
+        <p>
+            Manual order telah dihantar ke
+            proses dapur.
+        </p>
+
+
+        <p>
+
+            <strong>
+                Order ID:
+            </strong>
+
+            <span id="success-order-id">
+            </span>
+
+        </p>
+
+
+        <p>
+
+            <strong>
+                Customer:
+            </strong>
+
+            <span id="success-customer">
+            </span>
+
+        </p>
+
+
+        <p>
+
+            <strong>
+                Total:
+            </strong>
+
+            RM<span id="success-total">
+            </span>
+
+        </p>
+
+
+        <p id="success-discount-text">
+        </p>
+
+
+        <button
+            type="button"
+            class="receipt-btn"
+            onclick="downloadManualReceipt()">
+
+            🧾 Download Receipt PDF
+
+        </button>
+
+
+        <button
+            type="button"
+            class="new-order-btn"
+            onclick="newManualOrder()">
+
+            ➕ Buat Order Baru
+
+        </button>
+
+
+    </div>
+
+
+</div>
+
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   FIREBASE
+========================================================= */
+
+const firebaseConfig = {
+
+    apiKey:
+        "AIzaSyA55AmYlP7nPaAXavrFsU5G4GnQtB2Bqc",
+
+    authDomain:
+        "nikopi-operation.firebaseapp.com",
+
+    databaseURL:
+        "https://nikopi-operation-default-rtdb.asia-southeast1.firebasedatabase.app",
+
+    projectId:
+        "nikopi-operation",
+
+    storageBucket:
+        "nikopi-operation.firebasestorage.app",
+
+    messagingSenderId:
+        "922893888263",
+
+    appId:
+        "1:922893888263:web:2c113a2db29960044e73a2",
+
+    measurementId:
+        "G-WGEZB8BFW0"
+
+};
+
+
+firebase.initializeApp(
+    firebaseConfig
+);
+
+
+const db =
+    firebase.firestore();
+
+
+/* =========================================================
+   VARIABLES
+========================================================= */
+
+let liveCashierOrders = [];
+
+let liveAcceptedOrders = [];
+
+let unsubscribeOrders = null;
+
+let menuItems = [];
+
+let cart = [];
+
+let lastManualOrder = null;
+
+
+/* =========================================================
+   DEFAULT MENU
+========================================================= */
+
+const defaultMenu = [
+
+    {
+        id: 1,
+        category: "COFFEE",
+        name: "Cinnamon Latte",
+        price: 15
+    },
+
+    {
+        id: 2,
+        category: "COFFEE",
+        name: "Spanish Latte",
+        price: 15
+    },
+
+    {
+        id: 3,
+        category: "COFFEE",
+        name: "Hazelnut Latte",
+        price: 15
+    },
+
+    {
+        id: 4,
+        category: "COFFEE",
+        name: "Caramel Latte",
+        price: 15
+    },
+
+    {
+        id: 5,
+        category: "COFFEE",
+        name: "Cafe Latte / Flat White",
+        price: 12
+    },
+
+    {
+        id: 6,
+        category: "COFFEE",
+        name: "Cappuccino",
+        price: 12
+    },
+
+    {
+        id: 7,
+        category: "COFFEE",
+        name: "Americano / Long Black",
+        price: 10
+    },
+
+    {
+        id: 8,
+        category: "COFFEE",
+        name: "Sparkling Americano",
+        price: 12
+    },
+
+    {
+        id: 9,
+        category: "COFFEE",
+        name: "Mocha",
+        price: 17
+    },
+
+    {
+        id: 10,
+        category: "COFFEE",
+        name: "Espresso",
+        price: 5
+    },
+
+    {
+        id: 11,
+        category: "NON COFFEE",
+        name: "Chocolate",
+        price: 12
+    },
+
+    {
+        id: 12,
+        category: "NON COFFEE",
+        name: "Chocolate Hazelnut",
+        price: 14
+    },
+
+    {
+        id: 13,
+        category: "NON COFFEE",
+        name: "Sparkling Yuzu",
+        price: 14
+    },
+
+    {
+        id: 14,
+        category: "NON COFFEE",
+        name: "Sparkling Ribena",
+        price: 10
+    },
+
+    {
+        id: 15,
+        category: "NON COFFEE",
+        name: "Ribena",
+        price: 6
+    },
+
+    {
+        id: 16,
+        category: "NON COFFEE",
+        name: "Belgium Choc with Apple Fiber",
+        price: 10
+    },
+
+    {
+        id: 17,
+        category: "MATCHA",
+        name: "Matcha Latte",
+        price: 15
+    },
+
+    {
+        id: 18,
+        category: "MATCHA",
+        name: "Matcha Strawberry",
+        price: 17
+    },
+
+    {
+        id: 19,
+        category: "SOFT COOKIES",
+        name: "Classic Choc Chip",
+        price: 11.90
+    },
+
+    {
+        id: 20,
+        category: "SOFT COOKIES",
+        name: "S'mores",
+        price: 12.90
+    },
+
+    {
+        id: 21,
+        category: "SOFT COOKIES",
+        name: "Red Velvet Cheesecake",
+        price: 14.90
+    },
+
+    {
+        id: 22,
+        category: "BITES",
+        name: "Bagel with Cream Cheese",
+        price: 12
+    },
+
+    {
+        id: 23,
+        category: "BITES",
+        name: "Mini Croissant",
+        price: 6
+    },
+
+    {
+        id: 24,
+        category: "BITES",
+        name: "Koko Crunch with Milk",
+        price: 5
+    },
+
+    {
+        id: 25,
+        category: "BITES",
+        name: "Ramen",
+        price: 9
+    },
+
+    {
+        id: 26,
+        category: "BITES",
+        name: "Kaya Toast with Hard Boiled Egg",
+        price: 7
+    },
+
+    {
+        id: 27,
+        category: "BITES",
+        name: "Kaya Toast",
+        price: 5.50
+    },
+
+    {
+        id: 28,
+        category: "BITES",
+        name: "Nutella Toast",
+        price: 5.50
+    },
+
+    {
+        id: 29,
+        category: "BITES",
+        name: "Maggie Cup",
+        price: 4.50
+    },
+
+    {
+        id: 30,
+        category: "BITES",
+        name: "Indo Mee",
+        price: 6
+    },
+
+    {
+        id: 31,
+        category: "BITES",
+        name: "Hard Boiled Egg",
+        price: 2
+    },
+
+    {
+        id: 32,
+        category: "ADD ON",
+        name: "Oatmilk",
+        price: 3
+    },
+
+    {
+        id: 33,
+        category: "ADD ON",
+        name: "Extra Shot",
+        price: 4
+    },
+
+    {
+        id: 34,
+        category: "ADD ON",
+        name: "Extra Syrup",
+        price: 2
+    },
+
+    {
+        id: 35,
+        category: "ADD ON",
+        name: "Ice Water",
+        price: 2
+    }
+
+];
+
+
+/* =========================================================
+   PAGE SWITCH
+========================================================= */
+
+function showApprovePage() {
+
+    document.getElementById(
+        "approve-page"
+    ).style.display = "block";
+
+
+    document.getElementById(
+        "manual-page"
+    ).style.display = "none";
+
+
+    document.getElementById(
+        "header-subtitle"
+    ).textContent =
+        "Tengok dan approve pesanan customer";
+
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+
+}
+
+
+function showManualPage() {
+
+    document.getElementById(
+        "approve-page"
+    ).style.display = "none";
+
+
+    document.getElementById(
+        "manual-page"
+    ).style.display = "block";
+
+
+    document.getElementById(
+        "header-subtitle"
+    ).textContent =
+        "Manual order - Cashier";
+
+
+    loadMenu();
+
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+
+}
+
+
+/* =========================================================
+   CASHIER ORDER REALTIME
+========================================================= */
+
+function loadCashierDataRealtime() {
+
+    if(unsubscribeOrders) {
+
+        unsubscribeOrders();
+
+    }
+
+
+    unsubscribeOrders =
+        db.collection("orders")
+        .onSnapshot(
+
+            snapshot => {
+
+                liveCashierOrders = [];
+
+                liveAcceptedOrders = [];
+
+
+                snapshot.forEach(doc => {
+
+                    const data =
+                        doc.data();
+
+
+                    data.firebaseId =
+                        doc.id;
+
+
+                    if(
+                        data.status ===
+                        "Pending"
+                    ) {
+
+                        liveCashierOrders.push(
+                            data
+                        );
+
+                    }
+
+
+                    else if(
+                        data.status ===
+                        "Accepted"
+                    ) {
+
+                        liveAcceptedOrders.push(
+                            data
+                        );
+
+                    }
+
+                });
+
+
+                sortOrders(
+                    liveCashierOrders
+                );
+
+                sortOrders(
+                    liveAcceptedOrders
+                );
+
+
+                renderCashierOrders();
+
+                renderAcceptedOrders();
+
+            },
+
+            error => {
+
+                console.error(
+                    "Firebase order error:",
+                    error
+                );
+
+            }
+
+        );
+
+}
+
+
+/* =========================================================
+   SORT
+========================================================= */
+
+function getOrderTime(order) {
+
+    if(
+        order.timestamp &&
+        typeof order.timestamp.toMillis ===
+        "function"
+    ) {
+
+        return order.timestamp.toMillis();
+
+    }
+
+
+    if(
+        typeof order.timestamp ===
+        "number"
+    ) {
+
+        return order.timestamp;
+
+    }
+
+
+    return 0;
+
+}
+
+
+function sortOrders(orders) {
+
+    orders.sort(
+        (a,b) =>
+            getOrderTime(b) -
+            getOrderTime(a)
+    );
+
+}
+
+
+/* =========================================================
+   RENDER PENDING
+========================================================= */
+
+function renderCashierOrders() {
+
+    const container =
+        document.getElementById(
+            "pending-orders"
+        );
+
+
+    if(
+        liveCashierOrders.length ===
+        0
+    ) {
+
+        container.innerHTML = `
+
+            <div class="empty">
+                Tiada pending order.
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    let html = "";
+
+
+    liveCashierOrders.forEach(
+        order => {
+
+            html +=
+                createPendingHTML(
+                    order
+                );
+
+        }
+    );
+
+
+    container.innerHTML =
+        html;
+
+}
+
+
+/* =========================================================
+   PENDING HTML
+========================================================= */
+
+function createPendingHTML(order) {
+
+    const items =
+        Array.isArray(order.items)
+        ?
+        order.items
+        :
+        [];
+
+
+    let itemsHTML = "";
+
+
+    items.forEach(item => {
+
+        const quantity =
+            Number(
+                item.quantity ||
+                1
+            );
+
+
+        const price =
+            Number(
+                item.price ||
+                0
+            );
+
+
+        itemsHTML += `
+
+            <div class="item-line">
+
+                <span>
+                    ${escapeHTML(
+                        item.name ||
+                        "Item"
+                    )}
+
+                    × ${quantity}
+
+                </span>
+
+
+                <span>
+
+                    RM${(
+                        price *
+                        quantity
+                    ).toFixed(2)}
+
+                </span>
+
+            </div>
+
+        `;
+
+    });
+
+
+    return `
+
+        <div class="order-card">
+
+
+            <div class="order-header">
+
+
+                <div>
+
+                    <div class="order-id">
+
+                        ${escapeHTML(
+                            order.orderId ||
+                            "#"
+                        )}
+
+                    </div>
+
+
+                    <div class="customer">
+
+                        ${escapeHTML(
+                            order.customerName ||
+                            "Customer"
+                        )}
+
+                    </div>
+
+
+                    <div class="meta">
+
+                        ${escapeHTML(
+                            order.table ||
+                            ""
+                        )}
+
+                    </div>
+
+                </div>
+
+
+                <div>
+
+                    <span class="badge badge-pending">
+
+                        ⏳ PENDING
+
+                    </span>
+
+                </div>
+
+
+            </div>
+
+
+            <div class="meta">
+
+                Payment:
+                ${escapeHTML(
+                    order.paymentMethod ||
+                    "-"
+                )}
+
+            </div>
+
+
+            <div class="items">
+
+                ${itemsHTML}
+
+            </div>
+
+
+            ${
+                order.specialRequest
+                ?
+                `
+
+                <div class="meta">
+
+                    <strong>
+                        Special Request:
+                    </strong>
+
+                    ${escapeHTML(
+                        order.specialRequest
+                    )}
+
+                </div>
+
+                `
+                :
+                ""
+            }
+
+
+            ${
+                Number(
+                    order.discountPercent ||
+                    0
+                ) > 0
+
+                ?
+
+                `
+
+                <div class="meta">
+
+                    Discount:
+                    ${Number(
+                        order.discountPercent
+                    )}%
+
+                    (-RM${Number(
+                        order.discountAmount ||
+                        0
+                    ).toFixed(2)})
+
+                </div>
+
+                `
+
+                :
+
+                ""
+            }
+
+
+            <div class="total">
+
+                Total:
+                RM${Number(
+                    order.total ||
+                    0
+                ).toFixed(2)}
+
+            </div>
+
+
+            <button
+                type="button"
+                class="accept-btn"
+                onclick="acceptOrder('${order.firebaseId}')">
+
+                ✅ Accept Order
+
+            </button>
+
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   ACCEPT
+========================================================= */
+
+async function acceptOrder(firebaseId) {
+
+    try {
+
+        await db
+            .collection("orders")
+            .doc(firebaseId)
+            .update({
+
+                status:
+                    "Accepted",
+
+                acceptedAt:
+                    Date.now()
+
+            });
+
+    }
+
+    catch(error) {
+
+        console.error(
+            error
+        );
+
+        alert(
+            "Gagal accept order."
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   RENDER ACCEPTED
+========================================================= */
+
+function renderAcceptedOrders() {
+
+    const container =
+        document.getElementById(
+            "accepted-orders"
+        );
+
+
+    if(
+        liveAcceptedOrders.length ===
+        0
+    ) {
+
+        container.innerHTML = `
+
+            <div class="empty">
+
+                Tiada order sedang diproses.
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    let html = "";
+
+
+    liveAcceptedOrders.forEach(
+        order => {
+
+            html +=
+                createAcceptedHTML(
+                    order
+                );
+
+        }
+    );
+
+
+    container.innerHTML =
+        html;
+
+}
+
+
+/* =========================================================
+   ACCEPTED HTML
+========================================================= */
+
+function createAcceptedHTML(order) {
+
+    const items =
+        Array.isArray(order.items)
+        ?
+        order.items
+        :
+        [];
+
+
+    let itemsHTML = "";
+
+
+    items.forEach(item => {
+
+        const quantity =
+            Number(
+                item.quantity ||
+                1
+            );
+
+
+        const price =
+            Number(
+                item.price ||
+                0
+            );
+
+
+        itemsHTML += `
+
+            <div class="item-line">
+
+                <span>
+
+                    ${escapeHTML(
+                        item.name ||
+                        "Item"
+                    )}
+
+                    × ${quantity}
+
+                </span>
+
+
+                <span>
+
+                    RM${(
+                        price *
+                        quantity
+                    ).toFixed(2)}
+
+                </span>
+
+            </div>
+
+        `;
+
+    });
+
+
+    const acceptedAt =
+        Number(
+            order.acceptedAt ||
+            Date.now()
+        );
+
+
+    const elapsed =
+        Math.max(
+            0,
+            Math.floor(
+                (
+                    Date.now() -
+                    acceptedAt
+                ) / 1000
+            )
+        );
+
+
+    const minutes =
+        Math.floor(
+            elapsed / 60
+        );
+
+
+    const seconds =
+        elapsed % 60;
+
+
+    const timerText =
+        `${minutes}:${
+            String(seconds)
+            .padStart(2,"0")
+        }`;
+
+
+    const delayed =
+        elapsed >= 300;
+
+
+    return `
+
+        <div class="order-card">
+
+
+            ${
+                order.manualOrder
+                ?
+
+                `
+
+                <div class="manual-label">
+
+                    🧾 MANUAL ORDER
+
+                </div>
+
+                `
+
+                :
+
+                ""
+            }
+
+
+            <div class="order-header">
+
+
+                <div>
+
+                    <div class="order-id">
+
+                        ${escapeHTML(
+                            order.orderId ||
+                            "#"
+                        )}
+
+                    </div>
+
+
+                    <div class="customer">
+
+                        ${escapeHTML(
+                            order.customerName ||
+                            "Customer"
+                        )}
+
+                    </div>
+
+
+                    <div class="meta">
+
+                        ${escapeHTML(
+                            order.table ||
+                            ""
+                        )}
+
+                    </div>
+
+                </div>
+
+
+                <div>
+
+                    <span class="badge badge-accepted">
+
+                        ✅ ACCEPTED
+
+                    </span>
+
+                </div>
+
+
+            </div>
+
+
+            <div class="meta">
+
+                Payment:
+                ${escapeHTML(
+                    order.paymentMethod ||
+                    "-"
+                )}
+
+            </div>
+
+
+            <div class="meta">
+
+                Masa:
+
+                <span
+                    class="timer ${
+                        delayed
+                        ?
+                        "delayed"
+                        :
+                        ""
+                    }">
+
+                    ${timerText}
+
+                </span>
+
+                ${
+                    delayed
+                    ?
+                    " ⚠️"
+                    :
+                    ""
+                }
+
+            </div>
+
+
+            <div class="items">
+
+                ${itemsHTML}
+
+            </div>
+
+
+            ${
+                Number(
+                    order.discountPercent ||
+                    0
+                ) > 0
+
+                ?
+
+                `
+
+                <div class="meta">
+
+                    Discount:
+                    ${Number(
+                        order.discountPercent
+                    )}%
+
+                    (-RM${Number(
+                        order.discountAmount ||
+                        0
+                    ).toFixed(2)})
+
+                </div>
+
+                `
+
+                :
+
+                ""
+            }
+
+
+            <div class="total">
+
+                Total:
+                RM${Number(
+                    order.total ||
+                    0
+                ).toFixed(2)}
+
+            </div>
+
+
+            <button
+                type="button"
+                class="done-btn"
+                onclick="completeOrder('${order.firebaseId}')">
+
+                ✓ Done / Selesai
+
+            </button>
+
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   COMPLETE
+========================================================= */
+
+async function completeOrder(firebaseId) {
+
+    try {
+
+        await db
+            .collection("orders")
+            .doc(firebaseId)
+            .update({
+
+                status:
+                    "Selesai (Completed)",
+
+                completedAt:
+                    Date.now()
+
+            });
+
+    }
+
+    catch(error) {
+
+        console.error(
+            error
+        );
+
+        alert(
+            "Gagal complete order."
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   LIVE TIMER
+========================================================= */
+
+setInterval(
+    function() {
+
+        if(
+            liveAcceptedOrders.length >
+            0
+        ) {
+
+            renderAcceptedOrders();
+
+        }
+
+    },
+    1000
+);
+
+
+/* =========================================================
+   MANUAL MENU
+========================================================= */
+
+async function loadMenu() {
+
+    try {
+
+        const doc =
+            await db
+                .collection("settings")
+                .doc("menu")
+                .get();
+
+
+        if(
+            doc.exists
+        ) {
+
+            const data =
+                doc.data();
+
+
+            if(
+                Array.isArray(
+                    data.categories
+                )
+            ) {
+
+                const firestoreItems = [];
+
+
+                data.categories.forEach(
+                    category => {
+
+                        if(
+                            category.items &&
+                            Array.isArray(
+                                category.items
+                            )
+                        ) {
+
+                            category.items.forEach(
+                                item => {
+
+                                    firestoreItems.push({
+
+                                        id:
+                                            item.id ||
+                                            (
+                                                Date.now() +
+                                                Math.random()
+                                            ),
+
+                                        category:
+                                            category.name ||
+                                            "",
+
+                                        name:
+                                            item.name ||
+                                            "Menu",
+
+                                        price:
+                                            Number(
+                                                item.price
+                                            ) ||
+                                            0,
+
+                                        available:
+                                            item.available !== false
+
+                                    });
+
+                                }
+                            );
+
+                        }
+
+                    }
+                );
+
+
+                if(
+                    firestoreItems.length >
+                    0
+                ) {
+
+                    menuItems =
+                        firestoreItems;
+
+                }
+
+                else {
+
+                    useDefaultMenu();
+
+                }
+
+            }
+
+            else {
+
+                useDefaultMenu();
+
+            }
+
+        }
+
+        else {
+
+            useDefaultMenu();
+
+        }
+
+    }
+
+    catch(error) {
+
+        console.error(
+            "Menu error:",
+            error
+        );
+
+        useDefaultMenu();
+
+    }
+
+
+    renderMenu();
+
+}
+
+
+/* =========================================================
+   DEFAULT MENU
+========================================================= */
+
+function useDefaultMenu() {
+
+    menuItems =
+        defaultMenu.map(
+            item => ({
+
+                ...item,
+
+                available:
+                    true
+
+            })
+        );
+
+}
+
+
+/* =========================================================
+   RENDER MENU
+========================================================= */
+
+function renderMenu() {
+
+    const container =
+        document.getElementById(
+            "menu-container"
+        );
+
+
+    if(!container) return;
+
+
+    if(
+        menuItems.length ===
+        0
+    ) {
+
+        container.innerHTML =
+            "<p>Menu tidak tersedia.</p>";
+
+        return;
+
+    }
+
+
+    const categories = {};
+
+
+    menuItems.forEach(
+        item => {
+
+            const category =
+                item.category ||
+                "MENU";
+
+
+            if(
+                !categories[category]
+            ) {
+
+                categories[category] = [];
+
+            }
+
+
+            categories[category]
+                .push(item);
+
+        }
+    );
+
+
+    let html = "";
+
+
+    Object.keys(
+        categories
+    ).forEach(
+        category => {
+
+
+            html += `
+
+                <h3
+                    style="
+                        margin-top:20px;
+                        margin-bottom:10px;
+                    ">
+
+                    ${escapeHTML(
+                        category
+                    )}
+
+                </h3>
+
+
+                <div class="menu-grid">
+
+            `;
+
+
+            categories[category]
+                .forEach(
+                    item => {
+
+                        const qty =
+                            getQuantity(
+                                item.id
+                            );
+
+
+                        const soldOut =
+                            item.available ===
+                            false;
+
+
+                        html += `
+
+                            <div class="menu-item ${
+                                soldOut
+                                ?
+                                "sold-out"
+                                :
+                                ""
+                            }">
+
+
+                                <div class="menu-name">
+
+                                    ${escapeHTML(
+                                        item.name
+                                    )}
+
+                                </div>
+
+
+                                <div class="menu-price">
+
+                                    RM${Number(
+                                        item.price
+                                    ).toFixed(2)}
+
+                                </div>
+
+
+                                ${
+                                    soldOut
+
+                                    ?
+
+                                    `
+
+                                    <div
+                                        style="
+                                            color:#c0392b;
+                                            font-weight:bold;
+                                        ">
+
+                                        SOLD OUT
+
+                                    </div>
+
+                                    `
+
+                                    :
+
+                                    `
+
+                                    <div class="menu-controls">
+
+
+                                        <button
+                                            type="button"
+                                            class="qty-btn"
+                                            onclick="changeQuantity('${item.id}', -1)"
+                                            ${
+                                                qty <= 0
+                                                ?
+                                                "disabled"
+                                                :
+                                                ""
+                                            }>
+
+                                            −
+
+                                        </button>
+
+
+                                        <span class="qty">
+
+                                            ${qty}
+
+                                        </span>
+
+
+                                        <button
+                                            type="button"
+                                            class="qty-btn"
+                                            onclick="changeQuantity('${item.id}', 1)">
+
+                                            +
+
+                                        </button>
+
+
+                                    </div>
+
+                                    `
+                                }
+
+
+                            </div>
+
+                        `;
+
+                    }
+                );
+
+
+            html += `
+                </div>
+            `;
+
+        }
+    );
+
+
+    container.innerHTML =
+        html;
+
+
+    updateTotal();
+
+}
+
+
+/* =========================================================
+   CART
+========================================================= */
+
+function getQuantity(itemId) {
+
+    const item =
+        cart.find(
+            x =>
+                String(x.id) ===
+                String(itemId)
+        );
+
+
+    return item
+        ?
+        item.quantity
+        :
+        0;
+
+}
+
+
+function changeQuantity(
+    itemId,
+    change
+) {
+
+    const menuItem =
+        menuItems.find(
+            x =>
+                String(x.id) ===
+                String(itemId)
+        );
+
+
+    if(!menuItem) return;
+
+
+    if(
+        menuItem.available ===
+        false
+    ) {
+
+        return;
+
+    }
+
+
+    let cartItem =
+        cart.find(
+            x =>
+                String(x.id) ===
+                String(itemId)
+        );
+
+
+    if(!cartItem) {
+
+        cartItem = {
+
+            id:
+                menuItem.id,
+
+            name:
+                menuItem.name,
+
+            price:
+                Number(
+                    menuItem.price
+                ),
+
+            quantity:
+                0
+
+        };
+
+
+        cart.push(
+            cartItem
+        );
+
+    }
+
+
+    cartItem.quantity +=
+        change;
+
+
+    if(
+        cartItem.quantity <=
+        0
+    ) {
+
+        cart =
+            cart.filter(
+                x =>
+                    String(x.id) !==
+                    String(itemId)
+            );
+
+    }
+
+
+    renderMenu();
+
+    updateTotal();
+
+}
+
+
+/* =========================================================
+   SUBTOTAL
+========================================================= */
+
+function calculateSubtotal() {
+
+    let total = 0;
+
+
+    cart.forEach(
+        item => {
+
+            total +=
+                Number(
+                    item.price
+                ) *
+                Number(
+                    item.quantity
+                );
+
+        }
+    );
+
+
+    return Number(
+        total.toFixed(2)
+    );
+
+}
+
+
+/* =========================================================
+   DISCOUNT
+========================================================= */
+
+function getDiscountData() {
+
+    const subtotal =
+        calculateSubtotal();
+
+
+    const discountPercent =
+        Number(
+            document.getElementById(
+                "discount-select"
+            ).value
+        );
+
+
+    const discountAmount =
+        subtotal *
+        (
+            discountPercent /
+            100
+        );
+
+
+    const finalTotal =
+        Math.max(
+            0,
+            subtotal -
+            discountAmount
+        );
+
+
+    return {
+
+        subtotal:
+            Number(
+                subtotal.toFixed(2)
+            ),
+
+        discountPercent:
+            discountPercent,
+
+        discountAmount:
+            Number(
+                discountAmount.toFixed(2)
+            ),
+
+        finalTotal:
+            Number(
+                finalTotal.toFixed(2)
+            )
+
+    };
+
+}
+
+
+/* =========================================================
+   UPDATE TOTAL
+========================================================= */
+
+function updateTotal() {
+
+    const subtotalElement =
+        document.getElementById(
+            "subtotal"
+        );
+
+
+    if(!subtotalElement) return;
+
+
+    const data =
+        getDiscountData();
+
+
+    document.getElementById(
+        "subtotal"
+    ).textContent =
+        `RM${data.subtotal.toFixed(2)}`;
+
+
+    document.getElementById(
+        "discount-percent"
+    ).textContent =
+        `${data.discountPercent}%`;
+
+
+    document.getElementById(
+        "discount-amount"
+    ).textContent =
+        `- RM${data.discountAmount.toFixed(2)}`;
+
+
+    document.getElementById(
+        "final-total"
+    ).textContent =
+        `RM${data.finalTotal.toFixed(2)}`;
+
+}
+
+
+/* =========================================================
+   ORDER NUMBER
+========================================================= */
+
+function generateOrderNumber() {
+
+    const now =
+        new Date();
+
+
+    const hh =
+        String(
+            now.getHours()
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    const mm =
+        String(
+            now.getMinutes()
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    const ss =
+        String(
+            now.getSeconds()
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    const random =
+        Math.floor(
+            Math.random() *
+            100
+        )
+        .toString()
+        .padStart(
+            2,
+            "0"
+        );
+
+
+    return (
+        hh +
+        mm +
+        ss +
+        random
+    );
+
+}
+
+
+/* =========================================================
+   SUBMIT MANUAL ORDER
+========================================================= */
+
+async function submitManualOrder() {
+
+    hideError();
+
+
+    const customerName =
+        document
+            .getElementById(
+                "customer-name"
+            )
+            .value
+            .trim();
+
+
+    const table =
+        document
+            .getElementById(
+                "table-select"
+            )
+            .value;
+
+
+    const payment =
+        document
+            .getElementById(
+                "payment-method"
+            )
+            .value;
+
+
+    const specialRequest =
+        document
+            .getElementById(
+                "special-request"
+            )
+            .value
+            .trim();
+
+
+    if(!customerName) {
+
+        showError(
+            "Sila masukkan nama customer."
+        );
+
+
+        document
+            .getElementById(
+                "customer-name"
+            )
+            .focus();
+
+
+        return;
+
+    }
+
+
+    if(
+        cart.length ===
+        0
+    ) {
+
+        showError(
+            "Sila pilih sekurang-kurangnya satu menu."
+        );
+
+
+        return;
+
+    }
+
+
+    const discountData =
+        getDiscountData();
+
+
+    const orderNumber =
+        generateOrderNumber();
+
+
+    const formattedItems =
+        cart.map(
+            item => ({
+
+                name:
+                    item.name,
+
+                price:
+                    Number(
+                        item.price
+                    ),
+
+                quantity:
+                    Number(
+                        item.quantity
+                    ),
+
+                subtotal:
+                    Number(
+                        (
+                            item.price *
+                            item.quantity
+                        ).toFixed(2)
+                    )
+
+            })
+        );
+
+
+    try {
+
+        const orderData = {
+
+            orderId:
+                `#${orderNumber}`,
+
+            customerName:
+                customerName,
+
+            table:
+                `Meja ${table}`,
+
+            items:
+                formattedItems,
+
+            subtotal:
+                discountData.subtotal,
+
+            discountCode:
+                discountData.discountPercent >
+                0
+
+                ?
+
+                `${discountData.discountPercent}% Manual Discount`
+
+                :
+
+                "",
+
+            discountPercent:
+                discountData.discountPercent,
+
+            discountAmount:
+                discountData.discountAmount,
+
+            total:
+                discountData.finalTotal,
+
+            paymentMethod:
+                payment,
+
+            specialRequest:
+                specialRequest,
+
+            status:
+                "Accepted",
+
+            orderSource:
+                "Manual / Cashier",
+
+            manualOrder:
+                true,
+
+            acceptedAt:
+                Date.now(),
+
+            timestamp:
+                firebase.firestore
+                    .FieldValue
+                    .serverTimestamp()
+
+        };
+
+
+        const docRef =
+            await db
+                .collection("orders")
+                .add(
+                    orderData
+                );
+
+
+        lastManualOrder = {
+
+            ...orderData,
+
+            firebaseDocId:
+                docRef.id,
+
+            createdAt:
+                new Date()
+
+        };
+
+
+        document.getElementById(
+            "success-order-id"
+        ).textContent =
+            orderData.orderId;
+
+
+        document.getElementById(
+            "success-customer"
+        ).textContent =
+            orderData.customerName;
+
+
+        document.getElementById(
+            "success-total"
+        ).textContent =
+            orderData.total.toFixed(2);
+
+
+        const discountText =
+            document.getElementById(
+                "success-discount-text"
+            );
+
+
+        if(
+            orderData.discountPercent >
+            0
+        ) {
+
+            discountText.textContent =
+                `Discount ${
+                    orderData.discountPercent
+                }% (-RM${
+                    orderData.discountAmount
+                    .toFixed(2)
+                })`;
+
+        }
+
+        else {
+
+            discountText.textContent =
+                "No Discount";
+
+        }
+
+
+        document.getElementById(
+            "success-box"
+        ).style.display =
+            "block";
+
+
+        /* RESET FORM */
+
+        cart = [];
+
+
+        document.getElementById(
+            "customer-name"
+        ).value = "";
+
+
+        document.getElementById(
+            "special-request"
+        ).value = "";
+
+
+        document.getElementById(
+            "discount-select"
+        ).value = "0";
+
+
+        renderMenu();
+
+        updateTotal();
+
+
+        window.scrollTo({
+
+            top:
+                document.body.scrollHeight,
+
+            behavior:
+                "smooth"
+
+        });
+
+    }
+
+    catch(error) {
+
+        console.error(
+            "Manual order error:",
+            error
+        );
+
+
+        showError(
+            "Order gagal dihantar. Sila cuba lagi."
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+function showError(message) {
+
+    const box =
+        document.getElementById(
+            "error-box"
+        );
+
+
+    box.textContent =
+        message;
+
+
+    box.style.display =
+        "block";
+
+}
+
+
+function hideError() {
+
+    const box =
+        document.getElementById(
+            "error-box"
+        );
+
+
+    box.textContent =
+        "";
+
+
+    box.style.display =
+        "none";
+
+}
+
+
+/* =========================================================
+   PDF RECEIPT
+========================================================= */
+
+function downloadManualReceipt() {
+
+    if(!lastManualOrder) {
+
+        alert(
+            "Receipt order tidak dijumpai."
+        );
+
+
+        return;
+
+    }
+
+
+    if(
+        !window.jspdf ||
+        !window.jspdf.jsPDF
+    ) {
+
+        alert(
+            "PDF library belum siap. Sila cuba lagi."
+        );
+
+
+        return;
+
+    }
+
+
+    const {
+        jsPDF
+    } =
+        window.jspdf;
+
+
+    const order =
+        lastManualOrder;
+
+
+    const doc =
+        new jsPDF();
+
+
+    let y = 20;
+
+
+    /* HEADER */
+
+    doc.setFont(
+        "helvetica",
+        "bold"
+    );
+
+
+    doc.setFontSize(
+        18
+    );
+
+
+    doc.text(
+        "NGOPI DULU",
+        105,
+        y,
+        {
+            align:
+                "center"
+        }
+    );
+
+
+    y += 10;
+
+
+    doc.setFontSize(
+        13
+    );
+
+
+    doc.text(
+        "CUSTOMER RECEIPT",
+        105,
+        y,
+        {
+            align:
+                "center"
+        }
+    );
+
+
+    y += 12;
+
+
+    doc.setFont(
+        "helvetica",
+        "normal"
+    );
+
+
+    doc.setFontSize(
+        10
+    );
+
+
+    doc.text(
+        `Order ID: ${order.orderId}`,
+        15,
+        y
+    );
+
+
+    y += 6;
+
+
+    doc.text(
+        `Customer: ${order.customerName}`,
+        15,
+        y
+    );
+
+
+    y += 6;
+
+
+    doc.text(
+        `Table: ${order.table}`,
+        15,
+        y
+    );
+
+
+    y += 6;
+
+
+    doc.text(
+        `Payment: ${order.paymentMethod}`,
+        15,
+        y
+    );
+
+
+    y += 6;
+
+
+    doc.text(
+        "Order Type: Manual / Cashier",
+        15,
+        y
+    );
+
+
+    y += 10;
+
+
+    doc.line(
+        15,
+        y,
+        195,
+        y
+    );
+
+
+    y += 8;
+
+
+    /* ITEMS */
+
+    order.items.forEach(
+        item => {
+
+            const itemTotal =
+                Number(
+                    item.price
+                ) *
+                Number(
+                    item.quantity
+                );
+
+
+            doc.setFont(
+                "helvetica",
+                "bold"
+            );
+
+
+            doc.text(
+                `${item.name}`,
+                15,
+                y
+            );
+
+
+            y += 5;
+
+
+            doc.setFont(
+                "helvetica",
+                "normal"
+            );
+
+
+            doc.text(
+                `${item.quantity} x RM${Number(
+                    item.price
+                ).toFixed(2)}`,
+                20,
+                y
+            );
+
+
+            doc.text(
+                `RM${itemTotal.toFixed(2)}`,
+                190,
+                y,
+                {
+                    align:
+                        "right"
+                }
+            );
+
+
+            y += 8;
+
+
+            if(
+                y > 270
+            ) {
+
+                doc.addPage();
+
+                y = 20;
+
+            }
+
+        }
+    );
+
+
+    doc.line(
+        15,
+        y,
+        195,
+        y
+    );
+
+
+    y += 8;
+
+
+    /* SUBTOTAL */
+
+    doc.text(
+        "Subtotal",
+        15,
+        y
+    );
+
+
+    doc.text(
+        `RM${Number(
+            order.subtotal
+        ).toFixed(2)}`,
+        190,
+        y,
+        {
+            align:
+                "right"
+        }
+    );
+
+
+    y += 7;
+
+
+    /* DISCOUNT */
+
+    if(
+        Number(
+            order.discountPercent
+        ) > 0
+    ) {
+
+        doc.text(
+            `Discount (${order.discountPercent}%)`,
+            15,
+            y
+        );
+
+
+        doc.text(
+            `- RM${Number(
+                order.discountAmount
+            ).toFixed(2)}`,
+            190,
+            y,
+            {
+                align:
+                    "right"
+            }
+        );
+
+
+        y += 8;
+
+    }
+
+
+    doc.line(
+        15,
+        y,
+        195,
+        y
+    );
+
+
+    y += 8;
+
+
+    /* TOTAL */
+
+    doc.setFont(
+        "helvetica",
+        "bold"
+    );
+
+
+    doc.setFontSize(
+        13
+    );
+
+
+    doc.text(
+        "TOTAL",
+        15,
+        y
+    );
+
+
+    doc.text(
+        `RM${Number(
+            order.total
+        ).toFixed(2)}`,
+        190,
+        y,
+        {
+            align:
+                "right"
+        }
+    );
+
+
+    y += 10;
+
+
+    /* SPECIAL REQUEST */
+
+    if(
+        order.specialRequest
+    ) {
+
+        doc.setFontSize(
+            10
+        );
+
+
+        doc.setFont(
+            "helvetica",
+            "normal"
+        );
+
+
+        doc.text(
+            "Special Request:",
+            15,
+            y
+        );
+
+
+        y += 6;
+
+
+        const requestLines =
+            doc.splitTextToSize(
+                order.specialRequest,
+                175
+            );
+
+
+        doc.text(
+            requestLines,
+            15,
+            y
+        );
+
+
+        y +=
+            requestLines.length *
+            5;
+
+    }
+
+
+    y += 8;
+
+
+    doc.setFontSize(
+        9
+    );
+
+
+    doc.text(
+        "Thank you for ordering with NGOPI DULU!",
+        105,
+        y,
+        {
+            align:
+                "center"
+        }
+    );
+
+
+    /* DOWNLOAD */
+
+    const cleanOrderId =
+        String(
+            order.orderId
+        )
+        .replace(
+            /[^a-zA-Z0-9-_]/g,
+            ""
+        );
+
+
+    const fileName =
+        `NGOPI-DULU-Receipt-${cleanOrderId}.pdf`;
+
+
+    const pdfBlob =
+        doc.output(
+            "blob"
+        );
+
+
+    const blobUrl =
+        URL.createObjectURL(
+            pdfBlob
+        );
+
+
+    const downloadLink =
+        document.createElement(
+            "a"
+        );
+
+
+    downloadLink.href =
+        blobUrl;
+
+
+    downloadLink.download =
+        fileName;
+
+
+    downloadLink.style.display =
+        "none";
+
+
+    downloadLink.setAttribute(
+        "download",
+        fileName
+    );
+
+
+    document.body.appendChild(
+        downloadLink
+    );
+
+
+    downloadLink.click();
+
+
+    document.body.removeChild(
+        downloadLink
+    );
+
+
+    setTimeout(
+        () => {
+
+            URL.revokeObjectURL(
+                blobUrl
+            );
+
+        },
+        60000
+    );
+
+}
+
+
+/* =========================================================
+   NEW MANUAL ORDER
+========================================================= */
+
+function newManualOrder() {
+
+    lastManualOrder =
+        null;
+
+
+    document.getElementById(
+        "success-box"
+    ).style.display =
+        "none";
+
+
+    document.getElementById(
+        "customer-name"
+    ).focus();
+
+
+    window.scrollTo({
+
+        top:
+            0,
+
+        behavior:
+            "smooth"
+
+    });
+
+}
+
+
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
+
+function escapeHTML(value) {
+
+    return String(
+        value
+    )
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+    .replace(
+        /</g,
+        "&lt;"
+    )
+    .replace(
+        />/g,
+        "&gt;"
+    )
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+    .replace(
+        /'/g,
+        "&#039;"
+    );
+
+}
+
+
+/* =========================================================
+   START
+========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        loadCashierDataRealtime();
+
+        useDefaultMenu();
+
+        renderMenu();
+
+        updateTotal();
+
+        showApprovePage();
+
+    }
+);
+
+</script>
+
+</body>
+</html>

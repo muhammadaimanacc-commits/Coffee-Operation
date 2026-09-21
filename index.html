@@ -1,0 +1,3545 @@
+<!DOCTYPE html>
+
+<html lang="ms">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>NGOPI DULU</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+<!-- PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    background: #f5f5f5;
+    color: #111;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.header {
+    background: #111;
+    color: white;
+    text-align: center;
+    padding: 25px 15px 22px;
+}
+
+.logo {
+    width: 78px;
+    height: 78px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: white;
+    margin-bottom: 10px;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 27px;
+    letter-spacing: 1px;
+}
+
+.header p {
+    margin: 7px 0 0;
+    color: #ddd;
+    font-size: 13px;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+    padding: 18px 14px 50px;
+}
+
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 17px;
+    box-shadow: 0 3px 14px rgba(0,0,0,.06);
+}
+
+.section-title {
+    margin: 0 0 5px;
+    font-size: 19px;
+}
+
+.section-subtitle {
+    margin: 0 0 15px;
+    color: #777;
+    font-size: 12px;
+}
+
+.row-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.selection-group {
+    margin-bottom: 12px;
+}
+
+.selection-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 9px;
+    font-size: 14px;
+    outline: none;
+    background: white;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: #111;
+}
+
+/* LANGUAGE */
+
+.language-box {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
+.language-btn {
+    border: 1px solid #111;
+    background: white;
+    color: #111;
+    padding: 7px 11px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+/* MENU */
+
+.category {
+    margin-bottom: 25px;
+}
+
+.category-title {
+    margin: 0 0 12px;
+    font-size: 18px;
+    border-bottom: 2px solid #111;
+    padding-bottom: 8px;
+}
+
+/*
+   MENU SENTIASA 2 COLUMN
+*/
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.menu-card {
+    position: relative;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 13px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: .15s;
+}
+
+.menu-card:hover {
+    border-color: #111;
+}
+
+.menu-card.selected {
+    border: 2px solid #111;
+}
+
+.menu-card.sold-out {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.menu-picture {
+    height: 125px;
+    background: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* BLACK WHITE DRAWING */
+
+.menu-picture svg {
+    width: 82px;
+    height: 82px;
+    stroke: #111;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.menu-details {
+    padding: 10px;
+}
+
+.menu-name {
+    font-size: 13px;
+    font-weight: bold;
+    line-height: 1.3;
+    min-height: 34px;
+}
+
+.menu-price {
+    margin-top: 5px;
+    font-size: 13px;
+}
+
+.stock-text {
+    margin-top: 4px;
+    color: #777;
+    font-size: 10px;
+}
+
+.qty-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 9px;
+    border-top: 1px solid #eee;
+    padding-top: 8px;
+}
+
+.qty-btn {
+    width: 29px;
+    height: 29px;
+    border-radius: 7px;
+    border: 1px solid #aaa;
+    background: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.qty-number {
+    min-width: 25px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+/* ORDER SUMMARY */
+
+.order-summary {
+    background: #f7f7f7;
+    border-radius: 12px;
+    padding: 14px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #ddd;
+    font-size: 13px;
+}
+
+.summary-item:last-child {
+    border-bottom: none;
+}
+
+.summary-left {
+    flex: 1;
+}
+
+.summary-qty {
+    color: #777;
+}
+
+.summary-total {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 2px solid #111;
+    display: flex;
+    justify-content: space-between;
+    font-size: 19px;
+    font-weight: bold;
+}
+
+.empty-summary {
+    text-align: center;
+    color: #888;
+    padding: 15px 5px;
+    font-size: 13px;
+}
+
+/* PAYMENT */
+
+.payment-option {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.payment-card {
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 13px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 13px;
+}
+
+.payment-card.active {
+    background: #111;
+    color: white;
+    border-color: #111;
+}
+
+.payment-card input {
+    display: none;
+}
+
+.qr-box {
+    display: none;
+    text-align: center;
+    margin-top: 15px;
+    padding: 15px;
+    background: #f7f7f7;
+    border-radius: 12px;
+}
+
+.qr-box img {
+    width: 220px;
+    max-width: 100%;
+    background: white;
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.qr-box p {
+    font-size: 12px;
+    color: #555;
+}
+
+/* PROMO */
+
+.promo-row {
+    display: flex;
+    gap: 8px;
+}
+
+.promo-row input {
+    flex: 1;
+}
+
+.promo-btn {
+    border: none;
+    background: #111;
+    color: white;
+    border-radius: 9px;
+    padding: 0 15px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* SUBMIT */
+
+.submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: #111;
+    color: white;
+    border: none;
+    border-radius: 11px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.submit-btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.small-note {
+    text-align: center;
+    color: #777;
+    font-size: 11px;
+    margin-top: 9px;
+}
+
+/* ORDER STATUS */
+
+.status-card {
+    display: none;
+}
+
+.status-box {
+    text-align: center;
+    padding: 15px;
+    border-radius: 12px;
+    background: #f5f5f5;
+}
+
+.status-icon {
+    font-size: 35px;
+    margin-bottom: 7px;
+}
+
+.status-title {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.status-text {
+    color: #666;
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+.receipt {
+    margin-top: 15px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 14px;
+    text-align: left;
+}
+
+.receipt-header {
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.receipt-header h3 {
+    margin: 0;
+}
+
+.receipt-header p {
+    margin: 4px 0;
+    color: #777;
+    font-size: 11px;
+}
+
+.receipt-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px dashed #ddd;
+    font-size: 12px;
+}
+
+.receipt-total {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* PDF BUTTON */
+
+.download-receipt-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 13px;
+    background: #111;
+    color: white;
+    border: none;
+    border-radius: 9px;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.download-receipt-btn:active {
+    transform: scale(.99);
+}
+
+.new-order-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 13px;
+    background: white;
+    border: 2px solid #111;
+    border-radius: 9px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* FOOTER */
+
+.footer {
+    text-align: center;
+    padding: 25px 15px 35px;
+    color: #777;
+    font-size: 11px;
+}
+
+.social-links {
+    margin-top: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+}
+
+.social-links a {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #111;
+    text-decoration: none;
+    border: 1px solid #ddd;
+    border-radius: 50%;
+    background: white;
+    transition: .15s;
+}
+
+.social-links a:hover {
+    border-color: #111;
+    transform: translateY(-2px);
+}
+
+.social-links img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+}
+
+/* MOBILE */
+
+@media(max-width: 500px) {
+
+    .container {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .card {
+        padding: 15px;
+    }
+
+    /*
+       Kekal 2 column walaupun phone
+    */
+
+    .menu-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .menu-picture {
+        height: 105px;
+    }
+
+    .menu-picture svg {
+        width: 65px;
+        height: 65px;
+    }
+
+    .menu-details {
+        padding: 8px;
+    }
+
+    .menu-name {
+        font-size: 12px;
+    }
+
+    .menu-price {
+        font-size: 12px;
+    }
+
+    .row-group {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .payment-option {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .header h1 {
+        font-size: 24px;
+    }
+
+}
+
+/* VERY SMALL PHONE */
+
+@media(max-width: 350px) {
+
+    .menu-picture {
+        height: 90px;
+    }
+
+    .menu-picture svg {
+        width: 55px;
+        height: 55px;
+    }
+
+    .menu-name {
+        font-size: 11px;
+    }
+
+    .menu-price {
+        font-size: 11px;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header class="header">
+
+    <img
+        class="logo"
+        src="https://cdn.phototourl.com/free/2026-09-20-34e97ec4-2e83-4024-be24-0ac4468494d6.jpg"
+        alt="NGOPI DULU"
+    >
+
+    <h1>NGOPI DULU</h1>
+
+    <p id="header-subtitle">
+        Order your favourite drinks & food
+    </p>
+
+</header>
+
+<div class="container">
+
+    <!-- LANGUAGE -->
+
+    <div class="language-box">
+
+        <button
+            class="language-btn"
+            onclick="toggleLanguage()"
+        >
+            🇲🇾 BM / 🇬🇧 EN
+        </button>
+
+    </div>
+
+    <!-- CUSTOMER INFO -->
+
+    <div class="card">
+
+        <h2
+            class="section-title"
+            id="customer-title"
+        >
+            👤 Maklumat Customer
+        </h2>
+
+        <p
+            class="section-subtitle"
+            id="customer-subtitle"
+        >
+            Sila isi nama dan nombor meja anda
+        </p>
+
+        <div class="row-group">
+
+            <div class="selection-group">
+
+                <label id="name-label">
+                    Nama Anda
+                </label>
+
+                <input
+                    type="text"
+                    id="customer-name"
+                    placeholder="Cth: Ali"
+                >
+
+            </div>
+
+            <div class="selection-group">
+
+                <label id="table-label">
+                    Pilih Meja
+                </label>
+
+                <select id="table-select">
+
+                    <option value="1">Meja 1</option>
+                    <option value="2">Meja 2</option>
+                    <option value="3">Meja 3</option>
+                    <option value="4">Meja 4</option>
+                    <option value="5">Meja 5</option>
+                    <option value="6">Meja 6</option>
+                    <option value="7">Meja 7</option>
+                    <option value="8">Meja 8</option>
+                    <option value="9">Meja 9</option>
+                    <option value="10">Meja 10</option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- MENU -->
+
+    <div class="card">
+
+        <h2 class="section-title">
+            ☕ Menu
+        </h2>
+
+        <p
+            class="section-subtitle"
+            id="menu-subtitle"
+        >
+            Pilih makanan dan minuman anda
+        </p>
+
+        <div id="menu-container">
+
+            <div class="empty-summary">
+                Loading menu...
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- SPECIAL REQUEST -->
+
+    <div class="card">
+
+        <h2 class="section-title">
+            📝 Special Request
+        </h2>
+
+        <p class="section-subtitle">
+            Optional
+        </p>
+
+        <textarea
+            id="special-request"
+            placeholder="Contoh: kurang manis, less ice..."
+        ></textarea>
+
+    </div>
+
+    <!-- PROMO -->
+
+    <div class="card">
+
+        <h2 class="section-title">
+            🎟️ Promo Code
+        </h2>
+
+        <p class="section-subtitle">
+            Masukkan promo code jika ada
+        </p>
+
+        <div class="promo-row">
+
+            <input
+                type="text"
+                id="discount-code"
+                placeholder="Enter promo code"
+            >
+
+            <button
+                class="promo-btn"
+                onclick="usePromoCode()"
+            >
+                Apply
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- PAYMENT -->
+
+    <div class="card">
+
+        <h2 class="section-title">
+            💳 Payment
+        </h2>
+
+        <p class="section-subtitle">
+            Pilih cara pembayaran
+        </p>
+
+        <div class="payment-option">
+
+            <label
+                class="payment-card active"
+                id="cash-payment"
+                onclick="selectPayment('Cash')"
+            >
+
+                <input
+                    type="radio"
+                    name="payment"
+                    value="Cash"
+                    checked
+                >
+
+                💵 Cash
+
+            </label>
+
+            <label
+                class="payment-card"
+                id="qr-payment"
+                onclick="selectPayment('QR / DuitNow')"
+            >
+
+                <input
+                    type="radio"
+                    name="payment"
+                    value="QR / DuitNow"
+                >
+
+                📱 QR / DuitNow
+
+            </label>
+
+        </div>
+
+        <div
+            class="qr-box"
+            id="qr-box"
+        >
+
+            <img
+                src="https://cdn.phototourl.com/free/2026-09-20-0220995b-d93e-4068-b464-44cc50c06b4d.jpg"
+                alt="DuitNow QR"
+            >
+
+            <p>
+                Scan QR untuk membuat pembayaran.
+            </p>
+
+            <p>
+                <strong>
+                    Sila tunjukkan bukti pembayaran kepada cashier.
+                </strong>
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- ORDER SUMMARY -->
+
+    <div class="card">
+
+        <h2 class="section-title">
+            🛒 Order Summary
+        </h2>
+
+        <p class="section-subtitle">
+            Semak pesanan sebelum submit
+        </p>
+
+        <div
+            class="order-summary"
+            id="order-summary"
+        >
+
+            <div class="empty-summary">
+                Belum ada item dipilih.
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- SUBMIT -->
+
+    <div class="card">
+
+        <button
+            class="submit-btn"
+            id="submit-order-btn"
+            onclick="submitOrder()"
+        >
+            Hantar Pesanan
+        </button>
+
+        <div class="small-note">
+            Pesanan akan dihantar kepada cashier untuk approval.
+        </div>
+
+    </div>
+
+    <!-- ORDER STATUS -->
+
+    <div
+        class="card status-card"
+        id="status-card"
+    >
+
+        <div class="status-box">
+
+            <div
+                class="status-icon"
+                id="status-icon"
+            >
+                ⏳
+            </div>
+
+            <div
+                class="status-title"
+                id="status-title"
+            >
+                Menunggu Cashier
+            </div>
+
+            <div
+                class="status-text"
+                id="status-text"
+            >
+                Sila tunggu cashier approve pesanan anda.
+            </div>
+
+        </div>
+
+        <div
+            class="receipt"
+            id="receipt"
+            style="display:none;"
+        >
+
+            <div class="receipt-header">
+
+                <h3>NGOPI DULU</h3>
+
+                <p>CUSTOMER RECEIPT</p>
+
+                <p id="receipt-order-id"></p>
+
+            </div>
+
+            <div id="receipt-items"></div>
+
+            <div class="receipt-total">
+
+                <span>Total</span>
+
+                <span id="receipt-total">
+                    RM0.00
+                </span>
+
+            </div>
+
+        </div>
+
+        <!-- PDF DOWNLOAD BUTTON -->
+
+        <button
+            class="download-receipt-btn"
+            id="download-receipt-btn"
+            onclick="downloadReceiptPDF()"
+            style="display:none;"
+        >
+            📄 Download Receipt PDF
+        </button>
+
+        <button
+            class="new-order-btn"
+            id="new-order-btn"
+            onclick="newOrder()"
+            style="display:none;"
+        >
+            Buat Pesanan Baru
+        </button>
+
+    </div>
+
+</div>
+
+<footer class="footer">
+
+    <div>
+        NGOPI DULU © 2026
+    </div>
+
+    <div class="social-links">
+
+        <!-- INSTAGRAM -->
+        <a
+            href="https://www.instagram.com/ni.kopi_?stkn=MW9tbnEyYXZocDloMQ=="
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Instagram"
+            title="Instagram"
+        >
+            <img
+                src="https://cdn.simpleicons.org/instagram/111111"
+                alt="Instagram"
+            >
+        </a>
+
+        <!-- THREADS -->
+        <a
+            href="https://www.threads.com/@ni.kopi_?igshid=NTc4MTIwNjQ2YQ=="
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Threads"
+            title="Threads"
+        >
+            <img
+                src="https://cdn.simpleicons.org/threads/111111"
+                alt="Threads"
+            >
+        </a>
+
+        <!-- TIKTOK -->
+        <a
+            href="https://www.tiktok.com/@ni.kopi_?_r=1&_t=ZS-99uOt3UUzeW"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="TikTok"
+            title="TikTok"
+        >
+            <img
+                src="https://cdn.simpleicons.org/tiktok/111111"
+                alt="TikTok"
+            >
+        </a>
+
+    </div>
+
+</footer>
+
+<script>
+
+/* =========================================================
+   FIREBASE
+========================================================= */
+
+const firebaseConfig = {
+
+    apiKey: "AIzaSyA55AmYlP7nPaAXavrIFS5U4GnqB2bqc",
+
+    authDomain: "nikopi-operation.firebaseapp.com",
+
+    databaseURL: "https://nikopi-operation-default-rtdb.asia-southeast1.firebasedatabase.app",
+
+    projectId: "nikopi-operation",
+
+    storageBucket: "nikopi-operation.firebasestorage.app",
+
+    messagingSenderId: "922893888263",
+
+    appId: "1:922893888263:web:2c113a2db29960044e73a2",
+
+    measurementId: "G-WGEZB8BFW0"
+
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
+
+/* =========================================================
+   VARIABLES
+========================================================= */
+
+let menuItems = [];
+
+let cart = {};
+
+let selectedPayment = "Cash";
+
+let currentLang = "ms";
+
+let appliedPromo = null;
+
+let unsubscribeOrder = null;
+
+let currentOrderFirebaseId = null;
+
+/* Simpan data order terakhir untuk PDF */
+
+let lastOrderData = null;
+
+/* =========================================================
+   BLACK & WHITE DRAWINGS
+========================================================= */
+
+const drawings = {
+
+    coffee: `
+    <svg viewBox="0 0 100 100">
+
+        <path d="M25 35h48v30c0 12-10 20-24 20S25 77 25 65z"/>
+
+        <path d="M73 43h8c8 0 12 5 12 11s-4 11-12 11h-8"/>
+
+        <path d="M34 25c-4-7 5-8 1-15"/>
+
+        <path d="M48 25c-4-7 5-8 1-15"/>
+
+        <path d="M62 25c-4-7 5-8 1-15"/>
+
+    </svg>`,
+
+    latte: `
+    <svg viewBox="0 0 100 100">
+
+        <path d="M28 30h44l-5 55H33z"/>
+
+        <path d="M23 30h54"/>
+
+        <path d="M37 43c6-7 20-7 27 0"/>
+
+        <path d="M40 52c5-5 15-5 20 0"/>
+
+        <path d="M44 61c3-3 9-3 12 0"/>
+
+        <path d="M39 22c-3-6 5-8 1-14"/>
+
+        <path d="M55 22c-3-6 5-8 1-14"/>
+
+    </svg>`,
+
+    americano: `
+    <svg viewBox="0 0 100 100">
+
+        <path d="M25 32h50l-5 52H30z"/>
+
+        <path d="M22 32h56"/>
+
+        <path d="M35 45h30"/>
+
+        <path d="M37 54h26"/>
+
+        <path d="M40 63h20"/>
+
+        <path d="M41 23c-3-6 5-8 1-14"/>
+
+        <path d="M56 23c-3-6 5-8 1-14"/>
+
+    </svg>`,
+
+    sparkling: `
+    <svg viewBox="0 0 100 100">
+
+        <path d="M30 28h40l-5 58H35z"/>
+
+        <path d="M30 28h40"/>
+
+        <circle cx="43" cy="48" r="2"/>
+
+        <circle cx="56" cy="58" r="2"/>
+
+        <circle cx="48" cy="70" r="2"/>
+
+        <path d="M72 17l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/>
+
+        <path d="M31 17l1 5 5 1-5 2-1 5-2-5-5-2 5-1z"/>
+
+    </svg>`,
+
+    chocolate: `
+    <svg viewBox="0 0 100 100">
+
+        <path d="M28 32h44v51H28z"/>
+
+        <path d="M24 32h52"/>
+
+        <path d="M36 48h28"/>
+
+        <path d="M38 59h24"/>
+
+        <path d="M42 70h16"/>
+
+        <path d="M40 24c-4-6 5-8 1-14"/>
+
+        <path d="M56 24c-4-6 5-8 1-14"/>
+
+    </svg>`,
+
+    matcha: `
+    <svg viewBox="0 0 100 100">
+
+        <path d="M22 39h56l-6 45H28z"/>
+
+        <path d="M18 39h64"/>
+
+        <path d="M31 52c7-6 31-6 38 0"/>
+
+        <path d="M37 61c5-4 21-4 26 0"/>
+
+        <path d="M43 70c3-2 11-2 14 0"/>
+
+        <path d="M70 27l12-14"/>
+
+        <path d="M76 18l8 1"/>
+
+    </svg>`,
+
+    cookie: `
+    <svg viewBox="0 0 100 100">
+
+        <path d="M78 49c4 17-9 34-27 36-19 2-36-10-37-28-2-17 10-33 28-36 5-1 9 0 13 2-3 9 4 18 13 19 4 1 7 1 10 0z"/>
+
+        <circle cx="35" cy="51" r="3"/>
+
+        <circle cx="53" cy="43" r="3"/>
+
+        <circle cx="62" cy="62" r="3"/>
+
+        <circle cx="43" cy="72" r="3"/>
+
+        <circle cx="30" cy="65" r="2"/>
+
+    </svg>`,
+
+    bagel: `
+    <svg viewBox="0 0 100 100">
+
+        <ellipse cx="50" cy="52" rx="34" ry="27"/>
+
+        <ellipse cx="50" cy="52" rx="12" ry="9"/>
+
+        <path d="M28 42c12-8 31-9 45 0"/>
+
+        <circle cx="35" cy="54" r="2"/>
+
+        <circle cx="65" cy="46" r="2"/>
+
+        <circle cx="56" cy="72" r="2"/>
+
+        <circle cx="43" cy="34" r="2"/>
+
+    </svg>`,
+
+    croissant: `
+    <svg viewBox="0 0 100 100">
+
+        <path d="M18 64c8-29 23-43 32-43s24 14 32 43c-17-8-47-8-64 0z"/>
+
+        <path d="M30 57c4-15 9-27 20-36"/>
+
+        <path d="M42 59c2-15 4-27 8-38"/>
+
+        <path d="M54 59c-1-14-1-27-2-38"/>
+
+        <path d="M66 58c-3-13-7-25-14-36"/>
+
+    </svg>`,
+
+    toast: `
+    <svg viewBox="0 0 100 100">
+
+        <path d="M27 73V39c0-13 10-21 23-21s23 8 23 21v34"/>
+
+        <path d="M27 73h46"/>
+
+        <path d="M34 49h32"/>
+
+        <path d="M39 59h22"/>
+
+        <path d="M43 69h14"/>
+
+    </svg>`,
+
+    ramen: `
+    <svg viewBox="0 0 100 100">
+
+        <path d="M20 48h60l-5 29H25z"/>
+
+        <path d="M20 48c5 8 55 8 60 0"/>
+
+        <path d="M31 40c-7-12 13-12 6-24"/>
+
+        <path d="M47 40c-7-12 13-12 6-24"/>
+
+        <path d="M63 40c-7-12 13-12 6-24"/>
+
+        <path d="M35 57h30"/>
+
+        <path d="M39 65h22"/>
+
+    </svg>`,
+
+    egg: `
+    <svg viewBox="0 0 100 100">
+
+        <path d="M50 17c-13 0-25 22-25 38 0 17 10 27 25 27s25-10 25-27c0-16-12-38-25-38z"/>
+
+        <circle cx="50" cy="53" r="8"/>
+
+    </svg>`,
+
+    addon: `
+    <svg viewBox="0 0 100 100">
+
+        <rect x="30" y="25" width="40" height="55" rx="5"/>
+
+        <path d="M30 39h40"/>
+
+        <path d="M42 18h16"/>
+
+        <path d="M43 52h14"/>
+
+        <path d="M43 62h14"/>
+
+        <path d="M43 72h14"/>
+
+    </svg>`
+
+};
+
+/* =========================================================
+   DEFAULT MENU
+========================================================= */
+
+const defaultMenu = [
+
+    {
+        category: "COFFEE",
+        type: "coffee",
+
+        items: [
+
+            {id:1,name:"Cinnamon Latte",price:15},
+            {id:2,name:"Spanish Latte",price:15},
+            {id:3,name:"Hazelnut Latte",price:15},
+            {id:4,name:"Caramel Latte",price:15},
+            {id:5,name:"Cafe Latte / Flat White",price:12},
+            {id:6,name:"Cappuccino",price:12},
+            {id:7,name:"Americano / Long Black",price:10},
+            {id:8,name:"Sparkling Americano",price:12,type:"sparkling"},
+            {id:9,name:"Mocha",price:17},
+            {id:10,name:"Espresso",price:5}
+
+        ]
+    },
+
+    {
+        category: "NON COFFEE",
+        type: "chocolate",
+
+        items: [
+
+            {id:11,name:"Chocolate",price:12},
+            {id:12,name:"Chocolate Hazelnut",price:14},
+            {id:13,name:"Sparkling Yuzu",price:14,type:"sparkling"},
+            {id:14,name:"Sparkling Ribena",price:10,type:"sparkling"},
+            {id:15,name:"Ribena",price:6},
+            {id:16,name:"Belgium Choc with Apple Fiber",price:10}
+
+        ]
+    },
+
+    {
+        category: "MATCHA",
+        type: "matcha",
+
+        items: [
+
+            {id:17,name:"Matcha Latte",price:15},
+            {id:18,name:"Matcha Strawberry",price:17}
+
+        ]
+    },
+
+    {
+        category: "SOFT COOKIES",
+        type: "cookie",
+
+        items: [
+
+            {id:19,name:"Classic Choc Chip",price:11.90},
+            {id:20,name:"S'mores",price:12.90},
+            {id:21,name:"Red Velvet Cheesecake",price:14.90}
+
+        ]
+    },
+
+    {
+        category: "BITES",
+        type: "food",
+
+        items: [
+
+            {id:22,name:"Bagel with Cream Cheese",price:12,type:"bagel"},
+            {id:23,name:"Mini Croissant",price:6,type:"croissant"},
+            {id:24,name:"Koko Crunch with Milk",price:5,type:"chocolate"},
+            {id:25,name:"Ramen",price:9,type:"ramen"},
+            {id:26,name:"Kaya Toast with Hard Boiled Egg",price:7,type:"toast"},
+            {id:27,name:"Kaya Toast",price:5.50,type:"toast"},
+            {id:28,name:"Nutella Toast",price:5.50,type:"toast"},
+            {id:29,name:"Maggie Cup",price:4.50,type:"ramen"},
+            {id:30,name:"Indo Mee",price:6,type:"ramen"},
+            {id:31,name:"Hard Boiled Egg",price:2,type:"egg"}
+
+        ]
+    },
+
+    {
+        category: "ADD ON",
+        type: "addon",
+
+        items: [
+
+            {id:32,name:"Oatmilk",price:3},
+            {id:33,name:"Extra Shot",price:4},
+            {id:34,name:"Extra Syrup",price:2},
+            {id:35,name:"Ice Water",price:2}
+
+        ]
+    }
+
+];
+
+/* =========================================================
+   LOAD MENU
+========================================================= */
+
+async function loadMenu() {
+
+    try {
+
+        const doc =
+            await db
+            .collection("settings")
+            .doc("menu")
+            .get();
+
+        if(doc.exists) {
+
+            const data = doc.data();
+
+            if(Array.isArray(data.categories)) {
+
+                menuItems = [];
+
+                data.categories.forEach(category => {
+
+                    if(
+                        category.items &&
+                        Array.isArray(category.items)
+                    ) {
+
+                        category.items.forEach(item => {
+
+                            menuItems.push({
+
+                                ...item,
+
+                                category:
+                                    category.name ||
+                                    category.category ||
+                                    "MENU"
+
+                            });
+
+                        });
+
+                    }
+
+                });
+
+                if(menuItems.length > 0) {
+
+                    renderMenuFromFlat();
+
+                    return;
+
+                }
+
+            }
+
+        }
+
+    } catch(error) {
+
+        console.log(
+            "Firebase menu unavailable:",
+            error
+        );
+
+    }
+
+    renderDefaultMenu();
+
+}
+
+/* =========================================================
+   RENDER DEFAULT MENU
+========================================================= */
+
+function renderDefaultMenu() {
+
+    menuItems = [];
+
+    defaultMenu.forEach(category => {
+
+        category.items.forEach(item => {
+
+            menuItems.push({
+
+                ...item,
+
+                category: category.category
+
+            });
+
+        });
+
+    });
+
+    const container =
+        document.getElementById("menu-container");
+
+    container.innerHTML = "";
+
+    defaultMenu.forEach(category => {
+
+        const categoryDiv =
+            document.createElement("div");
+
+        categoryDiv.className = "category";
+
+        categoryDiv.innerHTML = `
+
+            <h3 class="category-title">
+                ${category.category}
+            </h3>
+
+            <div class="menu-grid"></div>
+
+        `;
+
+        const grid =
+            categoryDiv.querySelector(".menu-grid");
+
+        category.items.forEach(item => {
+
+            grid.appendChild(
+                createMenuCard(
+                    item,
+                    category.category
+                )
+            );
+
+        });
+
+        container.appendChild(categoryDiv);
+
+    });
+
+}
+
+/* =========================================================
+   RENDER FIREBASE MENU
+========================================================= */
+
+function renderMenuFromFlat() {
+
+    const container =
+        document.getElementById("menu-container");
+
+    container.innerHTML = "";
+
+    const grouped = {};
+
+    menuItems.forEach(item => {
+
+        const category =
+            item.category || "MENU";
+
+        if(!grouped[category]) {
+
+            grouped[category] = [];
+
+        }
+
+        grouped[category].push(item);
+
+    });
+
+    Object.keys(grouped).forEach(categoryName => {
+
+        const categoryDiv =
+            document.createElement("div");
+
+        categoryDiv.className = "category";
+
+        categoryDiv.innerHTML = `
+
+            <h3 class="category-title">
+                ${categoryName}
+            </h3>
+
+            <div class="menu-grid"></div>
+
+        `;
+
+        const grid =
+            categoryDiv.querySelector(".menu-grid");
+
+        grouped[categoryName].forEach(item => {
+
+            grid.appendChild(
+                createMenuCard(
+                    item,
+                    categoryName
+                )
+            );
+
+        });
+
+        container.appendChild(categoryDiv);
+
+    });
+
+}
+
+/* =========================================================
+   CREATE MENU CARD
+========================================================= */
+
+function createMenuCard(item, category) {
+
+    const card =
+        document.createElement("div");
+
+    const soldOut =
+        item.available === false ||
+        item.stock === 0 ||
+        item.soldOut === true;
+
+    card.className =
+        "menu-card" +
+        (soldOut ? " sold-out" : "");
+
+    const itemId =
+        String(
+            item.id ??
+            item.itemId ??
+            item.name
+        );
+
+    card.dataset.id = itemId;
+
+    let drawingType =
+        item.type ||
+        getDrawingType(
+            category,
+            item.name
+        );
+
+    const drawing =
+        drawings[drawingType] ||
+        drawings.coffee;
+
+    const quantity =
+        cart[itemId]?.qty || 0;
+
+    card.innerHTML = `
+
+        <div class="menu-picture">
+
+            ${drawing}
+
+        </div>
+
+        <div class="menu-details">
+
+            <div class="menu-name">
+
+                ${escapeHtml(item.name)}
+
+            </div>
+
+            <div class="menu-price">
+
+                RM${Number(
+                    item.price || 0
+                ).toFixed(2)}
+
+            </div>
+
+            <div class="stock-text">
+
+                ${
+                    soldOut
+                    ? "SOLD OUT"
+                    : "Available"
+                }
+
+            </div>
+
+            <div class="qty-row">
+
+                <button
+                    class="qty-btn"
+                    onclick="changeQty(
+                        event,
+                        '${escapeJs(itemId)}',
+                        -1
+                    )"
+                    ${soldOut ? "disabled" : ""}
+                >
+                    −
+                </button>
+
+                <span
+                    class="qty-number"
+                    id="qty-${safeId(itemId)}"
+                >
+                    ${quantity}
+                </span>
+
+                <button
+                    class="qty-btn"
+                    onclick="changeQty(
+                        event,
+                        '${escapeJs(itemId)}',
+                        1
+                    )"
+                    ${soldOut ? "disabled" : ""}
+                >
+                    +
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+
+    if(!soldOut) {
+
+        card.addEventListener(
+            "click",
+            function(e) {
+
+                if(
+                    e.target.closest(".qty-btn")
+                ) {
+
+                    return;
+
+                }
+
+                changeQtyById(
+                    itemId,
+                    1
+                );
+
+            }
+        );
+
+    }
+
+    if(quantity > 0) {
+
+        card.classList.add("selected");
+
+    }
+
+    return card;
+
+}
+
+/* =========================================================
+   DRAWING TYPE
+========================================================= */
+
+function getDrawingType(category, name) {
+
+    const text =
+        `${category} ${name}`.toLowerCase();
+
+    if(text.includes("cookie")) {
+        return "cookie";
+    }
+
+    if(text.includes("matcha")) {
+        return "matcha";
+    }
+
+    if(text.includes("sparkling")) {
+        return "sparkling";
+    }
+
+    if(text.includes("bagel")) {
+        return "bagel";
+    }
+
+    if(text.includes("croissant")) {
+        return "croissant";
+    }
+
+    if(
+        text.includes("toast") ||
+        text.includes("kaya") ||
+        text.includes("nutella")
+    ) {
+
+        return "toast";
+
+    }
+
+    if(
+        text.includes("ramen") ||
+        text.includes("maggie") ||
+        text.includes("indo mee")
+    ) {
+
+        return "ramen";
+
+    }
+
+    if(text.includes("egg")) {
+        return "egg";
+    }
+
+    if(
+        text.includes("chocolate") ||
+        text.includes("choc")
+    ) {
+
+        return "chocolate";
+
+    }
+
+    if(
+        text.includes("americano") ||
+        text.includes("espresso")
+    ) {
+
+        return "americano";
+
+    }
+
+    if(
+        text.includes("latte") ||
+        text.includes("cappuccino") ||
+        text.includes("mocha") ||
+        text.includes("coffee")
+    ) {
+
+        return "latte";
+
+    }
+
+    if(
+        category
+        .toLowerCase()
+        .includes("add")
+    ) {
+
+        return "addon";
+
+    }
+
+    return "coffee";
+
+}
+
+/* =========================================================
+   QUANTITY
+========================================================= */
+
+function changeQty(event, itemId, amount) {
+
+    if(event) {
+        event.stopPropagation();
+    }
+
+    changeQtyById(
+        itemId,
+        amount
+    );
+
+}
+
+function changeQtyById(itemId, amount) {
+
+    const item =
+        menuItems.find(
+            x =>
+                String(
+                    x.id ??
+                    x.itemId ??
+                    x.name
+                ) === String(itemId)
+        );
+
+    if(!item) return;
+
+    if(
+        item.available === false ||
+        item.stock === 0 ||
+        item.soldOut === true
+    ) {
+
+        return;
+
+    }
+
+    if(!cart[itemId]) {
+
+        cart[itemId] = {
+
+            item,
+            qty: 0
+
+        };
+
+    }
+
+    cart[itemId].qty += amount;
+
+    if(cart[itemId].qty <= 0) {
+
+        delete cart[itemId];
+
+    }
+
+    updateMenuVisual(itemId);
+
+    updateSummary();
+
+}
+
+/* =========================================================
+   UPDATE MENU VISUAL
+========================================================= */
+
+function updateMenuVisual(itemId) {
+
+    const safe =
+        safeId(itemId);
+
+    const qtyElement =
+        document.getElementById(
+            `qty-${safe}`
+        );
+
+    const qty =
+        cart[itemId]?.qty || 0;
+
+    if(qtyElement) {
+
+        qtyElement.textContent =
+            qty;
+
+    }
+
+    const card =
+        document.querySelector(
+            `.menu-card[data-id="${cssEscape(itemId)}"]`
+        );
+
+    if(card) {
+
+        if(qty > 0) {
+
+            card.classList.add("selected");
+
+        } else {
+
+            card.classList.remove("selected");
+
+        }
+
+    }
+
+}
+
+/* =========================================================
+   SUMMARY
+========================================================= */
+
+function calculateSubtotal() {
+
+    let total = 0;
+
+    Object.values(cart).forEach(item => {
+
+        total +=
+            Number(item.item.price || 0) *
+            Number(item.qty || 0);
+
+    });
+
+    return Number(
+        total.toFixed(2)
+    );
+
+}
+
+function updateSummary() {
+
+    const summary =
+        document.getElementById(
+            "order-summary"
+        );
+
+    const items =
+        Object.values(cart)
+        .filter(x => x.qty > 0);
+
+    if(items.length === 0) {
+
+        summary.innerHTML = `
+
+            <div class="empty-summary">
+                Belum ada item dipilih.
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+    let html = "";
+
+    items.forEach(data => {
+
+        const price =
+            Number(
+                data.item.price || 0
+            );
+
+        const line =
+            price * data.qty;
+
+        html += `
+
+            <div class="summary-item">
+
+                <div class="summary-left">
+
+                    <strong>
+                        ${escapeHtml(
+                            data.item.name
+                        )}
+                    </strong>
+
+                    <span class="summary-qty">
+                        × ${data.qty}
+                    </span>
+
+                </div>
+
+                <div>
+                    RM${line.toFixed(2)}
+                </div>
+
+            </div>
+
+        `;
+
+    });
+
+    const subtotal =
+        calculateSubtotal();
+
+    html += `
+
+        <div class="summary-total">
+
+            <span>Total</span>
+
+            <span>
+                RM${subtotal.toFixed(2)}
+            </span>
+
+        </div>
+
+    `;
+
+    summary.innerHTML = html;
+
+}
+
+/* =========================================================
+   PAYMENT
+========================================================= */
+
+function selectPayment(payment) {
+
+    selectedPayment =
+        payment;
+
+    const cash =
+        document.getElementById(
+            "cash-payment"
+        );
+
+    const qr =
+        document.getElementById(
+            "qr-payment"
+        );
+
+    const qrBox =
+        document.getElementById(
+            "qr-box"
+        );
+
+    cash.classList.remove(
+        "active"
+    );
+
+    qr.classList.remove(
+        "active"
+    );
+
+    if(payment === "Cash") {
+
+        cash.classList.add(
+            "active"
+        );
+
+        qrBox.style.display =
+            "none";
+
+    } else {
+
+        qr.classList.add(
+            "active"
+        );
+
+        qrBox.style.display =
+            "block";
+
+    }
+
+}
+
+/* =========================================================
+   PROMO
+========================================================= */
+
+function usePromoCode() {
+
+    const input =
+        document.getElementById(
+            "discount-code"
+        );
+
+    const code =
+        input.value.trim();
+
+    if(!code) {
+
+        alert(
+
+            currentLang === "en"
+
+            ? "Please enter a promo code."
+
+            : "Sila masukkan promo code."
+
+        );
+
+        input.focus();
+
+        return;
+
+    }
+
+    /*
+       TIADA PROMO CODE AKTIF
+    */
+
+    appliedPromo = null;
+
+    input.value = "";
+
+    alert(
+
+        currentLang === "en"
+
+        ? "Promo code is invalid or unavailable. Please enter another code."
+
+        : "Promo code tidak sah atau tidak tersedia. Sila masukkan code lain."
+
+    );
+
+    input.focus();
+
+}
+
+/* =========================================================
+   SUBMIT ORDER
+========================================================= */
+
+async function submitOrder() {
+
+    const customerName =
+        document
+        .getElementById(
+            "customer-name"
+        )
+        .value
+        .trim();
+
+    const table =
+        document
+        .getElementById(
+            "table-select"
+        )
+        .value;
+
+    const specialRequest =
+        document
+        .getElementById(
+            "special-request"
+        )
+        .value
+        .trim();
+
+    const items =
+        Object.values(cart)
+        .filter(x => x.qty > 0);
+
+    if(!customerName) {
+
+        alert(
+
+            currentLang === "en"
+
+            ? "Please enter your name."
+
+            : "Sila masukkan nama anda."
+
+        );
+
+        document
+        .getElementById(
+            "customer-name"
+        )
+        .focus();
+
+        return;
+
+    }
+
+    if(items.length === 0) {
+
+        alert(
+
+            currentLang === "en"
+
+            ? "Please select at least one item."
+
+            : "Sila pilih sekurang-kurangnya satu item."
+
+        );
+
+        return;
+
+    }
+
+    const subtotal =
+        calculateSubtotal();
+
+    const button =
+        document.getElementById(
+            "submit-order-btn"
+        );
+
+    button.disabled = true;
+
+    button.textContent =
+        currentLang === "en"
+        ? "Sending..."
+        : "Menghantar...";
+
+    try {
+
+        const orderNumber =
+            generateOrderNumber();
+
+        const formattedItems =
+            items.map(data => ({
+
+                name:
+                    data.item.name,
+
+                qty:
+                    data.qty,
+
+                price:
+                    Number(
+                        data.item.price || 0
+                    ),
+
+                subtotal:
+                    Number(
+                        (
+                            Number(
+                                data.item.price || 0
+                            ) *
+                            data.qty
+                        ).toFixed(2)
+                    )
+
+            }));
+
+        const orderData = {
+
+            orderId:
+                `#${orderNumber}`,
+
+            customerName,
+
+            table:
+                `Meja ${table}`,
+
+            items:
+                formattedItems,
+
+            subtotal:
+                Number(
+                    subtotal.toFixed(2)
+                ),
+
+            discountCode: "",
+
+            discountPercent: 0,
+
+            discountAmount: 0,
+
+            total:
+                Number(
+                    subtotal.toFixed(2)
+                ),
+
+            paymentMethod:
+                selectedPayment,
+
+            specialRequest,
+
+            status:
+                "Pending",
+
+            orderSource:
+                "Customer",
+
+            manualOrder:
+                false,
+
+            timestamp:
+                firebase.firestore
+                .FieldValue
+                .serverTimestamp()
+
+        };
+
+        const docRef =
+            await db
+            .collection("orders")
+            .add(orderData);
+
+        currentOrderFirebaseId =
+            docRef.id;
+
+        /*
+           SIMPAN ORDER UNTUK PDF
+        */
+
+        lastOrderData = {
+
+            ...orderData,
+
+            firebaseId:
+                docRef.id
+
+        };
+
+        showOrderStatus(
+            "Pending",
+            orderData
+        );
+
+        listenToOrder(
+            docRef.id
+        );
+
+    } catch(error) {
+
+        console.error(error);
+
+        alert(
+
+            currentLang === "en"
+
+            ? "Failed to submit order. Please try again."
+
+            : "Pesanan gagal dihantar. Sila cuba lagi."
+
+        );
+
+        button.disabled = false;
+
+        button.textContent =
+            currentLang === "en"
+            ? "Submit Order"
+            : "Hantar Pesanan";
+
+    }
+
+}
+
+/* =========================================================
+   ORDER NUMBER
+========================================================= */
+
+function generateOrderNumber() {
+
+    const now =
+        new Date();
+
+    const date =
+        String(
+            now.getDate()
+        ).padStart(2,"0");
+
+    const month =
+        String(
+            now.getMonth() + 1
+        ).padStart(2,"0");
+
+    const random =
+        Math.floor(
+            1000 +
+            Math.random() * 9000
+        );
+
+    return `${date}${month}-${random}`;
+
+}
+
+/* =========================================================
+   REALTIME ORDER STATUS
+========================================================= */
+
+function listenToOrder(firebaseId) {
+
+    if(unsubscribeOrder) {
+
+        unsubscribeOrder();
+
+    }
+
+    unsubscribeOrder =
+        db
+        .collection("orders")
+        .doc(firebaseId)
+        .onSnapshot(snapshot => {
+
+            if(!snapshot.exists) {
+
+                return;
+
+            }
+
+            const data =
+                snapshot.data();
+
+            /*
+               UPDATE DATA TERKINI
+               UNTUK PDF
+            */
+
+            lastOrderData = {
+
+                ...data,
+
+                firebaseId
+
+            };
+
+            showOrderStatus(
+                data.status,
+                data
+            );
+
+        });
+
+}
+
+/* =========================================================
+   STATUS DISPLAY
+========================================================= */
+
+function showOrderStatus(
+    status,
+    data
+) {
+
+    const statusCard =
+        document.getElementById(
+            "status-card"
+        );
+
+    const icon =
+        document.getElementById(
+            "status-icon"
+        );
+
+    const title =
+        document.getElementById(
+            "status-title"
+        );
+
+    const text =
+        document.getElementById(
+            "status-text"
+        );
+
+    const receipt =
+        document.getElementById(
+            "receipt"
+        );
+
+    const downloadButton =
+        document.getElementById(
+            "download-receipt-btn"
+        );
+
+    const newOrderBtn =
+        document.getElementById(
+            "new-order-btn"
+        );
+
+    statusCard.style.display =
+        "block";
+
+    if(status === "Pending") {
+
+        icon.textContent =
+            "⏳";
+
+        title.textContent =
+            currentLang === "en"
+            ? "Waiting for Cashier"
+            : "Menunggu Cashier";
+
+        text.textContent =
+            currentLang === "en"
+            ? "Please wait while the cashier approves your order."
+            : "Sila tunggu cashier approve pesanan anda.";
+
+        receipt.style.display =
+            "none";
+
+        downloadButton.style.display =
+            "none";
+
+        newOrderBtn.style.display =
+            "none";
+
+    }
+
+    else if(status === "Accepted") {
+
+        icon.textContent =
+            "☕";
+
+        title.textContent =
+            currentLang === "en"
+            ? "Order Accepted"
+            : "Pesanan Diterima";
+
+        text.textContent =
+            currentLang === "en"
+            ? "Your order has been accepted and is being prepared."
+            : "Pesanan anda telah diterima dan sedang disediakan.";
+
+        showReceipt(data);
+
+        receipt.style.display =
+            "block";
+
+        downloadButton.style.display =
+            "block";
+
+        newOrderBtn.style.display =
+            "block";
+
+    }
+
+    else if(
+
+        status === "Selesai (Completed)" ||
+
+        status === "Completed"
+
+    ) {
+
+        icon.textContent =
+            "✓";
+
+        title.textContent =
+            currentLang === "en"
+            ? "Order Completed"
+            : "Pesanan Selesai";
+
+        text.textContent =
+            currentLang === "en"
+            ? "Thank you for ordering with NGOPI DULU."
+            : "Terima kasih kerana order dengan NGOPI DULU.";
+
+        showReceipt(data);
+
+        receipt.style.display =
+            "block";
+
+        downloadButton.style.display =
+            "block";
+
+        newOrderBtn.style.display =
+            "block";
+
+    }
+
+}
+
+/* =========================================================
+   RECEIPT DISPLAY
+========================================================= */
+
+function showReceipt(data) {
+
+    const orderId =
+        document.getElementById(
+            "receipt-order-id"
+        );
+
+    const itemsContainer =
+        document.getElementById(
+            "receipt-items"
+        );
+
+    const total =
+        document.getElementById(
+            "receipt-total"
+        );
+
+    orderId.textContent =
+        data.orderId || "";
+
+    let html = "";
+
+    if(Array.isArray(data.items)) {
+
+        data.items.forEach(item => {
+
+            const subtotal =
+                Number(
+
+                    item.subtotal ??
+
+                    (
+                        Number(
+                            item.price || 0
+                        ) *
+                        Number(
+                            item.qty || 0
+                        )
+                    )
+
+                );
+
+            html += `
+
+                <div class="receipt-line">
+
+                    <span>
+
+                        ${escapeHtml(
+                            item.name
+                        )}
+
+                        ×${item.qty}
+
+                    </span>
+
+                    <span>
+
+                        RM${subtotal.toFixed(2)}
+
+                    </span>
+
+                </div>
+
+            `;
+
+        });
+
+    }
+
+    itemsContainer.innerHTML =
+        html;
+
+    total.textContent =
+        `RM${Number(
+            data.total || 0
+        ).toFixed(2)}`;
+
+}
+
+/* =========================================================
+   DOWNLOAD RECEIPT PDF
+========================================================= */
+
+function downloadReceiptPDF() {
+
+    if(!lastOrderData) {
+
+        alert(
+            currentLang === "en"
+            ? "Receipt data is not available yet."
+            : "Data receipt belum tersedia."
+        );
+
+        return;
+
+    }
+
+    if(
+        !window.jspdf ||
+        !window.jspdf.jsPDF
+    ) {
+
+        alert(
+            currentLang === "en"
+            ? "PDF system is not ready. Please try again."
+            : "Sistem PDF belum sedia. Sila cuba lagi."
+        );
+
+        return;
+
+    }
+
+    const data =
+        lastOrderData;
+
+    const {
+        jsPDF
+    } = window.jspdf;
+
+    const doc =
+        new jsPDF({
+
+            unit: "mm",
+
+            format: [
+                80,
+                220
+            ]
+
+        });
+
+    let y = 10;
+
+    const pageWidth = 80;
+
+    function centerText(
+        text,
+        yPosition,
+        size = 10,
+        bold = false
+    ) {
+
+        doc.setFont(
+            "helvetica",
+            bold
+            ? "bold"
+            : "normal"
+        );
+
+        doc.setFontSize(
+            size
+        );
+
+        doc.text(
+            String(text),
+            pageWidth / 2,
+            yPosition,
+            {
+                align: "center"
+            }
+        );
+
+    }
+
+    centerText(
+        "NGOPI DULU",
+        y,
+        16,
+        true
+    );
+
+    y += 7;
+
+    centerText(
+        "CUSTOMER RECEIPT",
+        y,
+        8,
+        false
+    );
+
+    y += 7;
+
+    doc.setLineWidth(
+        0.3
+    );
+
+    doc.line(
+        5,
+        y,
+        75,
+        y
+    );
+
+    y += 6;
+
+    doc.setFont(
+        "helvetica",
+        "normal"
+    );
+
+    doc.setFontSize(
+        8
+    );
+
+    doc.text(
+        "Order ID:",
+        5,
+        y
+    );
+
+    doc.text(
+        String(
+            data.orderId || "-"
+        ),
+        75,
+        y,
+        {
+            align: "right"
+        }
+    );
+
+    y += 5;
+
+    doc.text(
+        "Customer:",
+        5,
+        y
+    );
+
+    doc.text(
+        String(
+            data.customerName || "-"
+        ),
+        75,
+        y,
+        {
+            align: "right"
+        }
+    );
+
+    y += 5;
+
+    doc.text(
+        "Table:",
+        5,
+        y
+    );
+
+    doc.text(
+        String(
+            data.table || "-"
+        ),
+        75,
+        y,
+        {
+            align: "right"
+        }
+    );
+
+    y += 5;
+
+    doc.text(
+        "Payment:",
+        5,
+        y
+    );
+
+    doc.text(
+        String(
+            data.paymentMethod || "-"
+        ),
+        75,
+        y,
+        {
+            align: "right"
+        }
+    );
+
+    y += 7;
+
+    doc.line(
+        5,
+        y,
+        75,
+        y
+    );
+
+    y += 6;
+
+    doc.setFont(
+        "helvetica",
+        "bold"
+    );
+
+    doc.setFontSize(
+        8
+    );
+
+    doc.text(
+        "ITEM",
+        5,
+        y
+    );
+
+    doc.text(
+        "AMOUNT",
+        75,
+        y,
+        {
+            align: "right"
+        }
+    );
+
+    y += 5;
+
+    doc.setFont(
+        "helvetica",
+        "normal"
+    );
+
+    if(
+        Array.isArray(data.items)
+    ) {
+
+        data.items.forEach(item => {
+
+            const itemName =
+                String(
+                    item.name || ""
+                );
+
+            const qty =
+                Number(
+                    item.qty || 0
+                );
+
+            const price =
+                Number(
+                    item.price || 0
+                );
+
+            const subtotal =
+                Number(
+                    item.subtotal ??
+                    (
+                        price * qty
+                    )
+                );
+
+            const maxChars =
+                27;
+
+            const lines = [];
+
+            if(
+                itemName.length >
+                maxChars
+            ) {
+
+                for(
+                    let i = 0;
+                    i < itemName.length;
+                    i += maxChars
+                ) {
+
+                    lines.push(
+                        itemName.substring(
+                            i,
+                            i + maxChars
+                        )
+                    );
+
+                }
+
+            } else {
+
+                lines.push(
+                    itemName
+                );
+
+            }
+
+            doc.text(
+                `${lines[0]} x${qty}`,
+                5,
+                y
+            );
+
+            doc.text(
+                `RM${subtotal.toFixed(2)}`,
+                75,
+                y,
+                {
+                    align: "right"
+                }
+            );
+
+            y += 4;
+
+            for(
+                let i = 1;
+                i < lines.length;
+                i++
+            ) {
+
+                doc.text(
+                    lines[i],
+                    5,
+                    y
+                );
+
+                y += 4;
+
+            }
+
+            y += 2;
+
+        });
+
+    }
+
+    doc.line(
+        5,
+        y,
+        75,
+        y
+    );
+
+    y += 6;
+
+    const subtotal =
+        Number(
+            data.subtotal || 0
+        );
+
+    const discountAmount =
+        Number(
+            data.discountAmount || 0
+        );
+
+    const discountPercent =
+        Number(
+            data.discountPercent || 0
+        );
+
+    const total =
+        Number(
+            data.total || 0
+        );
+
+    doc.setFontSize(
+        8
+    );
+
+    doc.setFont(
+        "helvetica",
+        "normal"
+    );
+
+    doc.text(
+        "Subtotal",
+        5,
+        y
+    );
+
+    doc.text(
+        `RM${subtotal.toFixed(2)}`,
+        75,
+        y,
+        {
+            align: "right"
+        }
+    );
+
+    y += 5;
+
+    if(
+        discountAmount > 0
+    ) {
+
+        doc.text(
+            `Discount (${discountPercent}%)`,
+            5,
+            y
+        );
+
+        doc.text(
+            `-RM${discountAmount.toFixed(2)}`,
+            75,
+            y,
+            {
+                align: "right"
+            }
+        );
+
+        y += 5;
+
+    }
+
+    doc.setFont(
+        "helvetica",
+        "bold"
+    );
+
+    doc.setFontSize(
+        11
+    );
+
+    doc.text(
+        "TOTAL",
+        5,
+        y
+    );
+
+    doc.text(
+        `RM${total.toFixed(2)}`,
+        75,
+        y,
+        {
+            align: "right"
+        }
+    );
+
+    y += 8;
+
+    if(
+        data.specialRequest &&
+        String(
+            data.specialRequest
+        ).trim()
+    ) {
+
+        doc.setFont(
+            "helvetica",
+            "bold"
+        );
+
+        doc.setFontSize(
+            8
+        );
+
+        doc.text(
+            "Special Request:",
+            5,
+            y
+        );
+
+        y += 5;
+
+        doc.setFont(
+            "helvetica",
+            "normal"
+        );
+
+        const request =
+            String(
+                data.specialRequest
+            );
+
+        const requestLines =
+            doc.splitTextToSize(
+                request,
+                68
+            );
+
+        doc.text(
+            requestLines,
+            5,
+            y
+        );
+
+        y +=
+            requestLines.length * 4 +
+            4;
+
+    }
+
+    doc.line(
+        5,
+        y,
+        75,
+        y
+    );
+
+    y += 7;
+
+    centerText(
+        "Thank you for ordering!",
+        y,
+        8,
+        true
+    );
+
+    y += 5;
+
+    centerText(
+        "NGOPI DULU",
+        y,
+        8,
+        false
+    );
+
+    const orderId =
+        String(
+            data.orderId ||
+            "order"
+        )
+        .replace(
+            /[^a-zA-Z0-9-_]/g,
+            ""
+        );
+
+    const fileName =
+        `NGOPI-DULU-${orderId}-Receipt.pdf`;
+
+    doc.save(
+        fileName
+    );
+
+}
+
+/* =========================================================
+   NEW ORDER
+========================================================= */
+
+function newOrder() {
+
+    if(unsubscribeOrder) {
+
+        unsubscribeOrder();
+
+        unsubscribeOrder = null;
+
+    }
+
+    currentOrderFirebaseId =
+        null;
+
+    lastOrderData =
+        null;
+
+    cart = {};
+
+    document
+    .getElementById(
+        "customer-name"
+    )
+    .value = "";
+
+    document
+    .getElementById(
+        "special-request"
+    )
+    .value = "";
+
+    document
+    .getElementById(
+        "discount-code"
+    )
+    .value = "";
+
+    document
+    .getElementById(
+        "status-card"
+    )
+    .style.display =
+        "none";
+
+    document
+    .getElementById(
+        "download-receipt-btn"
+    )
+    .style.display =
+        "none";
+
+    const button =
+        document.getElementById(
+            "submit-order-btn"
+        );
+
+    button.disabled =
+        false;
+
+    button.textContent =
+        currentLang === "en"
+        ? "Submit Order"
+        : "Hantar Pesanan";
+
+    updateSummary();
+
+    loadMenu();
+
+    window.scrollTo({
+
+        top: 0,
+
+        behavior: "smooth"
+
+    });
+
+}
+
+/* =========================================================
+   LANGUAGE
+========================================================= */
+
+function toggleLanguage() {
+
+    currentLang =
+        currentLang === "ms"
+        ? "en"
+        : "ms";
+
+    if(currentLang === "en") {
+
+        document.getElementById(
+            "header-subtitle"
+        ).textContent =
+            "Order your favourite drinks & food";
+
+        document.getElementById(
+            "customer-title"
+        ).textContent =
+            "👤 Customer Information";
+
+        document.getElementById(
+            "customer-subtitle"
+        ).textContent =
+            "Please enter your name and table number";
+
+        document.getElementById(
+            "name-label"
+        ).textContent =
+            "Your Name";
+
+        document.getElementById(
+            "table-label"
+        ).textContent =
+            "Select Table";
+
+        document.getElementById(
+            "menu-subtitle"
+        ).textContent =
+            "Choose your food and drinks";
+
+        document.getElementById(
+            "submit-order-btn"
+        ).textContent =
+            "Submit Order";
+
+    } else {
+
+        document.getElementById(
+            "header-subtitle"
+        ).textContent =
+            "Order your favourite drinks & food";
+
+        document.getElementById(
+            "customer-title"
+        ).textContent =
+            "👤 Maklumat Customer";
+
+        document.getElementById(
+            "customer-subtitle"
+        ).textContent =
+            "Sila isi nama dan nombor meja anda";
+
+        document.getElementById(
+            "name-label"
+        ).textContent =
+            "Nama Anda";
+
+        document.getElementById(
+            "table-label"
+        ).textContent =
+            "Pilih Meja";
+
+        document.getElementById(
+            "menu-subtitle"
+        ).textContent =
+            "Pilih makanan dan minuman anda";
+
+        document.getElementById(
+            "submit-order-btn"
+        ).textContent =
+            "Hantar Pesanan";
+
+    }
+
+}
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function escapeHtml(value) {
+
+    return String(
+        value ?? ""
+    )
+
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+
+    .replace(
+        /</g,
+        "&lt;"
+    )
+
+    .replace(
+        />/g,
+        "&gt;"
+    )
+
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+
+    .replace(
+        /'/g,
+        "&#039;"
+    );
+
+}
+
+function escapeJs(value) {
+
+    return String(value)
+
+        .replace(
+            /\\/g,
+            "\\\\"
+        )
+
+        .replace(
+            /'/g,
+            "\\'"
+        );
+
+}
+
+function safeId(value) {
+
+    return String(value)
+
+        .replace(
+            /[^a-zA-Z0-9_-]/g,
+            "_"
+        );
+
+}
+
+function cssEscape(value) {
+
+    if(
+        window.CSS &&
+        typeof window.CSS.escape === "function"
+    ) {
+
+        return window.CSS.escape(
+            String(value)
+        );
+
+    }
+
+    return String(value)
+
+        .replace(
+            /[^a-zA-Z0-9_-]/g,
+            "\\$&"
+        );
+
+}
+
+/* =========================================================
+   START
+========================================================= */
+
+loadMenu();
+
+updateSummary();
+
+</script>
+
+</body>
+
+</html>

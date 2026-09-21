@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NIKOPI - Cashier</title>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f1eb;color:#222}
+.container{max-width:1100px;margin:auto;padding:20px}
+.header{background:#2b1d14;color:white;padding:22px;border-radius:15px;margin-bottom:20px}
+.header h1{margin:0;font-size:25px}
+.header p{margin:7px 0 0;opacity:.8}
+.card{background:white;border-radius:15px;padding:20px;margin-bottom:20px;box-shadow:0 3px 12px rgba(0,0,0,.08)}
+.section-title{margin-top:0;margin-bottom:7px}
+.section-subtitle{color:#777;margin-top:0;margin-bottom:18px}
+.page-navigation{display:flex;gap:10px;margin-bottom:20px}
+.nav-btn{flex:1;border:none;padding:13px;border-radius:10px;font-weight:bold;cursor:pointer;background:#2b1d14;color:white}
+.nav-btn.manual{background:#6f4e37}
+.order-card{border:1px solid #ddd;border-radius:12px;padding:15px;margin-bottom:12px}
+.order-header{display:flex;justify-content:space-between;gap:10px;margin-bottom:10px}
+.order-id{font-weight:bold;font-size:18px}
+.customer{font-weight:bold;margin-top:3px}
+.meta{color:#666;font-size:14px;margin-top:5px}
+.items{background:#faf8f5;padding:10px;border-radius:9px;margin:12px 0}
+.item-block{margin-bottom:12px;padding-bottom:10px;border-bottom:1px dashed #ddd}
+.item-block:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+.item-line{display:flex;justify-content:space-between;gap:10px;font-weight:bold;font-size:14px}
+.item-options{margin-top:5px;font-size:12px;color:#555;line-height:1.5}
+.item-options div{margin-bottom:2px}
+.item-note{margin-top:5px;font-size:12px;color:#c0392b;font-style:italic}
+.total{font-size:18px;font-weight:bold;text-align:right;margin-top:10px}
+.accept-btn,.done-btn{border:none;border-radius:9px;padding:13px 16px;font-weight:bold;cursor:pointer;width:100%;margin-top:12px}
+.accept-btn{background:#2e7d32;color:white}
+.done-btn{background:#6f4e37;color:white}
+.empty{text-align:center;color:#777;padding:25px 10px}
+.badge{display:inline-block;padding:5px 9px;border-radius:20px;font-size:12px;font-weight:bold}
+.badge-pending{background:#fff3cd;color:#856404}
+.badge-accepted{background:#d4edda;color:#155724}
+.manual-label{display:inline-block;background:#2b1d14;color:white;padding:4px 8px;border-radius:5px;font-size:11px;font-weight:bold;margin-bottom:8px}
+.timer{font-weight:bold}
+.delayed{color:#c0392b}
+.manual-page{display:none}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.form-group{margin-bottom:15px}
+.form-group label{display:block;font-weight:bold;margin-bottom:7px}
+input,select,textarea{width:100%;padding:12px;border:1px solid #ccc;border-radius:9px;font-size:15px}
+textarea{resize:vertical;min-height:80px}
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.menu-item{border:1px solid #ddd;border-radius:12px;padding:12px;background:#fff}
+.menu-item.sold-out{opacity:.5;background:#eee}
+.menu-name{font-weight:bold;margin-bottom:5px}
+.menu-price{color:#6f4e37;font-weight:bold;margin-bottom:10px}
+.menu-controls{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.qty-btn{width:36px;height:36px;border:none;border-radius:8px;background:#2b1d14;color:white;font-size:20px;cursor:pointer}
+.qty-btn:disabled{opacity:.4;cursor:not-allowed}
+.qty{font-weight:bold;min-width:30px;text-align:center}
+.customize-btn{width:100%;margin-top:8px;padding:8px;border:1px solid #2b1d14;border-radius:8px;background:#fff;color:#2b1d14;font-weight:bold;cursor:pointer;font-size:12px}
+.soldout-label{display:inline-block;background:#c0392b;color:white;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:bold;margin-bottom:8px}
+.discount-box{background:#faf7f3;padding:15px;border-radius:12px;margin-top:20px}
+.summary{margin-top:20px;border-top:1px solid #ddd;padding-top:15px}
+.summary-row{display:flex;justify-content:space-between;margin-bottom:8px}
+.discount-row{color:#c0392b}
+.total-row{font-size:21px;font-weight:bold;border-top:1px solid #ddd;padding-top:12px;margin-top:12px}
+.submit-btn{width:100%;padding:15px;border:none;border-radius:10px;background:#2b1d14;color:white;font-size:17px;font-weight:bold;cursor:pointer;margin-top:20px}
+.success-box{display:none;background:#eaf8ed;border:1px solid #9bd2a5;border-radius:15px;padding:20px;margin-top:20px}
+.success-box h2{margin-top:0;color:#237a35}
+.receipt-btn{width:100%;padding:13px;border:none;border-radius:10px;background:#6f4e37;color:white;font-weight:bold;cursor:pointer;margin-top:12px}
+.new-order-btn{width:100%;padding:13px;border:1px solid #2b1d14;border-radius:10px;background:white;color:#2b1d14;font-weight:bold;cursor:pointer;margin-top:10px}
+.error-box{display:none;background:#ffecec;border:1px solid #e5a1a1;color:#9b2226;padding:15px;border-radius:10px;margin-bottom:20px}
+.cart-item-block{background:#fff;border:1px solid #eee;border-radius:10px;padding:10px;margin-bottom:8px}
+.cart-item-block .row{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.cart-item-block .opts{color:#666;font-size:11px;margin-top:4px;line-height:1.5}
+.cart-item-block .actions{margin-top:6px;text-align:right}
+.cart-item-block .remove{background:#eee;border:none;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:11px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:flex-end;justify-content:center}
+.overlay.show{display:flex}
+.modal{background:#fff;width:100%;max-width:600px;max-height:94vh;overflow-y:auto;border-radius:22px 22px 0 0;padding:20px}
+.modal-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.close-btn{width:35px;height:35px;border:none;background:#eee;border-radius:50%;font-size:20px;cursor:pointer}
+.opt-section{margin-bottom:15px}
+.opt-title{font-size:13px;font-weight:900;margin-bottom:8px}
+.opt-list{display:grid;gap:6px}
+.opt-item{display:flex;justify-content:space-between;align-items:center;border:1px solid #ddd;border-radius:10px;padding:10px;cursor:pointer;font-size:13px}
+.opt-item.selected{border-color:#2b1d14;background:#faf7f3;font-weight:bold}
+.opt-item.disabled{opacity:.4;cursor:not-allowed;background:#f5f5f5}
+.opt-item.disabled span{text-decoration:line-through}
+.qty-box{display:flex;align-items:center;gap:15px}
+.qty-num{min-width:30px;text-align:center;font-weight:900;font-size:18px}
+.modal-add-btn{width:100%;padding:15px;border:none;border-radius:10px;background:#2b1d14;color:white;font-size:16px;font-weight:bold;cursor:pointer;margin-top:15px}
+@media(max-width:600px){
+.container{padding:12px}
+.form-row{grid-template-columns:1fr}
+.menu-grid{grid-template-columns:1fr 1fr;gap:8px}
+.menu-item{padding:9px}
+.menu-name{font-size:14px}
+.menu-price{font-size:14px}
+.qty-btn{width:32px;height:32px}
+.order-header{flex-direction:column}
+.page-navigation{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="header">
+<h1>☕ NIKOPI - Cashier</h1>
+<p id="header-subtitle">Tengok dan approve pesanan customer</p>
+</div>
+
+<div class="page-navigation">
+<button type="button" class="nav-btn" id="btn-approve" onclick="showApprovePage()">📋 Tengok / Approve Order</button>
+<button type="button" class="nav-btn manual" id="btn-manual" onclick="showManualPage()">➕ Manual Order</button>
+</div>
+
+<div id="approve-page">
+
+<div class="card">
+<h2 class="section-title">📋 Pesanan Baru Masuk</h2>
+<p class="section-subtitle">Pending Approval</p>
+<div id="pending-orders"><div class="empty">Loading order...</div></div>
+</div>
+
+<div class="card">
+<h2 class="section-title">☕ Pesanan Diterima / Proses Dapur</h2>
+<p class="section-subtitle">Order yang sudah di-approve</p>
+<div id="accepted-orders"><div class="empty">Loading order...</div></div>
+</div>
+
+</div>
+
+<div id="manual-page" class="manual-page">
+
+<div style="margin-bottom:20px;">
+<button type="button" class="nav-btn" onclick="showApprovePage()" style="width:100%;">← Kembali ke Tengok / Approve Order</button>
+</div>
+
+<div id="error-box" class="error-box"></div>
+
+<div class="card">
+<h2 class="section-title">Maklumat Customer</h2>
+<div class="form-row">
+<div class="form-group">
+<label>Nama Customer</label>
+<input type="text" id="customer-name" placeholder="Cth: Ali">
+</div>
+<div class="form-group">
+<label>Pilih Meja</label>
+<select id="table-select">
+<option value="1">Meja 1</option>
+<option value="2">Meja 2</option>
+<option value="3">Meja 3</option>
+<option value="4">Meja 4</option>
+<option value="5">Meja 5</option>
+<option value="6">Meja 6</option>
+<option value="7">Meja 7</option>
+<option value="8">Meja 8</option>
+<option value="9">Meja 9</option>
+<option value="10">Meja 10</option>
+</select>
+</div>
+</div>
+<div class="form-group">
+<label>Payment Method</label>
+<select id="payment-method">
+<option value="Cash">Cash</option>
+<option value="DuitNow QR">DuitNow QR</option>
+<option value="QR">QR</option>
+</select>
+</div>
+<div class="form-group">
+<label>Special Request</label>
+<textarea id="special-request" placeholder="Contoh: kurang ais, kurang manis..."></textarea>
+</div>
+</div>
+
+<div class="card">
+<h2 class="section-title">Pilih Menu</h2>
+<div id="menu-container">Loading menu...</div>
+</div>
+
+<div class="card">
+<h2 class="section-title">Cart</h2>
+<div id="cart-list"><div class="empty">Belum ada item</div></div>
+</div>
+
+<div class="card">
+<h2 class="section-title">Diskaun Cashier</h2>
+<div class="discount-box">
+<label style="font-weight:bold;display:block;margin-bottom:8px;">Pilih Diskaun</label>
+<select id="discount-select" onchange="updateTotal()">
+<option value="0">No Discount</option>
+<option value="5">5% Discount</option>
+<option value="10">10% Discount</option>
+<option value="15">15% Discount</option>
+<option value="20">20% Discount</option>
+<option value="50">50% Discount</option>
+<option value="100">100% Discount</option>
+</select>
+</div>
+<div class="summary">
+<div class="summary-row"><span>Subtotal</span><span id="subtotal">RM0.00</span></div>
+<div class="summary-row discount-row"><span>Discount <span id="discount-percent">0%</span></span><span id="discount-amount">- RM0.00</span></div>
+<div class="summary-row total-row"><span>Total</span><span id="final-total">RM0.00</span></div>
+</div>
+<button type="button" class="submit-btn" onclick="submitManualOrder()">✅ Buat Manual Order</button>
+</div>
+
+<div id="success-box" class="success-box">
+<h2>✅ Order Berjaya</h2>
+<p>Manual order telah dihantar ke proses dapur.</p>
+<p><strong>Order ID:</strong> <span id="success-order-id"></span></p>
+<p><strong>Customer:</strong> <span id="success-customer"></span></p>
+<p><strong>Total:</strong> RM<span id="success-total"></span></p>
+<p id="success-discount-text"></p>
+<button type="button" class="receipt-btn" onclick="downloadManualReceipt()">🧾 Download Receipt PDF</button>
+<button type="button" class="new-order-btn" onclick="newManualOrder()">➕ Buat Order Baru</button>
+</div>
+
+</div>
+
+</div>
+
+<div id="custom-overlay" class="overlay">
+<div class="modal">
+<div class="modal-top">
+<strong id="modal-title">Pilih Pilihan</strong>
+<button type="button" class="close-btn" onclick="closeCustom()">×</button>
+</div>
+<div id="modal-content"></div>
+</div>
+</div>
+
+<script>
+var firebaseConfig = {
+apiKey: "AIzaSyA55AmYlP7nPaAXavrFsU5G4GnQtB2Bqc",
+authDomain: "nikopi-operation.firebaseapp.com",
+databaseURL: "https://nikopi-operation-default-rtdb.asia-southeast1.firebasedatabase.app",
+projectId: "nikopi-operation",
+storageBucket: "nikopi-operation.firebasestorage.app",
+messagingSenderId: "922893888263",
+appId: "1:922893888263:web:2c113a2db29960044e73a2",
+measurementId: "G-WGEZB8BFW0"
+};
+
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+
+var liveCashierOrders = [];
+var liveAcceptedOrders = [];
+var unsubscribeOrders = null;
+var unsubscribeStock = null;
+var menuItems = [];
+var cart = [];
+var lastManualOrder = null;
+var stockFromFirebase = null;
+
+var defaultMenu = [
+{ id:"coffee-1", name:"Cinnamon Latte", category:"COFFEE", price:15, customization:{sugar:false,milk:true,temperature:true,extraShot:true,extraSyrup:true} },
+{ id:"coffee-2", name:"Spanish Latte", category:"COFFEE", price:15, customization:{sugar:true,milk:true,temperature:true,extraShot:true,extraSyrup:false} },
+{ id:"coffee-3", name:"Hazelnut Latte", category:"COFFEE", price:15, customization:{sugar:false,milk:true,temperature:true,extraShot:true,extraSyrup:true} },
+{ id:"coffee-4", name:"Caramel Latte", category:"COFFEE", price:15, customization:{sugar:false,milk:true,temperature:true,extraShot:true,extraSyrup:true} },
+{ id:"coffee-5", name:"Cafe Latte / Flat White", category:"COFFEE", price:12, customization:{sugar:true,milk:true,temperature:true,extraShot:true,extraSyrup:false} },
+{ id:"coffee-6", name:"Cappuccino", category:"COFFEE", price:12, customization:{sugar:true,milk:true,temperature:true,extraShot:true,extraSyrup:false} },
+{ id:"coffee-7", name:"Americano / Long Black", category:"COFFEE", price:10, customization:{sugar:true,milk:false,temperature:true,extraShot:true,extraSyrup:false} },
+{ id:"coffee-8", name:"Sparkling Americano", category:"COFFEE", price:12, customization:{sugar:false,milk:false,temperature:false,extraShot:true,extraSyrup:false} },
+{ id:"coffee-9", name:"Mocha", category:"COFFEE", price:17, customization:{sugar:true,milk:true,temperature:true,extraShot:true,extraSyrup:false} },
+{ id:"coffee-10", name:"Espresso", category:"COFFEE", price:5, customization:{sugar:false,milk:false,temperature:false,extraShot:false,extraSyrup:false} },
+{ id:"noncoffee-1", name:"Chocolate", category:"NON COFFEE", price:12, customization:{sugar:true,milk:true,temperature:true,extraShot:false,extraSyrup:false} },
+{ id:"noncoffee-2", name:"Chocolate Hazelnut", category:"NON COFFEE", price:14, customization:{sugar:false,milk:true,temperature:true,extraShot:false,extraSyrup:true} },
+{ id:"noncoffee-3", name:"Sparkling Yuzu", category:"NON COFFEE", price:14, customization:{sugar:false,milk:false,temperature:false,extraShot:false,extraSyrup:false} },
+{ id:"noncoffee-4", name:"Sparkling Ribena", category:"NON COFFEE", price:10, customization:{sugar:false,milk:false,temperature:false,extraShot:false,extraSyrup:false} },
+{ id:"noncoffee-5", name:"Ribena", category:"NON COFFEE", price:6, customization:{sugar:false,milk:false,temperature:false,extraShot:false,extraSyrup:false} },
+{ id:"noncoffee-6", name:"Belgium Choc With Apple Fiber", category:"NON COFFEE", price:10, customization:{sugar:true,milk:true,temperature:true,extraShot:false,extraSyrup:false} },
+{ id:"matcha-1", name:"Matcha Latte", category:"MATCHA", price:15, customization:{sugar:true,milk:true,temperature:true,extraShot:false,extraSyrup:false} },
+{ id:"matcha-2", name:"Matcha Strawberry", category:"MATCHA", price:17, customization:{sugar:true,milk:true,temperature:true,extraShot:false,extraSyrup:false} },
+{ id:"cookie-1", name:"Cookies", category:"SOFT COOKIES", price:11.90, customization:{}, variants:{ title:"Jenis Cookies", type:"price", options:[ {name:"Classic Choc Chip",price:11.90}, {name:"S'mores",price:12.90}, {name:"Red Velvet Cheesecake",price:14.90} ] } },
+{ id:"cookie-4", name:"Add On Milk", category:"SOFT COOKIES", price:3, customization:{} },
+{ id:"bites-1", name:"Bagel With Cream Cheese", category:"BITES", price:12, customization:{}, variants:{ title:"Jenis Roti", type:"option", options:[ {name:"Poppy seed",price:0}, {name:"Sesame",price:0}, {name:"Garlic",price:0}, {name:"Plain",price:0} ] } },
+{ id:"bites-2", name:"Mini Croissant", category:"BITES", price:6, customization:{} },
+{ id:"bites-3", name:"Koko Crunch With Milk", category:"BITES", price:5, customization:{} },
+{ id:"bites-4", name:"Ramen", category:"BITES", price:9, customization:{}, variants:{ title:"Jenis Ramen", type:"option", options:[ {name:"Carbonara",price:0}, {name:"Quattro Cheese",price:0} ] } },
+{ id:"bites-5", name:"Kaya Toast With Hard Boiled Egg", category:"BITES", price:7, customization:{} },
+{ id:"bites-6", name:"Kaya Toast", category:"BITES", price:5.50, customization:{} },
+{ id:"bites-7", name:"Nutella Toast", category:"BITES", price:5.50, customization:{} },
+{ id:"bites-8", name:"Maggie Cup", category:"BITES", price:4.50, customization:{} },
+{ id:"bites-9", name:"Indo Mee", category:"BITES", price:6, customization:{} },
+{ id:"bites-10", name:"Hard Boiled Egg", category:"BITES", price:2, customization:{} },
+{ id:"addon-1", name:"Oatmilk", category:"ADD ON", price:3, customization:{} },
+{ id:"addon-2", name:"Extra Shot", category:"ADD ON", price:4, customization:{} },
+{ id:"addon-3", name:"Extra Syrup", category:"ADD ON", price:2, customization:{} },
+{ id:"addon-4", name:"Ice Water", category:"ADD ON", price:2, customization:{} }
+];
+
+var customProduct = null;
+var customQty = 1;
+var customVariant = null;
+var customOptions = {
+sugar:{name:"Regular Sugar",price:0},
+milk:{name:"Dairy Milk",price:0},
+temperature:{name:"Hot",price:0},
+shot:{name:"No Extra Shot",price:0},
+syrup:{name:"No Extra Syrup",price:0}
+};
+
+function showApprovePage(){
+document.getElementById("approve-page").style.display="block";
+document.getElementById("manual-page").style.display="none";
+document.getElementById("header-subtitle").textContent="Tengok dan approve pesanan customer";
+window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function showManualPage(){
+document.getElementById("approve-page").style.display="none";
+document.getElementById("manual-page").style.display="block";
+document.getElementById("header-subtitle").textContent="Manual order - Cashier";
+loadStockForMenu();
+window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function loadCashierDataRealtime(){
+if(unsubscribeOrders){unsubscribeOrders();}
+unsubscribeOrders=db.collection("orders").onSnapshot(function(snapshot){
+liveCashierOrders=[];
+liveAcceptedOrders=[];
+snapshot.forEach(function(doc){
+var data=doc.data();
+data.firebaseId=doc.id;
+if(data.status==="Pending"){
+liveCashierOrders.push(data);
+}else if(data.status==="Accepted"){
+liveAcceptedOrders.push(data);
+}
+});
+sortOrders(liveCashierOrders);
+sortOrders(liveAcceptedOrders);
+renderCashierOrders();
+renderAcceptedOrders();
+},function(error){
+console.error("Firebase order error:",error);
+});
+}
+
+function getOrderTime(order){
+if(order.timestamp && typeof order.timestamp.toMillis==="function"){return order.timestamp.toMillis();}
+if(typeof order.timestamp==="number"){return order.timestamp;}
+return 0;
+}
+
+function sortOrders(orders){
+orders.sort(function(a,b){return getOrderTime(b)-getOrderTime(a);});
+}
+
+function buildItemsHTML(order){
+var items=Array.isArray(order.items)?order.items:[];
+if(!items.length)return '<div style="color:#999;font-size:13px;">Tiada item</div>';
+var html="";
+items.forEach(function(item){
+var quantity=Number(item.quantity||1);
+var unitPrice=Number(item.unitPrice||item.price||0);
+var lineTotal=unitPrice*quantity;
+var opts="";
+if(item.variant && item.variant.name){
+opts+='<div>⭐ '+(item.variantTitle||"Pilihan")+': <strong>'+escapeHTML(item.variant.name)+'</strong></div>';
+}
+if(item.options){
+if(item.options.sugar && item.options.sugar.name){
+opts+='<div>• Gula: '+escapeHTML(item.options.sugar.name)+'</div>';
+}
+if(item.options.milk && item.options.milk.name){
+opts+='<div>• Susu: '+escapeHTML(item.options.milk.name)+'</div>';
+}
+if(item.options.temperature && item.options.temperature.name){
+opts+='<div>• Suhu: '+escapeHTML(item.options.temperature.name)+'</div>';
+}
+if(item.options.shot && item.options.shot.name && item.options.shot.name!=="No Extra Shot"){
+opts+='<div>• Extra Shot</div>';
+}
+if(item.options.syrup && item.options.syrup.name && item.options.syrup.name!=="No Extra Syrup"){
+opts+='<div>• Extra Syrup</div>';
+}
+}
+var note="";
+if(item.specialRequest){
+note='<div class="item-note">📝 '+escapeHTML(item.specialRequest)+'</div>';
+}
+html+='<div class="item-block">'
++'<div class="item-line">'
++'<span>'+escapeHTML(item.name||"Item")+' × '+quantity+'</span>'
++'<span>RM'+lineTotal.toFixed(2)+'</span>'
++'</div>'
++(opts?'<div class="item-options">'+opts+'</div>':'')
++note
++'</div>';
+});
+return html;
+}
+
+function renderCashierOrders(){
+var container=document.getElementById("pending-orders");
+if(liveCashierOrders.length===0){
+container.innerHTML='<div class="empty">Tiada pending order.</div>';
+return;
+}
+var html="";
+liveCashierOrders.forEach(function(order){
+html+=createPendingHTML(order);
+});
+container.innerHTML=html;
+}
+
+function createPendingHTML(order){
+return '<div class="order-card">'
++'<div class="order-header">'
++'<div>'
++'<div class="order-id">'+escapeHTML(order.orderNumber||order.orderId||"#")+'</div>'
++'<div class="customer">'+escapeHTML(order.customerName||"Customer")+'</div>'
++'<div class="meta">Meja '+escapeHTML(String(order.tableNumber||order.table||"-"))+'</div>'
++'</div>'
++'<div><span class="badge badge-pending">⏳ PENDING</span></div>'
++'</div>'
++'<div class="meta">Payment: '+escapeHTML(order.paymentMethod||"-")+'</div>'
++'<div class="items">'+buildItemsHTML(order)+'</div>'
++'<div class="total">Total: RM'+Number(order.total||0).toFixed(2)+'</div>'
++'<button type="button" class="accept-btn" onclick="acceptOrder(\''+order.firebaseId+'\')">✅ Accept Order</button>'
++'</div>';
+}
+
+function acceptOrder(firebaseId){
+db.collection("orders").doc(firebaseId).update({
+status:"Accepted",
+acceptedAt:Date.now()
+}).then(function(){
+console.log("Order accepted");
+}).catch(function(error){
+console.error(error);
+alert("Gagal accept order.");
+});
+}
+
+function renderAcceptedOrders(){
+var container=document.getElementById("accepted-orders");
+if(liveAcceptedOrders.length===0){
+container.innerHTML='<div class="empty">Tiada order sedang diproses.</div>';
+return;
+}
+var html="";
+liveAcceptedOrders.forEach(function(order){
+html+=createAcceptedHTML(order);
+});
+container.innerHTML=html;
+}
+
+function createAcceptedHTML(order){
+var acceptedAt=Number(order.acceptedAt||Date.now());
+var elapsed=Math.max(0,Math.floor((Date.now()-acceptedAt)/1000));
+var minutes=Math.floor(elapsed/60);
+var seconds=elapsed%60;
+var timerText=minutes+":"+String(seconds).padStart(2,"0");
+var delayed=elapsed>=300;
+return '<div class="order-card">'
++(order.manualOrder?'<div class="manual-label">🧾 MANUAL ORDER</div>':'')
++'<div class="order-header">'
++'<div>'
++'<div class="order-id">'+escapeHTML(order.orderNumber||order.orderId||"#")+'</div>'
++'<div class="customer">'+escapeHTML(order.customerName||"Customer")+'</div>'
++'<div class="meta">Meja '+escapeHTML(String(order.tableNumber||order.table||"-"))+'</div>'
++'</div>'
++'<div><span class="badge badge-accepted">✅ ACCEPTED</span></div>'
++'</div>'
++'<div class="meta">Payment: '+escapeHTML(order.paymentMethod||"-")+'</div>'
++'<div class="meta">Masa: <span class="timer '+(delayed?"delayed":"")+'">'+timerText+'</span>'+(delayed?' ⚠️':'')+'</div>'
++'<div class="items">'+buildItemsHTML(order)+'</div>'
++'<div class="total">Total: RM'+Number(order.total||0).toFixed(2)+'</div>'
++'<button type="button" class="done-btn" onclick="completeOrder(\''+order.firebaseId+'\')">✓ Done / Selesai</button>'
++'</div>';
+}
+
+function completeOrder(firebaseId){
+db.collection("orders").doc(firebaseId).update({
+status:"Selesai (Completed)",
+completedAt:Date.now()
+}).then(function(){
+console.log("Order completed");
+}).catch(function(error){
+console.error(error);
+alert("Gagal complete order.");
+});
+}
+
+setInterval(function(){
+if(liveAcceptedOrders.length>0){
+renderAcceptedOrders();
+}
+},1000);
+
+function loadStockForMenu(){
+if(unsubscribeStock){unsubscribeStock();}
+unsubscribeStock=db.collection("settings").doc("menu").onSnapshot(function(doc){
+if(doc.exists && doc.data().categories){
+stockFromFirebase=doc.data().categories;
+}else{
+stockFromFirebase=null;
+}
+applyStockToMenu();
+renderMenu();
+},function(error){
+console.error("Stock error:",error);
+stockFromFirebase=null;
+applyStockToMenu();
+renderMenu();
+});
+}
+
+function applyStockToMenu(){
+menuItems=defaultMenu.map(function(item){
+var copy=Object.assign({},item,{available:true});
+copy.variants=item.variants?JSON.parse(JSON.stringify(item.variants)):null;
+if(stockFromFirebase){
+var found=null;
+stockFromFirebase.forEach(function(cat){
+var it=cat.items.find(function(m){return m.id===item.id;});
+if(it)found=it;
+});
+if(found){
+copy.available=found.available!==false;
+if(copy.variants && copy.variants.options && found.variants){
+copy.variants.options.forEach(function(v){
+var fv=found.variants.find(function(x){return x.name===v.name;});
+if(fv)v.available=fv.available!==false;
+});
+}
+}
+}
+return copy;
+});
+}
+
+function isItemFullySoldOut(item){
+if(item.available===false)return true;
+if(item.variants && item.variants.options){
+return item.variants.options.every(function(v){return v.available===false;});
+}
+return false;
+}
+
+function renderMenu(){
+var container=document.getElementById("menu-container");
+if(!container)return;
+if(menuItems.length===0){
+container.innerHTML="<p>Menu tidak tersedia.</p>";
+return;
+}
+var categories={};
+menuItems.forEach(function(item){
+var category=item.category||"MENU";
+if(!categories[category]){categories[category]=[];}
+categories[category].push(item);
+});
+var html="";
+Object.keys(categories).forEach(function(category){
+html+='<h3 style="margin-top:20px;margin-bottom:10px;">'+escapeHTML(category)+'</h3><div class="menu-grid">';
+categories[category].forEach(function(item){
+var qty=getQuantity(item.id);
+var hasCustom = (item.customization && Object.keys(item.customization).length>0) || (item.variants && item.variants.options);
+var soldOut=isItemFullySoldOut(item);
+html+='<div class="menu-item '+(soldOut?"sold-out":"")+'">';
+if(soldOut){
+html+='<div class="soldout-label">HABIS STOK</div>';
+}
+html+='<div class="menu-name">'+escapeHTML(item.name)+'</div>'
++'<div class="menu-price">RM'+Number(item.price).toFixed(2)+'</div>';
+if(soldOut){
+html+='<div style="text-align:center;color:#c0392b;font-weight:bold;font-size:13px;padding:8px;">— HABIS STOK —</div>';
+}else if(hasCustom){
+html+='<button type="button" class="customize-btn" onclick="openCustom(\''+item.id+'\')">➕ Tambah'+(qty>0?' ('+qty+')':'')+'</button>';
+}else{
+html+='<div class="menu-controls">'
++'<button type="button" class="qty-btn" onclick="changeQuantity(\''+item.id+'\', -1)" '+(qty<=0?"disabled":"")+'>−</button>'
++'<span class="qty">'+qty+'</span>'
++'<button type="button" class="qty-btn" onclick="changeQuantity(\''+item.id+'\', 1)">+</button>'
++'</div>';
+}
+html+='</div>';
+});
+html+='</div>';
+});
+container.innerHTML=html;
+updateTotal();
+renderCartList();
+}
+
+function getQuantity(itemId){
+var qty=0;
+cart.forEach(function(x){
+if(String(x.productId)===String(itemId) || String(x.id)===String(itemId)){
+qty+=Number(x.quantity);
+}
+});
+return qty;
+}
+
+function changeQuantity(itemId,change){
+var menuItem=menuItems.find(function(x){return String(x.id)===String(itemId);});
+if(!menuItem)return;
+if(isItemFullySoldOut(menuItem)){alert("Item habis stok.");return;}
+var cartItem=cart.find(function(x){return x.simple && String(x.productId)===String(itemId);});
+if(!cartItem){
+cartItem={
+simple:true,
+cartId:Date.now()+Math.random().toString(36).slice(2),
+productId:menuItem.id,
+name:menuItem.name,
+price:Number(menuItem.price),
+unitPrice:Number(menuItem.price),
+quantity:0,
+variant:null,
+variantTitle:null,
+options:null,
+specialRequest:""
+};
+cart.push(cartItem);
+}
+cartItem.quantity+=change;
+if(cartItem.quantity<=0){
+cart=cart.filter(function(x){return x.cartId!==cartItem.cartId;});
+}
+renderMenu();
+updateTotal();
+}
+
+function openCustom(itemId){
+customProduct=menuItems.find(function(x){return String(x.id)===String(itemId);});
+if(!customProduct)return;
+if(isItemFullySoldOut(customProduct)){alert("Item habis stok.");return;}
+customQty=1;
+customVariant=null;
+customOptions={
+sugar:{name:"Regular Sugar",price:0},
+milk:{name:"Dairy Milk",price:0},
+temperature:{name:"Hot",price:0},
+shot:{name:"No Extra Shot",price:0},
+syrup:{name:"No Extra Syrup",price:0}
+};
+if(customProduct.variants && customProduct.variants.options && customProduct.variants.options.length){
+var firstAvail=customProduct.variants.options.find(function(v){return v.available!==false;});
+if(firstAvail)customVariant=Object.assign({},firstAvail);
+}
+renderCustomModal();
+document.getElementById("custom-overlay").classList.add("show");
+}
+
+function closeCustom(){
+document.getElementById("custom-overlay").classList.remove("show");
+customProduct=null;
+}
+
+function renderCustomModal(){
+var title=document.getElementById("modal-title");
+var content=document.getElementById("modal-content");
+title.textContent=customProduct.name;
+var html="";
+if(customProduct.variants && customProduct.variants.options){
+html+='<div class="opt-section"><div class="opt-title">'+escapeHTML(customProduct.variants.title)+'</div><div class="opt-list">';
+customProduct.variants.options.forEach(function(opt,i){
+var isSoldOut=opt.available===false;
+var sel = customVariant && customVariant.name===opt.name ? " selected" : "";
+var dis = isSoldOut ? " disabled" : "";
+var priceLabel = isSoldOut ? "OUT OF STOCK" : (customProduct.variants.type==="price" ? "RM"+opt.price.toFixed(2) : "+RM0");
+html+='<div class="opt-item'+sel+dis+'" onclick="pickVariant('+i+')"><span>'+escapeHTML(opt.name)+'</span><span>'+priceLabel+'</span></div>';
+});
+html+='</div></div>';
+}
+var c=customProduct.customization||{};
+if(c.sugar){
+html+='<div class="opt-section"><div class="opt-title">Gula</div><div class="opt-list">';
+html+=optItemHTML("sugar","Regular Sugar",0);
+html+=optItemHTML("sugar","Less Sugar",0);
+html+=optItemHTML("sugar","No Sugar",0);
+html+='</div></div>';
+}
+if(c.milk){
+html+='<div class="opt-section"><div class="opt-title">Susu</div><div class="opt-list">';
+html+=optItemHTML("milk","Dairy Milk",0);
+html+=optItemHTML("milk","Oatside",3);
+html+='</div></div>';
+}
+if(c.temperature){
+html+='<div class="opt-section"><div class="opt-title">Suhu</div><div class="opt-list">';
+html+=optItemHTML("temperature","Hot",0);
+html+=optItemHTML("temperature","Iced",0);
+html+='</div></div>';
+}
+if(c.extraShot){
+html+='<div class="opt-section"><div class="opt-title">Extra Shot</div><div class="opt-list">';
+html+=optItemHTML("shot","No Extra Shot",0);
+html+=optItemHTML("shot","Extra Shot",4);
+html+='</div></div>';
+}
+if(c.extraSyrup){
+html+='<div class="opt-section"><div class="opt-title">Extra Syrup</div><div class="opt-list">';
+html+=optItemHTML("syrup","No Extra Syrup",0);
+html+=optItemHTML("syrup","Extra Syrup",2);
+html+='</div></div>';
+}
+html+='<div class="opt-section"><div class="opt-title">Kuantiti</div><div class="qty-box">'
++'<button type="button" class="qty-btn" onclick="changeCustomQty(-1)">−</button>'
++'<span class="qty-num">'+customQty+'</span>'
++'<button type="button" class="qty-btn" onclick="changeCustomQty(1)">+</button>'
++'</div></div>';
+var total=getCustomPrice()*customQty;
+html+='<button type="button" class="modal-add-btn" onclick="addCustomToCart()">TAMBAH · RM'+total.toFixed(2)+'</button>';
+content.innerHTML=html;
+}
+
+function optItemHTML(type,name,price){
+var sel = customOptions[type] && customOptions[type].name===name ? " selected" : "";
+var label = price>0 ? "+RM"+price : "+RM0";
+return '<div class="opt-item'+sel+'" onclick="pickOpt(\''+type+'\',\''+name.replace(/'/g,"\\'")+'\','+price+')"><span>'+escapeHTML(name)+'</span><span>'+label+'</span></div>';
+}
+
+function pickVariant(i){
+var opt=customProduct.variants.options[i];
+if(opt.available===false)return;
+customVariant=Object.assign({},opt);
+renderCustomModal();
+}
+
+function pickOpt(type,name,price){
+customOptions[type]={name:name,price:Number(price)};
+renderCustomModal();
+}
+
+function changeCustomQty(d){
+customQty+=d;
+if(customQty<1)customQty=1;
+if(customQty>99)customQty=99;
+renderCustomModal();
+}
+
+function getCustomPrice(){
+var price=customProduct.price;
+if(customProduct.variants && customProduct.variants.type==="price" && customVariant){
+price=customVariant.price;
+}
+var c=customProduct.customization||{};
+if(c.milk)price+=customOptions.milk.price;
+if(c.extraShot)price+=customOptions.shot.price;
+if(c.extraSyrup)price+=customOptions.syrup.price;
+return price;
+}
+
+function addCustomToCart(){
+var c=customProduct.customization||{};
+if(customProduct.variants && customProduct.variants.options && customProduct.variants.options.length>0){
+if(!customVariant){alert("Sila pilih pilihan.");return;}
+}
+var unitPrice=getCustomPrice();
+cart.push({
+simple:false,
+cartId:Date.now()+Math.random().toString(36).slice(2),
+productId:customProduct.id,
+name:customProduct.name,
+price:unitPrice,
+unitPrice:unitPrice,
+quantity:customQty,
+variant:customVariant?Object.assign({},customVariant):null,
+variantTitle:customProduct.variants?customProduct.variants.title:null,
+options:{
+sugar:c.sugar?Object.assign({},customOptions.sugar):null,
+milk:c.milk?Object.assign({},customOptions.milk):null,
+temperature:c.temperature?Object.assign({},customOptions.temperature):null,
+shot:c.extraShot?Object.assign({},customOptions.shot):null,
+syrup:c.extraSyrup?Object.assign({},customOptions.syrup):null
+},
+specialRequest:""
+});
+closeCustom();
+renderMenu();
+updateTotal();
+}
+
+function renderCartList(){
+var container=document.getElementById("cart-list");
+if(!container)return;
+if(cart.length===0){
+container.innerHTML='<div class="empty">Belum ada item</div>';
+return;
+}
+var html="";
+cart.forEach(function(item,index){
+var opts="";
+if(item.variant && item.variant.name){opts+='<div>⭐ '+escapeHTML(item.variantTitle||"Pilihan")+': '+escapeHTML(item.variant.name)+'</div>';}
+if(item.options){
+if(item.options.sugar && item.options.sugar.name)opts+='<div>• Gula: '+escapeHTML(item.options.sugar.name)+'</div>';
+if(item.options.milk && item.options.milk.name)opts+='<div>• Susu: '+escapeHTML(item.options.milk.name)+'</div>';
+if(item.options.temperature && item.options.temperature.name)opts+='<div>• Suhu: '+escapeHTML(item.options.temperature.name)+'</div>';
+if(item.options.shot && item.options.shot.name && item.options.shot.name!=="No Extra Shot")opts+='<div>• Extra Shot</div>';
+if(item.options.syrup && item.options.syrup.name && item.options.syrup.name!=="No Extra Syrup")opts+='<div>• Extra Syrup</div>';
+}
+html+='<div class="cart-item-block">'
++'<div class="row"><strong>'+escapeHTML(item.name)+' × '+item.quantity+'</strong><span>RM'+(Number(item.unitPrice)*Number(item.quantity)).toFixed(2)+'</span></div>'
++(opts?'<div class="opts">'+opts+'</div>':'')
++'<div class="actions"><button type="button" class="remove" onclick="removeCartItem('+index+')">Buang</button></div>'
++'</div>';
+});
+container.innerHTML=html;
+}
+
+function removeCartItem(index){
+cart.splice(index,1);
+renderMenu();
+updateTotal();
+renderCartList();
+}
+
+function calculateSubtotal(){
+var total=0;
+cart.forEach(function(item){
+total+=Number(item.unitPrice)*Number(item.quantity);
+});
+return Number(total.toFixed(2));
+}
+
+function getDiscountData(){
+var subtotal=calculateSubtotal();
+var discountPercent=Number(document.getElementById("discount-select").value);
+var discountAmount=subtotal*(discountPercent/100);
+var finalTotal=Math.max(0,subtotal-discountAmount);
+return {
+subtotal:Number(subtotal.toFixed(2)),
+discountPercent:discountPercent,
+discountAmount:Number(discountAmount.toFixed(2)),
+finalTotal:Number(finalTotal.toFixed(2))
+};
+}
+
+function updateTotal(){
+var subtotalElement=document.getElementById("subtotal");
+if(!subtotalElement)return;
+var data=getDiscountData();
+document.getElementById("subtotal").textContent="RM"+data.subtotal.toFixed(2);
+document.getElementById("discount-percent").textContent=data.discountPercent+"%";
+document.getElementById("discount-amount").textContent="- RM"+data.discountAmount.toFixed(2);
+document.getElementById("final-total").textContent="RM"+data.finalTotal.toFixed(2);
+}
+
+function generateOrderNumber(){
+return String(Math.floor(100+Math.random()*900));
+}
+
+function submitManualOrder(){
+hideError();
+var customerName=document.getElementById("customer-name").value.trim();
+var table=document.getElementById("table-select").value;
+var payment=document.getElementById("payment-method").value;
+var specialRequest=document.getElementById("special-request").value.trim();
+if(!customerName){
+showError("Sila masukkan nama customer.");
+document.getElementById("customer-name").focus();
+return;
+}
+if(cart.length===0){
+showError("Sila pilih sekurang-kurangnya satu menu.");
+return;
+}
+var discountData=getDiscountData();
+var orderNumber=generateOrderNumber();
+var formattedItems=cart.map(function(item){
+return {
+name:item.name,
+price:Number(item.unitPrice),
+unitPrice:Number(item.unitPrice),
+quantity:Number(item.quantity),
+variant:item.variant||null,
+variantTitle:item.variantTitle||null,
+options:item.options||null,
+specialRequest:item.specialRequest||""
+};
+});
+var orderData={
+orderNumber:orderNumber,
+customerName:customerName,
+tableNumber:table,
+items:formattedItems,
+subtotal:discountData.subtotal,
+discountPercent:discountData.discountPercent,
+discountAmount:discountData.discountAmount,
+total:discountData.finalTotal,
+paymentMethod:payment,
+specialRequest:specialRequest,
+status:"Accepted",
+manualOrder:true,
+acceptedAt:Date.now(),
+createdAt:firebase.firestore.FieldValue.serverTimestamp()
+};
+db.collection("orders").add(orderData).then(function(docRef){
+var copy=Object.assign({},orderData);
+copy.firebaseDocId=docRef.id;
+copy.createdAt=new Date();
+lastManualOrder=copy;
+document.getElementById("success-order-id").textContent="#"+orderData.orderNumber;
+document.getElementById("success-customer").textContent=orderData.customerName;
+document.getElementById("success-total").textContent=orderData.total.toFixed(2);
+var discountText=document.getElementById("success-discount-text");
+if(orderData.discountPercent>0){
+discountText.textContent="Discount "+orderData.discountPercent+"% (-RM"+orderData.discountAmount.toFixed(2)+")";
+}else{
+discountText.textContent="No Discount";
+}
+document.getElementById("success-box").style.display="block";
+cart=[];
+document.getElementById("customer-name").value="";
+document.getElementById("special-request").value="";
+document.getElementById("discount-select").value="0";
+renderMenu();
+updateTotal();
+window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"});
+}).catch(function(error){
+console.error("Manual order error:",error);
+showError("Order gagal dihantar: "+error.message);
+});
+}
+
+function showError(message){
+var box=document.getElementById("error-box");
+box.textContent=message;
+box.style.display="block";
+}
+
+function hideError(){
+var box=document.getElementById("error-box");
+box.textContent="";
+box.style.display="none";
+}
+
+function downloadManualReceipt(){
+if(!lastManualOrder){alert("Receipt order tidak dijumpai.");return;}
+var jsPDF=window.jspdf ? window.jspdf.jsPDF : null;
+if(!jsPDF){alert("PDF library belum siap.");return;}
+var order=lastManualOrder;
+var doc=new jsPDF();
+var y=20;
+doc.setFont("helvetica","bold");
+doc.setFontSize(18);
+doc.text("NIKOPI",105,y,{align:"center"});
+y+=10;
+doc.setFontSize(13);
+doc.text("CUSTOMER RECEIPT",105,y,{align:"center"});
+y+=12;
+doc.setFont("helvetica","normal");
+doc.setFontSize(10);
+doc.text("Order ID: #"+order.orderNumber,15,y);y+=6;
+doc.text("Customer: "+order.customerName,15,y);y+=6;
+doc.text("Table: Meja "+order.tableNumber,15,y);y+=6;
+doc.text("Payment: "+order.paymentMethod,15,y);y+=6;
+doc.text("Order Type: Manual / Cashier",15,y);y+=10;
+doc.line(15,y,195,y);y+=8;
+order.items.forEach(function(item){
+var itemTotal=Number(item.unitPrice||item.price)*Number(item.quantity);
+doc.setFont("helvetica","bold");
+doc.text(item.name,15,y);y+=5;
+doc.setFont("helvetica","normal");
+doc.text(item.quantity+" x RM"+Number(item.unitPrice||item.price).toFixed(2),20,y);
+doc.text("RM"+itemTotal.toFixed(2),190,y,{align:"right"});
+y+=6;
+var opts=[];
+if(item.variant && item.variant.name)opts.push((item.variantTitle||"Pilihan")+": "+item.variant.name);
+if(item.options){
+if(item.options.sugar && item.options.sugar.name)opts.push("Gula: "+item.options.sugar.name);
+if(item.options.milk && item.options.milk.name)opts.push("Susu: "+item.options.milk.name);
+if(item.options.temperature && item.options.temperature.name)opts.push("Suhu: "+item.options.temperature.name);
+if(item.options.shot && item.options.shot.name && item.options.shot.name!=="No Extra Shot")opts.push("Extra Shot");
+if(item.options.syrup && item.options.syrup.name && item.options.syrup.name!=="No Extra Syrup")opts.push("Extra Syrup");
+}
+if(opts.length){
+doc.setFontSize(8);
+var lines=doc.splitTextToSize(opts.join(" | "),170);
+doc.text(lines,20,y);
+y+=lines.length*4;
+doc.setFontSize(10);
+}
+y+=4;
+if(y>270){doc.addPage();y=20;}
+});
+doc.line(15,y,195,y);y+=8;
+doc.text("Subtotal",15,y);
+doc.text("RM"+Number(order.subtotal).toFixed(2),190,y,{align:"right"});
+y+=7;
+if(Number(order.discountPercent)>0){
+doc.text("Discount ("+order.discountPercent+"%)",15,y);
+doc.text("- RM"+Number(order.discountAmount).toFixed(2),190,y,{align:"right"});
+y+=8;
+}
+doc.line(15,y,195,y);y+=8;
+doc.setFont("helvetica","bold");
+doc.setFontSize(13);
+doc.text("TOTAL",15,y);
+doc.text("RM"+Number(order.total).toFixed(2),190,y,{align:"right"});
+y+=10;
+if(order.specialRequest){
+doc.setFontSize(10);
+doc.setFont("helvetica","normal");
+doc.text("Special Request:",15,y);y+=6;
+var lines2=doc.splitTextToSize(order.specialRequest,175);
+doc.text(lines2,15,y);
+y+=lines2.length*5;
+}
+y+=8;
+doc.setFontSize(9);
+doc.text("Thank you for ordering with NIKOPI!",105,y,{align:"center"});
+var cleanId=String(order.orderNumber).replace(/[^a-zA-Z0-9-_]/g,"");
+var fileName="NIKOPI-Receipt-"+cleanId+".pdf";
+var blob=doc.output("blob");
+var url=URL.createObjectURL(blob);
+var link=document.createElement("a");
+link.href=url;
+link.download=fileName;
+link.style.display="none";
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
+setTimeout(function(){URL.revokeObjectURL(url);},60000);
+}
+
+function newManualOrder(){
+lastManualOrder=null;
+document.getElementById("success-box").style.display="none";
+document.getElementById("customer-name").focus();
+window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function escapeHTML(value){
+return String(value==null?"":value)
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;")
+.replace(/'/g,"&#039;");
+}
+
+document.addEventListener("DOMContentLoaded",function(){
+loadCashierDataRealtime();
+updateTotal();
+showApprovePage();
+});
+</script>
+
+</body>
+</html>

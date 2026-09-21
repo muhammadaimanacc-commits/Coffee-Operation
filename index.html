@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NIKOPI</title>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f7f7f7;color:#111}
+button,input,select,textarea{font-family:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+#welcome-page{min-height:100vh;background:#fff;display:flex;justify-content:center;align-items:center;padding:25px 18px}
+.welcome-box{width:100%;max-width:430px;text-align:center}
+.welcome-logo{width:170px;height:170px;object-fit:cover;border-radius:50%;margin-bottom:20px}
+.welcome-title{font-size:36px;font-weight:900;letter-spacing:-1px}
+.welcome-subtitle{color:#777;font-size:13px;margin:6px 0 28px}
+.welcome-input{width:100%;border:1px solid #ddd;border-radius:13px;padding:15px;font-size:14px;outline:none;margin-bottom:12px;text-align:center}
+.language-title{font-size:12px;font-weight:bold;margin:10px 0 8px}
+.language-buttons{display:flex;justify-content:center;gap:8px;margin-bottom:18px}
+.language-buttons button{flex:1;border:1px solid #ddd;background:#fff;padding:11px;border-radius:10px;font-size:12px;font-weight:bold}
+.language-buttons button.active{background:#111;color:#fff;border-color:#111}
+.start-btn{width:100%;border:none;background:#111;color:#fff;padding:16px;border-radius:13px;font-size:15px;font-weight:bold}
+.social-links{margin-top:25px;display:flex;justify-content:center;gap:9px;flex-wrap:wrap}
+.social-link{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 12px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#111;text-decoration:none;font-size:12px;font-weight:bold}
+.social-link svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.social-link.tiktok svg{fill:currentColor;stroke:none}
+.welcome-copy{margin-top:22px;color:#aaa;font-size:10px}
+.app-header{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #eee;padding:13px 15px}
+.header-inner{max-width:1100px;margin:auto;display:flex;align-items:center;justify-content:space-between}
+.brand{font-weight:900;font-size:19px}
+.header-actions{display:flex;gap:8px;align-items:center}
+.logout-btn{border:1px solid #ddd;background:#fff;border-radius:11px;padding:9px 10px;font-weight:bold;font-size:11px}
+.cart-header-btn{border:1px solid #ddd;background:#fff;border-radius:11px;padding:9px 12px;font-weight:bold}
+.cart-count{background:#111;color:#fff;border-radius:20px;padding:2px 6px;margin-left:3px}
+.main{max-width:1100px;margin:auto;padding:18px 15px 110px}
+.customer-info{background:#fff;border:1px solid #eee;border-radius:15px;padding:14px;margin-bottom:18px}
+.customer-info-title{font-weight:900;font-size:14px;margin-bottom:6px}
+.customer-info-text{color:#666;font-size:12px}
+.order-layout{display:grid;grid-template-columns:165px 1fr;gap:20px}
+.category-panel{position:sticky;top:75px;height:max-content}
+.category-panel button{width:100%;border:none;background:transparent;padding:13px 11px;border-radius:10px;text-align:left;font-size:12px;font-weight:bold;margin-bottom:4px}
+.category-panel button.active{background:#111;color:#fff}
+.mobile-category{display:none;overflow-x:auto;gap:7px;margin-bottom:15px;scrollbar-width:none}
+.mobile-category button{white-space:nowrap;border:1px solid #ddd;background:#fff;padding:9px 13px;border-radius:20px;font-size:11px;font-weight:bold}
+.mobile-category button.active{background:#111;color:#fff}
+.menu-title{font-size:25px;margin:0 0 15px}
+.menu-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.menu-card{background:#fff;border:1px solid #eee;border-radius:15px;overflow:hidden;position:relative}
+.menu-card.soldout{opacity:.55}
+.menu-card.soldout .menu-image img{filter:grayscale(100%)}
+.menu-image{aspect-ratio:1/.72;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.menu-image img{width:100%;height:100%;object-fit:cover;display:block}
+.menu-image.no-image{font-size:55px;background:#f5f5f5}
+.menu-image .soldout-overlay{position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:15px;letter-spacing:1px;text-align:center;padding:10px}
+.menu-info{padding:12px}
+.menu-name{font-size:14px;font-weight:900;line-height:1.25}
+.menu-desc{color:#888;font-size:10px;margin-top:4px;min-height:25px}
+.menu-bottom{display:flex;justify-content:space-between;align-items:center;gap:7px;margin-top:11px}
+.price{font-size:13px;font-weight:900}
+.add-btn{border:none;background:#111;color:#fff;padding:8px 12px;border-radius:9px;font-size:10px;font-weight:bold}
+.add-btn.disabled{background:#bbb;cursor:not-allowed}
+.cart-floating{position:fixed;z-index:200;bottom:16px;left:50%;transform:translateX(-50%);width:calc(100% - 30px);max-width:500px;border:none;border-radius:15px;background:#111;color:#fff;padding:15px 17px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 8px 25px rgba(0,0,0,.2)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:flex;align-items:flex-end;justify-content:center}
+.product-modal{width:100%;max-width:600px;max-height:94vh;overflow-y:auto;background:#fff;border-radius:22px 22px 0 0;padding:18px}
+.modal-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.close-btn{width:35px;height:35px;border:none;background:#eee;border-radius:50%;font-size:20px}
+.product-preview{height:190px;background:#fff;border-radius:14px;display:flex;justify-content:center;align-items:center;overflow:hidden;margin-bottom:16px}
+.product-preview img{width:100%;height:100%;object-fit:cover}
+.product-preview.no-image{font-size:75px;background:#f1f1f1}
+.product-name-big{font-size:23px;font-weight:900}
+.product-price{color:#666;font-size:12px;margin:5px 0 20px}
+.option-section{margin-bottom:19px}
+.option-title{font-size:13px;font-weight:900;margin-bottom:8px}
+.option-list{display:grid;gap:7px}
+.option-item{display:flex;justify-content:space-between;align-items:center;border:1px solid #ddd;border-radius:10px;padding:11px;cursor:pointer}
+.option-item.selected{border-color:#111;background:#f5f5f5}
+.option-item.soldout{opacity:.4;cursor:not-allowed;background:#f5f5f5}
+.option-item.soldout .option-name{text-decoration:line-through}
+.option-left{display:flex;align-items:center;gap:7px;font-size:12px}
+.option-price{font-size:11px;font-weight:bold}
+.option-soldout-label{font-size:10px;color:#c0392b;font-weight:bold}
+.quantity-box{display:flex;align-items:center;gap:15px}
+.qty-btn{width:38px;height:38px;border:1px solid #ddd;background:#fff;border-radius:10px;font-size:20px}
+.qty-number{min-width:20px;text-align:center;font-weight:900}
+.special-request{width:100%;min-height:80px;border:1px solid #ddd;border-radius:10px;padding:12px;resize:vertical;outline:none;font-size:12px}
+.add-cart-btn{width:100%;border:none;background:#111;color:#fff;padding:16px;border-radius:13px;font-weight:bold;font-size:14px}
+.add-cart-btn.disabled{background:#bbb;cursor:not-allowed}
+.page{max-width:650px;margin:auto;padding:25px 15px 100px}
+.back-btn{border:none;background:transparent;padding:0;font-weight:bold;margin-bottom:20px}
+.page-title{font-size:27px;font-weight:900;margin-bottom:18px}
+.cart-item{background:#fff;border:1px solid #eee;border-radius:14px;padding:14px;margin-bottom:10px}
+.cart-top{display:flex;justify-content:space-between;gap:10px}
+.cart-name{font-weight:900;font-size:14px}
+.cart-price{font-weight:900;font-size:13px}
+.cart-options{color:#777;font-size:10px;line-height:1.6;margin-top:5px}
+.cart-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:9px}
+.remove-btn{border:none;background:#eee;padding:7px 9px;border-radius:8px;font-size:10px}
+.total-box{background:#fff;border:1px solid #eee;border-radius:14px;padding:16px;margin-top:15px}
+.total-row{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px}
+.total-row.final{border-top:1px solid #eee;padding-top:12px;margin-top:10px;font-size:18px;font-weight:900}
+.checkout-btn,.place-order-btn{width:100%;border:none;background:#111;color:#fff;padding:16px;border-radius:13px;font-weight:bold;margin-top:13px}
+.payment-card{background:#fff;border:1px solid #eee;border-radius:14px;padding:16px;margin-top:15px}
+.payment-option{display:flex;align-items:center;gap:9px;border:1px solid #ddd;padding:12px;border-radius:10px;margin-top:8px;font-size:13px;cursor:pointer}
+.qr-box{text-align:center;margin-top:15px}
+.qr-box img{width:220px;max-width:100%;border-radius:10px}
+.table-input{width:100%;padding:14px;border:1px solid #ddd;border-radius:12px;font-size:16px;text-align:center;margin-top:10px;font-weight:bold}
+.status-card{background:#fff;border:1px solid #eee;border-radius:16px;padding:20px}
+.order-number{font-size:32px;font-weight:900;margin:5px 0 8px;text-align:center;letter-spacing:1px}
+.order-number-label{text-align:center;color:#666;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:22px}
+.status-timeline{position:relative;margin:10px 0 20px}
+.status-step{display:flex;align-items:flex-start;gap:14px;position:relative;padding-bottom:22px}
+.status-step:last-child{padding-bottom:0}
+.status-step:not(:last-child)::before{content:"";position:absolute;left:13px;top:30px;bottom:0;width:2px;background:#e0e0e0;transition:background .5s}
+.status-step.done:not(:last-child)::before{background:#22c55e}
+.status-step .status-circle{flex-shrink:0;width:28px;height:28px;border-radius:50%;border:2px solid #ddd;background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;color:#aaa;transition:all .5s;position:relative;z-index:1}
+.status-step.done .status-circle{background:#22c55e;border-color:#22c55e;color:#fff;animation:pop .4s ease}
+.status-step.current .status-circle{background:#f59e0b;border-color:#f59e0b;color:#fff;animation:pulse 1.5s infinite}
+.status-step.done .status-text,.status-step.current .status-text{color:#111;font-weight:bold}
+.status-step .status-text{font-size:13px;color:#aaa;line-height:1.4;padding-top:4px}
+.status-step .status-sub{font-size:10px;color:#999;margin-top:2px;font-weight:normal}
+@keyframes pop{0%{transform:scale(0.5)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.5)}50%{box-shadow:0 0 0 8px rgba(245,158,11,0)}}
+.receipt{background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:20px;margin-top:20px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.receipt-mini{border:1px dashed #bbb;background:#fafafa}
+.receipt-header{text-align:center;margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed #ccc}
+.receipt-header h2{margin:0 0 3px;font-size:20px;font-weight:900;letter-spacing:.5px}
+.receipt-header .address{font-size:10px;color:#666;line-height:1.5;margin-top:6px}
+.receipt-order-num{text-align:center;font-size:26px;font-weight:900;margin:8px 0;letter-spacing:2px;color:#111}
+.receipt-line{border-top:1px dashed #ccc;margin:10px 0}
+.receipt-row{display:flex;justify-content:space-between;margin-bottom:5px;font-size:11px}
+.receipt-row .label{color:#666}
+.receipt-total{display:flex;justify-content:space-between;font-size:16px;font-weight:900;margin-top:8px}
+.receipt-warning{background:#fff3cd;border:1px solid #ffc107;color:#856404;padding:10px;border-radius:8px;font-size:11px;text-align:center;margin-top:12px;font-weight:bold}
+.receipt-success{background:#d1fae5;border:1px solid #22c55e;color:#166534;padding:10px;border-radius:8px;font-size:12px;text-align:center;margin-top:12px;font-weight:bold}
+.receipt-item{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}
+.receipt-item-name{font-weight:bold;font-size:11.5px}
+.receipt-item-price{font-weight:bold;white-space:nowrap;font-size:11.5px}
+.receipt-item-options{color:#777;font-size:10px;line-height:1.5;margin-top:3px}
+.download-btn,.new-order-btn{width:100%;padding:14px;border-radius:12px;font-weight:bold;margin-top:10px;font-size:14px}
+.download-btn{background:#fff;border:2px solid #111;color:#111}
+.new-order-btn{border:none;background:#111;color:#fff}
+.rate-us{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;border:2px solid #4285F4;border-radius:12px;background:#fff;color:#111;text-decoration:none;font-size:13px;font-weight:bold;margin-top:12px}
+.rate-us svg{width:24px;height:24px;flex-shrink:0}
+.footer{text-align:center;padding:30px 15px;color:#888;font-size:11px}
+@media(max-width:650px){
+.order-layout{display:block}
+.category-panel{display:none}
+.mobile-category{display:flex}
+.menu-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.menu-info{padding:10px}
+.menu-name{font-size:12px}
+.menu-desc{font-size:9px}
+.price{font-size:11px}
+.add-btn{padding:7px 9px;font-size:9px}
+.welcome-title{font-size:32px}
+}
+</style>
+</head>
+<body>
+
+<section id="welcome-page">
+<div class="welcome-box">
+<img class="welcome-logo" src="https://cdn.phototourl.com/free/2026-09-20-34e97ec4-2e83-4024-be24-0ac4468494d6.jpg" alt="NIKOPI">
+<div class="welcome-title">NIKOPI</div>
+<div id="welcome-subtitle" class="welcome-subtitle">Kopi, makanan & suasana yang best.</div>
+<input id="welcome-name" class="welcome-input" type="text" placeholder="Masukkan nama anda">
+<div class="language-title">LANGUAGE / BAHASA</div>
+<div class="language-buttons">
+<button id="lang-ms" class="active" type="button" onclick="setLanguage('ms')">Bahasa Melayu</button>
+<button id="lang-en" type="button" onclick="setLanguage('en')">English</button>
+</div>
+<button id="start-btn" class="start-btn" type="button" onclick="startOrder()">MULA ORDER</button>
+<div class="social-links">
+<a class="social-link" href="https://www.instagram.com/ni.kopi_" target="_blank" rel="noopener noreferrer">
+<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="1"></circle></svg>
+Instagram
+</a>
+<a class="social-link" href="https://www.threads.com/@ni.kopi_" target="_blank" rel="noopener noreferrer">
+<svg viewBox="0 0 24 24"><path d="M12 3c-4.9 0-8 3.1-8 8.1C4 17.1 7.1 21 12 21c4.4 0 7-2.3 7-5.8 0-3.2-2.2-5.2-5.8-5.4-2.9-.2-4.8.7-4.8 2.5 0 1.5 1.2 2.4 3.1 2.4 2.8 0 5.1-1.8 5.1-5.2C16.6 5.9 14.8 4 12 4c-2.5 0-4.1 1.3-4.7 3.1"></path></svg>
+Threads
+</a>
+<a class="social-link tiktok" href="https://www.tiktok.com/@ni.kopi_" target="_blank" rel="noopener noreferrer">
+<svg viewBox="0 0 24 24"><path d="M16.5 3c.5 2.8 2.1 4.5 4.5 4.8v3.2c-1.7-.1-3.2-.6-4.5-1.5v6.7c0 3.7-3 5.8-6.2 5.8C7.2 22 5 19.9 5 16.8c0-3.3 2.5-5.8 5.8-5.8.5 0 1 .1 1.5.2-0.5-0.2-1-.3-1.5-.3-1.3 0-2.3.9-2.3 2.4 0 1.3.9 2.2 2.2 2.2 1.5 0 2.8-.9 2.8-3.1V3h3z"></path></svg>
+TikTok
+</a>
+</div>
+<div class="welcome-copy">© 2026 NIKOPI</div>
+</div>
+</section>
+
+<div id="app" class="hidden">
+<header class="app-header">
+<div class="header-inner">
+<div class="brand">NIKOPI</div>
+<div class="header-actions">
+<button class="logout-btn" type="button" onclick="logoutCustomer()" title="Tukar Nama">🔄 Nama</button>
+<button class="cart-header-btn" type="button" onclick="openCart()">🛒 <span id="header-cart-count" class="cart-count">0</span></button>
+</div>
+</div>
+</header>
+
+<section id="menu-page">
+<main class="main">
+<div class="customer-info">
+<div id="customer-info-title" class="customer-info-title">Selamat Datang</div>
+<div id="customer-display" class="customer-info-text"></div>
+</div>
+<div id="mobile-category" class="mobile-category"></div>
+<div class="order-layout">
+<aside id="category-panel" class="category-panel"></aside>
+<section>
+<h1 id="menu-title" class="menu-title">COFFEE</h1>
+<div id="menu-grid" class="menu-grid"></div>
+</section>
+</div>
+</main>
+</section>
+
+<section id="cart-page" class="page hidden">
+<button id="cart-back" class="back-btn" type="button" onclick="showMenu()">← Kembali ke Menu</button>
+<div id="cart-title" class="page-title">Cart Anda</div>
+<div id="cart-items"></div>
+<div id="cart-empty" class="hidden" style="text-align:center;padding:50px 20px;color:#777">Cart anda kosong.</div>
+<div id="cart-total-box" class="total-box hidden">
+<div class="total-row"><span id="cart-subtotal-label">Jumlah kecil</span><strong id="cart-subtotal">RM0.00</strong></div>
+<div class="total-row final"><span id="cart-total-label">Jumlah</span><strong id="cart-total">RM0.00</strong></div>
+<button id="checkout-btn" class="checkout-btn" type="button" onclick="openCheckout()">Checkout</button>
+</div>
+</section>
+
+<section id="checkout-page" class="page hidden">
+<button id="checkout-back" class="back-btn" type="button" onclick="openCart()">← Kembali ke Cart</button>
+<div id="checkout-title" class="page-title">Checkout</div>
+<div id="checkout-items"></div>
+<div class="total-box">
+<div class="total-row"><span id="checkout-subtotal-label">Jumlah kecil</span><strong id="checkout-subtotal">RM0.00</strong></div>
+<div class="total-row final"><span id="checkout-total-label">Jumlah</span><strong id="checkout-total">RM0.00</strong></div>
+</div>
+<div class="payment-card">
+<h3 id="payment-title">Kaedah Pembayaran</h3>
+<label class="payment-option"><input type="radio" name="payment" onchange="selectPayment('Cash')">💵 <span id="cash-label">Tunai</span></label>
+<label class="payment-option"><input type="radio" name="payment" onchange="selectPayment('DuitNow QR')">📱 <span id="qr-label">DuitNow QR</span></label>
+<div id="qr-payment" class="qr-box hidden">
+<p id="qr-text">Scan DuitNow QR untuk bayar</p>
+<img src="https://cdn.phototourl.com/free/2026-09-20-0220995b-d93e-4068-b464-44cc50c06b4d.jpg" alt="DuitNow QR">
+</div>
+</div>
+<div class="payment-card">
+<h3 id="table-title">Nombor Meja</h3>
+<input id="table-input" class="table-input" type="number" placeholder="Contoh: 3" min="1" max="99">
+</div>
+<button id="place-order-btn" class="place-order-btn" type="button" onclick="placeOrder()">HANTAR ORDER</button>
+</section>
+
+<section id="status-page" class="page hidden">
+<div id="status-page-title" class="page-title">Status Order</div>
+<div class="status-card">
+<div class="order-number-label">Nombor Order</div>
+<div id="status-order-number" class="order-number">#---</div>
+<div class="status-timeline">
+<div id="step-1" class="status-step done"><div class="status-circle">✓</div><div class="status-text">Order Diterima<div class="status-sub">Pesanan anda telah dihantar</div></div></div>
+<div id="step-2" class="status-step done"><div class="status-circle">✓</div><div class="status-text">Payment Done<div class="status-sub">Pembayaran telah dipilih</div></div></div>
+<div id="step-3" class="status-step current"><div class="status-circle">3</div><div class="status-text">Pending Approval<div class="status-sub">Sila ke kaunter & tunjuk resit</div></div></div>
+<div id="step-4" class="status-step"><div class="status-circle">4</div><div class="status-text">Preparing<div class="status-sub">Pesanan sedang disediakan</div></div></div>
+<div id="step-5" class="status-step"><div class="status-circle">5</div><div class="status-text">Ready<div class="status-sub">Sila ambil di kaunter</div></div></div>
+</div>
+<div id="receipt-container"></div>
+<button id="download-receipt-btn" class="download-btn" type="button" onclick="downloadReceiptPDF()" style="display:none">📄 Muat Turun Resit PDF</button>
+<a id="rate-us-btn" class="rate-us" href="https://maps.app.goo.gl/NWN6nss5b6ZhC3fM6?g_st=ic" target="_blank" rel="noopener noreferrer" style="display:none">
+<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M24 4C14.6 4 7 11.6 7 21c0 12.4 17 23 17 23s17-10.6 17-23C41 11.6 33.4 4 24 4z"></path><circle cx="24" cy="21" r="8" fill="#fff"></circle><circle cx="24" cy="21" r="4" fill="#EA4335"></circle></svg>
+<span>⭐ Rate Us on Google Maps</span>
+</a>
+<button id="new-order-btn" class="new-order-btn" type="button" onclick="newOrder()" style="display:none">ORDER BARU</button>
+</div>
+</section>
+
+<button id="cart-floating" class="cart-floating hidden" type="button" onclick="openCart()">
+<strong id="floating-cart-title">🛒 Lihat Cart</strong>
+<span id="floating-cart-info">0 item · RM0.00</span>
+</button>
+
+<footer class="footer">NIKOPI © 2026</footer>
+</div>
+
+<div id="product-overlay" class="overlay hidden">
+<div class="product-modal">
+<div class="modal-top">
+<strong id="customize-title">Pilih Pilihan</strong>
+<button class="close-btn" type="button" onclick="closeProduct()">×</button>
+</div>
+<div id="product-preview" class="product-preview"></div>
+<div id="product-name" class="product-name-big"></div>
+<div id="product-price" class="product-price"></div>
+
+<div id="variant-section" class="option-section hidden">
+<div id="variant-title" class="option-title">Pilihan</div>
+<div id="variant-list" class="option-list"></div>
+</div>
+
+<div id="sugar-section" class="option-section">
+<div id="sugar-title" class="option-title">Gula</div>
+<div class="option-list">
+<div class="option-item selected" onclick="selectOption('sugar','Regular Sugar',0,this)"><div class="option-left"><input type="radio" name="sugar" checked><span id="sugar-regular-text">Regular Sugar</span></div><div class="option-price">+RM0</div></div>
+<div class="option-item" onclick="selectOption('sugar','Less Sugar',0,this)"><div class="option-left"><input type="radio" name="sugar"><span id="sugar-less-text">Less Sugar</span></div><div class="option-price">+RM0</div></div>
+<div class="option-item" onclick="selectOption('sugar','No Sugar',0,this)"><div class="option-left"><input type="radio" name="sugar"><span id="sugar-none-text">No Sugar</span></div><div class="option-price">+RM0</div></div>
+</div>
+</div>
+
+<div id="milk-section" class="option-section">
+<div id="milk-title" class="option-title">Susu</div>
+<div class="option-list">
+<div class="option-item selected" onclick="selectOption('milk','Dairy Milk',0,this)"><div class="option-left"><input type="radio" name="milk" checked><span id="dairy-milk-text">Dairy Milk</span></div><div class="option-price">+RM0</div></div>
+<div class="option-item" onclick="selectOption('milk','Oatside',3,this)"><div class="option-left"><input type="radio" name="milk"><span>Oatside</span></div><div class="option-price">+RM3</div></div>
+</div>
+</div>
+
+<div id="temperature-section" class="option-section">
+<div id="temperature-title" class="option-title">Suhu</div>
+<div class="option-list">
+<div class="option-item selected" onclick="selectOption('temperature','Hot',0,this)"><div class="option-left"><input type="radio" name="temperature" checked><span>🔥 Panas</span></div><div class="option-price">+RM0</div></div>
+<div class="option-item" onclick="selectOption('temperature','Iced',0,this)"><div class="option-left"><input type="radio" name="temperature"><span>🧊 Ais</span></div><div class="option-price">+RM0</div></div>
+</div>
+</div>
+
+<div id="shot-section" class="option-section">
+<div id="shot-title" class="option-title">Extra Shot</div>
+<div class="option-list">
+<div class="option-item selected" onclick="selectOption('shot','No Extra Shot',0,this)"><div class="option-left"><input type="radio" name="shot" checked><span id="no-shot-text">Tiada Extra Shot</span></div><div class="option-price">+RM0</div></div>
+<div class="option-item" onclick="selectOption('shot','Extra Shot',4,this)"><div class="option-left"><input type="radio" name="shot"><span id="extra-shot-text">Extra Shot</span></div><div class="option-price">+RM4</div></div>
+</div>
+</div>
+
+<div id="syrup-section" class="option-section">
+<div id="syrup-title" class="option-title">Extra Syrup</div>
+<div class="option-list">
+<div class="option-item selected" onclick="selectOption('syrup','No Extra Syrup',0,this)"><div class="option-left"><input type="radio" name="syrup" checked><span id="no-syrup-text">Tiada Extra Syrup</span></div><div class="option-price">+RM0</div></div>
+<div class="option-item" onclick="selectOption('syrup','Extra Syrup',2,this)"><div class="option-left"><input type="radio" name="syrup"><span id="extra-syrup-text">Extra Syrup</span></div><div class="option-price">+RM2</div></div>
+</div>
+</div>
+
+<div class="option-section">
+<div id="quantity-title" class="option-title">Kuantiti</div>
+<div class="quantity-box">
+<button class="qty-btn" type="button" onclick="changeProductQty(-1)">−</button>
+<div id="product-quantity" class="qty-number">1</div>
+<button class="qty-btn" type="button" onclick="changeProductQty(1)">+</button>
+</div>
+</div>
+
+<div class="option-section">
+<div id="request-title" class="option-title">Permintaan Khas</div>
+<textarea id="special-request" class="special-request" placeholder="Ada apa-apa permintaan khas?"></textarea>
+</div>
+
+<button class="add-cart-btn" type="button" onclick="addToCart()">
+<span id="add-cart-text">TAMBAH KE CART</span> · <span id="add-cart-price">RM0.00</span>
+</button>
+
+</div>
+</div>
+
+<script>
+var firebaseConfig = {
+apiKey: "AIzaSyA55AmYlP7nPaAXavrFsU5G4GnQtB2Bqc",
+authDomain: "nikopi-operation.firebaseapp.com",
+databaseURL: "https://nikopi-operation-default-rtdb.asia-southeast1.firebasedatabase.app",
+projectId: "nikopi-operation",
+storageBucket: "nikopi-operation.firebasestorage.app",
+messagingSenderId: "922893888263",
+appId: "1:922893888263:web:2c113a2db29960044e73a2",
+measurementId: "G-WGEZB8BFW0"
+};
+
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+
+var SHOP = {
+name: "NIKOPI COFFEE SHOP",
+address1: "1-2, E-Boulevard Phase E1-3",
+address2: "Jln Elektron G U16/G",
+address3: "Denai Alam, 40160 Shah Alam",
+address4: "Selangor"
+};
+
+var cart = [];
+var selectedCategory = "COFFEE";
+var selectedPayment = "";
+var selectedLanguage = "ms";
+var selectedProduct = null;
+var productQuantity = 1;
+var unsubscribeOrder = null;
+var unsubscribeStock = null;
+var currentOrderFirebaseId = null;
+var lastOrderData = null;
+var selectedVariant = null;
+var animationTimers = [];
+var stockFromFirebase = null;
+
+var selectedOptions = {
+sugar:{name:"Regular Sugar",price:0},
+milk:{name:"Dairy Milk",price:0},
+temperature:{name:"Hot",price:0},
+shot:{name:"No Extra Shot",price:0},
+syrup:{name:"No Extra Syrup",price:0}
+};
+
+var IMG = {
+espresso: "https://img.sanishtech.com/u/4d5b867c5a75fa9adb6ffb93c324a096.jpeg",
+americano: "https://img.sanishtech.com/u/f815322a7c42beedfeacff57a1d08cf0.jpeg",
+kokoCrunch: "https://cdn.phototourl.com/free/2026-09-21-1d6c8b9a-37d3-45b7-853a-d8748ffff618.png",
+miniCroissant: "https://cdn.phototourl.com/free/2026-09-21-83f95755-fa3f-4092-9747-473d477241e0.png",
+ramen: "https://cdn.phototourl.com/free/2026-09-21-da3b4053-b2d9-448c-a7e4-0e0436f0bfa4.jpg",
+indoMee: "https://cdn.phototourl.com/free/2026-09-21-dcb536c1-bf8c-4ef5-85de-a74232452f18.png",
+hardBoiledEgg: "https://img.sanishtech.com/u/6de190016092722b3a2c25fa907159ec.jpeg",
+kayaNutellaToast: "https://img.sanishtech.com/u/bb40a8294c655e4b890113a41443a16d.png",
+addonSyrup: "https://img.sanishtech.com/u/2c36c17a08b928159cbe943f1c764ab7.png",
+addonShot: "https://img.sanishtech.com/u/3c86d83e15908460e9a5c643dae92f01.png",
+maggieCup: "https://img.sanishtech.com/u/d222d91a5c6c25bcb6e42ff630bb2e29.png",
+addonOatside: "https://img.sanishtech.com/u/00613585e0d27bdb917e92e1e408157a.jpeg",
+iceWater: "https://img.sanishtech.com/u/dd19ac38b4448a1b309204d6fc2277ca.png",
+flavoredLatte: "https://img.sanishtech.com/u/73cd54950bec01203629ca4e5b1bf4fd.png",
+classicLatte: "https://img.sanishtech.com/u/2a6e1b9216dc86182c3c4ec5edb51063.png",
+kayaEggSet: "https://img.sanishtech.com/u/38c1cb6af0786024d1feb2e92a2580e7.png",
+icedChoc: "https://img.sanishtech.com/u/5354a3c4e141d6126ba1bef3b5359b44.jpeg",
+mocha: "https://img.sanishtech.com/u/d34ac4c96ae68855b95e6fb8e67993aa.jpeg",
+bagel: "https://img.sanishtech.com/u/605c4597d8f69f71e58e45a5eeb10085.jpeg",
+sparklingAmericano: "https://img.sanishtech.com/u/cbb59ce14deba3f77f70fce7aa4488ca.jpeg",
+sparklingYuzu: "https://img.sanishtech.com/u/6a8701582c4ba4e1d7ceff0ac21ac168.jpeg",
+sparklingRibena: "https://img.sanishtech.com/u/0f2cc2529efd176aef358e11174e93b1.jpeg",
+ribena: "https://img.sanishtech.com/u/e41a3a49dc6b26ada05bb0f060354cb2.jpeg",
+appleFiber: "https://img.sanishtech.com/u/529098e5e7f53426dc51ea1ccb243919.jpeg",
+addonMilk: "https://img.sanishtech.com/u/eac2bac4baf9c7ba4dcb8cf221979f94.jpeg",
+cookies: "https://img.sanishtech.com/u/60056bf703e1caf10bcacef353725a9f.jpeg",
+matcha: "https://img.sanishtech.com/u/ea672fe05bcbc68e7973de91660b13fb.jpeg",
+strawberryMatcha: "https://img.sanishtech.com/u/2806769c1817a47b220526fad952e3e8.jpeg"
+};
+
+var menuItems = [
+{ id:"coffee-1", name:"Cinnamon Latte", category:"COFFEE", price:15, emoji:"☕", image:IMG.flavoredLatte, description:"Latte with cinnamon.", customization:{sugar:false,milk:true,temperature:true,extraShot:true,extraSyrup:true} },
+{ id:"coffee-2", name:"Spanish Latte", category:"COFFEE", price:15, emoji:"☕", image:IMG.flavoredLatte, description:"Creamy Spanish-style latte.", customization:{sugar:true,milk:true,temperature:true,extraShot:true,extraSyrup:false} },
+{ id:"coffee-3", name:"Hazelnut Latte", category:"COFFEE", price:15, emoji:"☕", image:IMG.flavoredLatte, description:"Latte with hazelnut.", customization:{sugar:false,milk:true,temperature:true,extraShot:true,extraSyrup:true} },
+{ id:"coffee-4", name:"Caramel Latte", category:"COFFEE", price:15, emoji:"☕", image:IMG.flavoredLatte, description:"Latte with caramel.", customization:{sugar:false,milk:true,temperature:true,extraShot:true,extraSyrup:true} },
+{ id:"coffee-5", name:"Cafe Latte / Flat White", category:"COFFEE", price:12, emoji:"☕", image:IMG.classicLatte, description:"Classic espresso with milk.", customization:{sugar:true,milk:true,temperature:true,extraShot:true,extraSyrup:false} },
+{ id:"coffee-6", name:"Cappuccino", category:"COFFEE", price:12, emoji:"☕", image:IMG.classicLatte, description:"Espresso, milk and foam.", customization:{sugar:true,milk:true,temperature:true,extraShot:true,extraSyrup:false} },
+{ id:"coffee-7", name:"Americano / Long Black", category:"COFFEE", price:10, emoji:"☕", image:IMG.americano, description:"Espresso with water.", customization:{sugar:true,milk:false,temperature:true,extraShot:true,extraSyrup:false} },
+{ id:"coffee-8", name:"Sparkling Americano", category:"COFFEE", price:12, emoji:"🥤", image:IMG.sparklingAmericano, description:"Espresso with sparkling water.", customization:{sugar:false,milk:false,temperature:false,extraShot:true,extraSyrup:false} },
+{ id:"coffee-9", name:"Mocha", category:"COFFEE", price:17, emoji:"🍫", image:IMG.mocha, description:"Chocolate and espresso.", customization:{sugar:true,milk:true,temperature:true,extraShot:true,extraSyrup:false} },
+{ id:"coffee-10", name:"Espresso", category:"COFFEE", price:5, emoji:"☕", image:IMG.espresso, description:"Single espresso shot.", customization:{sugar:false,milk:false,temperature:false,extraShot:false,extraSyrup:false} },
+{ id:"noncoffee-1", name:"Chocolate", category:"NON COFFEE", price:12, emoji:"🍫", image:IMG.icedChoc, description:"Rich chocolate drink.", customization:{sugar:true,milk:true,temperature:true,extraShot:false,extraSyrup:false} },
+{ id:"noncoffee-2", name:"Chocolate Hazelnut", category:"NON COFFEE", price:14, emoji:"🍫", image:IMG.icedChoc, description:"Chocolate with hazelnut.", customization:{sugar:false,milk:true,temperature:true,extraShot:false,extraSyrup:true} },
+{ id:"noncoffee-3", name:"Sparkling Yuzu", category:"NON COFFEE", price:14, emoji:"🍋", image:IMG.sparklingYuzu, description:"Refreshing sparkling yuzu.", customization:{sugar:false,milk:false,temperature:false,extraShot:false,extraSyrup:false} },
+{ id:"noncoffee-4", name:"Sparkling Ribena", category:"NON COFFEE", price:10, emoji:"🥤", image:IMG.sparklingRibena, description:"Sparkling Ribena.", customization:{sugar:false,milk:false,temperature:false,extraShot:false,extraSyrup:false} },
+{ id:"noncoffee-5", name:"Ribena", category:"NON COFFEE", price:6, emoji:"🥤", image:IMG.ribena, description:"Classic Ribena.", customization:{sugar:false,milk:false,temperature:false,extraShot:false,extraSyrup:false} },
+{ id:"noncoffee-6", name:"Belgium Choc With Apple Fiber", category:"NON COFFEE", price:10, emoji:"🍫", image:IMG.appleFiber, description:"Belgian chocolate with apple fiber.", customization:{sugar:true,milk:true,temperature:true,extraShot:false,extraSyrup:false} },
+{ id:"matcha-1", name:"Matcha Latte", category:"MATCHA", price:15, emoji:"🍵", image:IMG.matcha, description:"Matcha with creamy milk.", customization:{sugar:true,milk:true,temperature:true,extraShot:false,extraSyrup:false} },
+{ id:"matcha-2", name:"Matcha Strawberry", category:"MATCHA", price:17, emoji:"🍓", image:IMG.strawberryMatcha, description:"Matcha with strawberry.", customization:{sugar:true,milk:true,temperature:true,extraShot:false,extraSyrup:false} },
+{ id:"cookie-1", name:"Cookies", category:"SOFT COOKIES", price:11.90, emoji:"🍪", image:IMG.cookies, description:"Pilih jenis cookies.", customization:{}, variants:{ title:"Jenis Cookies", type:"price", options:[ {name:"Classic Choc Chip",price:11.90,id:"cookie-1"}, {name:"S'mores",price:12.90,id:"cookie-1-s"}, {name:"Red Velvet Cheesecake",price:14.90,id:"cookie-1-r"} ] } },
+{ id:"cookie-4", name:"Add On Milk", category:"SOFT COOKIES", price:3, emoji:"🥛", image:IMG.addonMilk, description:"Milk add-on.", customization:{} },
+{ id:"bites-1", name:"Bagel With Cream Cheese", category:"BITES", price:12, emoji:"🥯", image:IMG.bagel, description:"Pilih jenis bagel.", customization:{}, variants:{ title:"Jenis Roti", type:"option", options:[ {name:"Poppy seed",price:0,id:"bites-1-p"}, {name:"Sesame",price:0,id:"bites-1-s"}, {name:"Garlic",price:0,id:"bites-1-g"}, {name:"Plain",price:0,id:"bites-1-pl"} ] } },
+{ id:"bites-2", name:"Mini Croissant", category:"BITES", price:6, emoji:"🥐", image:IMG.miniCroissant, description:"Mini buttery croissant.", customization:{} },
+{ id:"bites-3", name:"Koko Crunch With Milk", category:"BITES", price:5, emoji:"🥣", image:IMG.kokoCrunch, description:"Koko Crunch with milk.", customization:{} },
+{ id:"bites-4", name:"Ramen", category:"BITES", price:9, emoji:"🍜", image:IMG.ramen, description:"Pilih jenis ramen.", customization:{}, variants:{ title:"Jenis Ramen", type:"option", options:[ {name:"Carbonara",price:0,id:"bites-4-c"}, {name:"Quattro Cheese",price:0,id:"bites-4-q"} ] } },
+{ id:"bites-5", name:"Kaya Toast With Hard Boiled Egg", category:"BITES", price:7, emoji:"🍞", image:IMG.kayaEggSet, description:"Kaya toast with hard boiled egg.", customization:{} },
+{ id:"bites-6", name:"Kaya Toast", category:"BITES", price:5.50, emoji:"🍞", image:IMG.kayaNutellaToast, description:"Classic kaya toast.", customization:{} },
+{ id:"bites-7", name:"Nutella Toast", category:"BITES", price:5.50, emoji:"🍞", image:IMG.kayaNutellaToast, description:"Toast with Nutella.", customization:{} },
+{ id:"bites-8", name:"Maggie Cup", category:"BITES", price:4.50, emoji:"🍜", image:IMG.maggieCup, description:"Maggie cup noodles.", customization:{} },
+{ id:"bites-9", name:"Indo Mee", category:"BITES", price:6, emoji:"🍜", image:IMG.indoMee, description:"Indo Mee.", customization:{} },
+{ id:"bites-10", name:"Hard Boiled Egg", category:"BITES", price:2, emoji:"🥚", image:IMG.hardBoiledEgg, description:"Hard boiled egg.", customization:{} },
+{ id:"addon-1", name:"Oatmilk", category:"ADD ON", price:3, emoji:"🥛", image:IMG.addonOatside, description:"Oatmilk add-on.", customization:{} },
+{ id:"addon-2", name:"Extra Shot", category:"ADD ON", price:4, emoji:"☕", image:IMG.addonShot, description:"Additional espresso shot.", customization:{} },
+{ id:"addon-3", name:"Extra Syrup", category:"ADD ON", price:2, emoji:"🍯", image:IMG.addonSyrup, description:"Additional syrup.", customization:{} },
+{ id:"addon-4", name:"Ice Water", category:"ADD ON", price:2, emoji:"💧", image:IMG.iceWater, description:"Ice water.", customization:{} }
+];
+
+var categories = ["COFFEE","NON COFFEE","MATCHA","SOFT COOKIES","BITES","ADD ON"];
+
+var categoryTranslations = {
+ms:{"COFFEE":"KOPI","NON COFFEE":"BUKAN KOPI","MATCHA":"MATCHA","SOFT COOKIES":"SOFT COOKIES","BITES":"MAKANAN RINGAN","ADD ON":"TAMBAHAN"},
+en:{"COFFEE":"COFFEE","NON COFFEE":"NON COFFEE","MATCHA":"MATCHA","SOFT COOKIES":"SOFT COOKIES","BITES":"BITES","ADD ON":"ADD ON"}
+};
+
+var translations = {
+ms:{
+welcomeSubtitle:"Kopi, makanan & suasana yang best.",
+namePlaceholder:"Masukkan nama anda",
+start:"MULA ORDER",
+welcome:"Selamat Datang",
+floatingCart:"🛒 Lihat Cart",
+backMenu:"← Kembali ke Menu",
+backCart:"← Kembali ke Cart",
+cart:"Cart Anda",
+checkout:"Checkout",
+subtotal:"Jumlah kecil",
+total:"Jumlah",
+emptyCart:"Cart anda kosong.",
+remove:"Buang",
+quantity:"Kuantiti",
+paymentMethod:"Kaedah Pembayaran",
+cash:"Tunai",
+qr:"DuitNow QR",
+scanQR:"Scan DuitNow QR untuk bayar",
+placeOrder:"HANTAR ORDER",
+customize:"Pilih Pilihan",
+sugar:"Gula",
+regularSugar:"Regular Sugar",
+lessSugar:"Less Sugar",
+noSugar:"No Sugar",
+milk:"Susu",
+dairyMilk:"Dairy Milk",
+temperature:"Suhu",
+hot:"🔥 Panas",
+iced:"🧊 Ais",
+extraShot:"Extra Shot",
+noExtraShot:"No Extra Shot",
+extraSyrup:"Extra Syrup",
+noExtraSyrup:"No Extra Syrup",
+quantityTitle:"Kuantiti",
+specialRequest:"Permintaan Khas",
+specialPlaceholder:"Ada apa-apa permintaan khas?",
+addCart:"TAMBAH KE CART",
+status:"Status Order",
+orderNumber:"Nombor Order",
+download:"📄 Muat Turun Resit PDF",
+newOrder:"ORDER BARU",
+paymentMissing:"Sila pilih kaedah pembayaran.",
+nameMissing:"Sila masukkan nama anda.",
+table:"Masukkan nombor meja:",
+cartEmptyAlert:"Cart anda kosong.",
+orderFailed:"Order gagal. Sila cuba lagi.",
+receiptMissing:"Resit tidak tersedia.",
+pdfMissing:"Sistem PDF belum siap.",
+tableMissing:"Sila masukkan nombor meja."
+},
+en:{
+welcomeSubtitle:"Coffee, bites & good vibes.",
+namePlaceholder:"Enter your name",
+start:"START ORDER",
+welcome:"Welcome",
+floatingCart:"🛒 View Cart",
+backMenu:"← Back to Menu",
+backCart:"← Back to Cart",
+cart:"Your Cart",
+checkout:"Checkout",
+subtotal:"Subtotal",
+total:"Total",
+emptyCart:"Your cart is empty.",
+remove:"Remove",
+quantity:"Quantity",
+paymentMethod:"Payment Method",
+cash:"Cash",
+qr:"DuitNow QR",
+scanQR:"Scan DuitNow QR to pay",
+placeOrder:"PLACE ORDER",
+customize:"Customize",
+sugar:"Sugar",
+regularSugar:"Regular Sugar",
+lessSugar:"Less Sugar",
+noSugar:"No Sugar",
+milk:"Milk",
+dairyMilk:"Dairy Milk",
+temperature:"Temperature",
+hot:"🔥 Hot",
+iced:"🧊 Iced",
+extraShot:"Extra Shot",
+noExtraShot:"No Extra Shot",
+extraSyrup:"Extra Syrup",
+noExtraSyrup:"No Extra Syrup",
+quantityTitle:"Quantity",
+specialRequest:"Special Request",
+specialPlaceholder:"Anything you want us to know?",
+addCart:"ADD TO CART",
+status:"Order Status",
+orderNumber:"Order Number",
+download:"📄 Download Receipt PDF",
+newOrder:"NEW ORDER",
+paymentMissing:"Please select a payment method.",
+nameMissing:"Please enter your name.",
+table:"Enter your table number:",
+cartEmptyAlert:"Your cart is empty.",
+orderFailed:"Order failed. Please try again.",
+receiptMissing:"Receipt not available.",
+pdfMissing:"PDF system not ready.",
+tableMissing:"Please enter your table number."
+}
+};
+
+function t(key){ return translations[selectedLanguage] && translations[selectedLanguage][key] ? translations[selectedLanguage][key] : (translations.en[key] || key); }
+function setText(id,key){ var el=document.getElementById(id); if(el){el.textContent=t(key);} }
+function setLanguage(language){ selectedLanguage=language; localStorage.setItem("ngopiLanguage",selectedLanguage); applyLanguage(); }
+
+function applyLanguage(){
+document.documentElement.lang = selectedLanguage==="ms" ? "ms" : "en";
+var msButton=document.getElementById("lang-ms");
+var enButton=document.getElementById("lang-en");
+if(msButton){msButton.classList.toggle("active",selectedLanguage==="ms");}
+if(enButton){enButton.classList.toggle("active",selectedLanguage==="en");}
+setText("welcome-subtitle","welcomeSubtitle");
+var nameInput=document.getElementById("welcome-name");
+if(nameInput){nameInput.placeholder=t("namePlaceholder");}
+setText("start-btn","start");
+setText("customer-info-title","welcome");
+setText("cart-title","cart");
+setText("cart-back","backMenu");
+setText("cart-subtotal-label","subtotal");
+setText("cart-total-label","total");
+setText("checkout-btn","checkout");
+setText("checkout-back","backCart");
+setText("checkout-title","checkout");
+setText("checkout-subtotal-label","subtotal");
+setText("checkout-total-label","total");
+setText("payment-title","paymentMethod");
+setText("cash-label","cash");
+setText("qr-label","qr");
+setText("qr-text","scanQR");
+setText("place-order-btn","placeOrder");
+setText("status-page-title","status");
+setText("download-receipt-btn","download");
+setText("new-order-btn","newOrder");
+setText("customize-title","customize");
+setText("sugar-title","sugar");
+setText("sugar-regular-text","regularSugar");
+setText("sugar-less-text","lessSugar");
+setText("sugar-none-text","noSugar");
+setText("milk-title","milk");
+setText("dairy-milk-text","dairyMilk");
+setText("temperature-title","temperature");
+var tempItems=document.querySelectorAll("#temperature-section .option-item");
+if(tempItems.length>=2){
+var hotSpan=tempItems[0].querySelector(".option-left span");
+var icedSpan=tempItems[1].querySelector(".option-left span");
+if(hotSpan)hotSpan.textContent=t("hot");
+if(icedSpan)icedSpan.textContent=t("iced");
+}
+setText("shot-title","extraShot");
+setText("no-shot-text","noExtraShot");
+setText("extra-shot-text","extraShot");
+setText("syrup-title","extraSyrup");
+setText("no-syrup-text","noExtraSyrup");
+setText("extra-syrup-text","extraSyrup");
+setText("quantity-title","quantityTitle");
+setText("request-title","specialRequest");
+setText("add-cart-text","addCart");
+var request=document.getElementById("special-request");
+if(request){request.placeholder=t("specialPlaceholder");}
+setText("floating-cart-title","floatingCart");
+var tableInput=document.getElementById("table-input");
+if(tableInput){tableInput.placeholder=selectedLanguage==="ms"?"Contoh: 3":"Example: 3";}
+renderCategories();
+renderMenu();
+updateCartUI();
+if(!document.getElementById("cart-page").classList.contains("hidden")){renderCart();}
+if(!document.getElementById("checkout-page").classList.contains("hidden")){renderCheckout();}
+if(selectedProduct){updateProductPrice();}
+}
+
+function startOrder(){
+var nameInput=document.getElementById("welcome-name");
+var name=nameInput.value.trim();
+if(!name){alert(t("nameMissing"));nameInput.focus();return;}
+localStorage.setItem("ngopiCustomerName",name);
+localStorage.setItem("ngopiLanguage",selectedLanguage);
+enterApp(name);
+}
+
+function enterApp(name){
+document.getElementById("welcome-page").classList.add("hidden");
+document.getElementById("app").classList.remove("hidden");
+document.getElementById("customer-display").textContent=name;
+applyLanguage();
+showMenu();
+}
+
+function logoutCustomer(){
+var ok=confirm("Tukar nama customer? Order & cart akan direset.");
+if(!ok)return;
+localStorage.removeItem("ngopiCustomerName");
+localStorage.removeItem("ngopiCart");
+localStorage.removeItem("ngopiCurrentOrder");
+cart=[];
+saveCart();
+updateCartUI();
+if(unsubscribeOrder){unsubscribeOrder();unsubscribeOrder=null;}
+currentOrderFirebaseId=null;
+lastOrderData=null;
+document.getElementById("welcome-name").value="";
+document.getElementById("welcome-page").classList.remove("hidden");
+document.getElementById("app").classList.add("hidden");
+document.getElementById("product-overlay").classList.add("hidden");
+}
+
+function loadStockRealtime(){
+if(unsubscribeStock){unsubscribeStock();}
+unsubscribeStock=db.collection("settings").doc("menu").onSnapshot(function(doc){
+if(doc.exists && doc.data().categories){
+stockFromFirebase=doc.data().categories;
+}else{
+stockFromFirebase=null;
+}
+renderMenu();
+},function(error){
+console.error("Stock error:",error);
+stockFromFirebase=null;
+renderMenu();
+});
+}
+
+function isItemSoldOut(item){
+if(!item)return false;
+if(stockFromFirebase){
+var found=null;
+stockFromFirebase.forEach(function(cat){
+var it=cat.items.find(function(m){return m.id===item.id;});
+if(it)found=it;
+});
+if(found && found.available===false)return true;
+}
+return false;
+}
+
+function isVariantSoldOut(parentId,variantName){
+if(!stockFromFirebase)return false;
+var found=null;
+stockFromFirebase.forEach(function(cat){
+cat.items.forEach(function(it){
+if(it.parentId===parentId && it.variantName===variantName){
+found=it;
+}
+});
+});
+if(found && found.available===false)return true;
+return false;
+}
+
+function isItemFullySoldOut(item){
+if(isItemSoldOut(item))return true;
+if(item.variants && item.variants.options){
+var hasAvail=false;
+item.variants.options.forEach(function(v){
+if(!isVariantSoldOut(item.id,v.name))hasAvail=true;
+});
+if(!hasAvail)return true;
+}
+return false;
+}
+
+function renderCategories(){
+var desktop=document.getElementById("category-panel");
+var mobile=document.getElementById("mobile-category");
+desktop.innerHTML="";
+mobile.innerHTML="";
+categories.forEach(function(category){
+var d=document.createElement("button");
+d.type="button";
+d.textContent=categoryTranslations[selectedLanguage][category]||category;
+d.classList.toggle("active",category===selectedCategory);
+d.onclick=function(){selectCategory(category);};
+desktop.appendChild(d);
+var m=document.createElement("button");
+m.type="button";
+m.textContent=categoryTranslations[selectedLanguage][category]||category;
+m.classList.toggle("active",category===selectedCategory);
+m.onclick=function(){selectCategory(category);};
+mobile.appendChild(m);
+});
+}
+
+function selectCategory(category){
+selectedCategory=category;
+renderCategories();
+renderMenu();
+window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function renderMenu(){
+var grid=document.getElementById("menu-grid");
+if(!grid)return;
+var title=document.getElementById("menu-title");
+title.textContent=categoryTranslations[selectedLanguage][selectedCategory]||selectedCategory;
+grid.innerHTML="";
+menuItems.filter(function(item){return item.category===selectedCategory;}).forEach(function(item){
+var card=document.createElement("div");
+card.className="menu-card";
+var fullySold=isItemFullySoldOut(item);
+if(fullySold)card.classList.add("soldout");
+var imageHTML=item.image
+? '<img src="'+item.image+'" alt="'+escapeHTML(item.name)+'" loading="lazy">'
+: item.emoji;
+var overlayHTML=fullySold?'<div class="soldout-overlay">HABIS STOK</div>':'';
+card.innerHTML='<div class="menu-image">'+imageHTML+overlayHTML+'</div><div class="menu-info"><div class="menu-name">'+escapeHTML(item.name)+'</div><div class="menu-desc">'+escapeHTML(item.description)+'</div><div class="menu-bottom"><div class="price">RM'+item.price.toFixed(2)+'</div><button type="button" class="add-btn'+(fullySold?" disabled":"")+'">'+(fullySold?"HABIS":(selectedLanguage==="ms"?"TAMBAH":"ADD"))+'</button></div></div>';
+var addButton=card.querySelector(".add-btn");
+if(!fullySold){
+addButton.onclick=function(event){event.stopPropagation();openProduct(item.id);};
+card.onclick=function(){openProduct(item.id);};
+}else{
+addButton.disabled=true;
+}
+grid.appendChild(card);
+});
+}
+
+function openProduct(id){
+selectedProduct=menuItems.find(function(item){return item.id===id;});
+if(!selectedProduct)return;
+if(isItemFullySoldOut(selectedProduct)){alert("Maaf, item ini habis stok.");return;}
+productQuantity=1;
+document.getElementById("product-quantity").textContent="1";
+document.getElementById("special-request").value="";
+document.getElementById("product-name").textContent=selectedProduct.name;
+document.getElementById("product-price").textContent="RM"+selectedProduct.price.toFixed(2);
+var preview=document.getElementById("product-preview");
+preview.classList.remove("no-image");
+preview.innerHTML='<img src="'+selectedProduct.image+'" alt="'+escapeHTML(selectedProduct.name)+'">';
+resetOptions();
+renderVariants();
+var c=selectedProduct.customization || {};
+document.getElementById("sugar-section").classList.toggle("hidden",!c.sugar);
+document.getElementById("milk-section").classList.toggle("hidden",!c.milk);
+document.getElementById("temperature-section").classList.toggle("hidden",!c.temperature);
+document.getElementById("shot-section").classList.toggle("hidden",!c.extraShot);
+document.getElementById("syrup-section").classList.toggle("hidden",!c.extraSyrup);
+document.getElementById("product-overlay").classList.remove("hidden");
+applyLanguage();
+updateProductPrice();
+}
+
+function renderVariants(){
+var section=document.getElementById("variant-section");
+var list=document.getElementById("variant-list");
+var title=document.getElementById("variant-title");
+var variants=selectedProduct && selectedProduct.variants ? selectedProduct.variants : null;
+if(!variants){
+section.classList.add("hidden");
+selectedVariant=null;
+return;
+}
+section.classList.remove("hidden");
+title.textContent=variants.title;
+list.innerHTML="";
+var firstAvailable=null;
+variants.options.forEach(function(opt,index){
+var vSold=isVariantSoldOut(selectedProduct.id,opt.name);
+if(!vSold && !firstAvailable)firstAvailable=opt;
+var div=document.createElement("div");
+div.className="option-item"+(vSold?" soldout":"");
+var priceLabel=vSold?'<span class="option-soldout-label">OUT OF STOCK</span>':(variants.type==="price"?"RM"+opt.price.toFixed(2):"+RM0");
+div.innerHTML='<div class="option-left"><input type="radio" name="variant" '+(vSold?"disabled":"")+'><span class="option-name">'+escapeHTML(opt.name)+'</span></div><div class="option-price">'+priceLabel+'</div>';
+div.onclick=function(){if(!vSold)selectVariant(opt,this);};
+list.appendChild(div);
+});
+if(firstAvailable){
+selectedVariant=Object.assign({},firstAvailable);
+var firstEl=null;
+for(var i=0;i<list.children.length;i++){
+var child=list.children[i];
+var nameEl=child.querySelector(".option-name");
+if(nameEl && nameEl.textContent===firstAvailable.name){firstEl=child;break;}
+}
+if(firstEl){
+firstEl.classList.add("selected");
+var radio=firstEl.querySelector("input");
+if(radio)radio.checked=true;
+}
+}else{
+selectedVariant=null;
+}
+}
+
+function selectVariant(opt,element){
+selectedVariant=Object.assign({},opt);
+var list=element.parentElement;
+list.querySelectorAll(".option-item").forEach(function(item){
+item.classList.remove("selected");
+var radio=item.querySelector("input");
+if(radio)radio.checked=false;
+});
+element.classList.add("selected");
+var radio=element.querySelector("input");
+if(radio)radio.checked=true;
+if(selectedProduct && selectedProduct.variants && selectedProduct.variants.type==="price"){
+document.getElementById("product-price").textContent="RM"+opt.price.toFixed(2);
+}
+updateProductPrice();
+}
+
+function resetOptions(){
+selectedOptions={
+sugar:{name:"Regular Sugar",price:0},
+milk:{name:"Dairy Milk",price:0},
+temperature:{name:"Hot",price:0},
+shot:{name:"No Extra Shot",price:0},
+syrup:{name:"No Extra Syrup",price:0}
+};
+document.querySelectorAll(".option-item").forEach(function(item){item.classList.remove("selected");});
+document.querySelectorAll(".option-list").forEach(function(list){
+if(list.id==="variant-list")return;
+var first=list.querySelector(".option-item");
+if(first){
+first.classList.add("selected");
+var radio=first.querySelector("input");
+if(radio)radio.checked=true;
+}
+});
+selectedVariant=null;
+}
+
+function selectOption(type,name,price,element){
+selectedOptions[type]={name:name,price:Number(price)};
+var list=element.parentElement;
+list.querySelectorAll(".option-item").forEach(function(item){
+item.classList.remove("selected");
+var radio=item.querySelector("input");
+if(radio)radio.checked=false;
+});
+element.classList.add("selected");
+var radio=element.querySelector("input");
+if(radio)radio.checked=true;
+updateProductPrice();
+}
+
+function closeProduct(){
+document.getElementById("product-overlay").classList.add("hidden");
+selectedProduct=null;
+selectedVariant=null;
+}
+
+function changeProductQty(amount){
+productQuantity+=amount;
+if(productQuantity<1)productQuantity=1;
+if(productQuantity>99)productQuantity=99;
+document.getElementById("product-quantity").textContent=productQuantity;
+updateProductPrice();
+}
+
+function getUnitPrice(){
+if(!selectedProduct)return 0;
+var price=selectedProduct.price;
+if(selectedProduct.variants && selectedProduct.variants.type==="price" && selectedVariant){price=selectedVariant.price;}
+var c=selectedProduct.customization || {};
+if(c.milk)price+=selectedOptions.milk.price;
+if(c.extraShot)price+=selectedOptions.shot.price;
+if(c.extraSyrup)price+=selectedOptions.syrup.price;
+return price;
+}
+
+function updateProductPrice(){
+var total=getUnitPrice()*productQuantity;
+var priceElement=document.getElementById("add-cart-price");
+if(priceElement)priceElement.textContent="RM"+total.toFixed(2);
+}
+
+function addToCart(){
+if(!selectedProduct)return;
+if(isItemFullySoldOut(selectedProduct)){alert("Maaf, item habis stok.");return;}
+if(selectedProduct.variants && selectedProduct.variants.options){
+if(!selectedVariant){alert("Sila pilih pilihan.");return;}
+if(isVariantSoldOut(selectedProduct.id,selectedVariant.name)){alert("Pilihan tu habis stok.");return;}
+}
+var c=selectedProduct.customization || {};
+var unitPrice=getUnitPrice();
+var item={
+cartId:Date.now()+Math.random().toString(36).slice(2),
+productId:selectedProduct.id,
+name:selectedProduct.name,
+category:selectedProduct.category,
+basePrice:selectedProduct.price,
+price:unitPrice,
+unitPrice:unitPrice,
+quantity:productQuantity,
+variant:selectedVariant?Object.assign({},selectedVariant):null,
+variantTitle:selectedProduct.variants?selectedProduct.variants.title:null,
+options:{
+sugar:c.sugar?Object.assign({},selectedOptions.sugar):null,
+milk:c.milk?Object.assign({},selectedOptions.milk):null,
+temperature:c.temperature?Object.assign({},selectedOptions.temperature):null,
+shot:c.extraShot?Object.assign({},selectedOptions.shot):null,
+syrup:c.extraSyrup?Object.assign({},selectedOptions.syrup):null
+},
+specialRequest:document.getElementById("special-request").value.trim()
+};
+cart.push(item);
+saveCart();
+updateCartUI();
+closeProduct();
+}
+
+function saveCart(){ localStorage.setItem("ngopiCart",JSON.stringify(cart)); }
+function loadCart(){ try{ var saved=localStorage.getItem("ngopiCart"); if(saved)cart=JSON.parse(saved); }catch(error){ cart=[]; } }
+function getCartQty(){ return cart.reduce(function(sum,item){return sum+Number(item.quantity);},0); }
+function getCartTotal(){ return cart.reduce(function(sum,item){return sum+Number(item.unitPrice)*Number(item.quantity);},0); }
+
+function updateCartUI(){
+var qty=getCartQty();
+var total=getCartTotal();
+var headerCount=document.getElementById("header-cart-count");
+if(headerCount)headerCount.textContent=qty;
+var floatingInfo=document.getElementById("floating-cart-info");
+if(floatingInfo){floatingInfo.textContent=qty+(qty===1?" item":" items")+" · RM"+total.toFixed(2);}
+var floating=document.getElementById("cart-floating");
+if(floating)floating.classList.toggle("hidden",qty===0);
+}
+
+function openCart(){
+hidePages();
+document.getElementById("cart-page").classList.remove("hidden");
+renderCart();
+window.scrollTo(0,0);
+}
+
+function renderCart(){
+var container=document.getElementById("cart-items");
+var empty=document.getElementById("cart-empty");
+var totalBox=document.getElementById("cart-total-box");
+container.innerHTML="";
+if(!cart.length){
+empty.classList.remove("hidden");
+totalBox.classList.add("hidden");
+return;
+}
+empty.classList.add("hidden");
+totalBox.classList.remove("hidden");
+cart.forEach(function(item,index){
+var div=document.createElement("div");
+div.className="cart-item";
+div.innerHTML='<div class="cart-top"><div class="cart-name">'+escapeHTML(item.name)+'</div><div class="cart-price">RM'+(item.unitPrice*item.quantity).toFixed(2)+'</div></div><div class="cart-options">'+getOptionText(item)+'</div><div class="cart-bottom"><strong>'+t("quantity")+': '+item.quantity+'</strong><button type="button" class="remove-btn" onclick="removeCartItem('+index+')">'+t("remove")+'</button></div>';
+container.appendChild(div);
+});
+document.getElementById("cart-subtotal").textContent="RM"+getCartTotal().toFixed(2);
+document.getElementById("cart-total").textContent="RM"+getCartTotal().toFixed(2);
+}
+
+function removeCartItem(index){
+cart.splice(index,1);
+saveCart();
+updateCartUI();
+renderCart();
+}
+
+function getOptionText(item){
+var result=[];
+if(item.variant && item.variant.name){
+result.push((item.variantTitle||"Variant")+": "+escapeHTML(item.variant.name));
+}
+if(item.options && item.options.sugar && item.options.sugar.name){
+var sugar=item.options.sugar.name;
+if(selectedLanguage==="ms"){
+if(sugar==="Regular Sugar")sugar="Gula Biasa";
+if(sugar==="Less Sugar")sugar="Kurang Gula";
+if(sugar==="No Sugar")sugar="Tiada Gula";
+}
+result.push(t("sugar")+": "+sugar);
+}
+if(item.options && item.options.milk && item.options.milk.name){
+result.push(t("milk")+": "+item.options.milk.name);
+}
+if(item.options && item.options.temperature && item.options.temperature.name){
+var temp=item.options.temperature.name;
+if(selectedLanguage==="ms"){
+if(temp==="Hot")temp="Panas";
+if(temp==="Iced")temp="Ais";
+}
+result.push(temp);
+}
+if(item.options && item.options.shot && item.options.shot.name && item.options.shot.name!=="No Extra Shot"){result.push("Extra Shot");}
+if(item.options && item.options.syrup && item.options.syrup.name && item.options.syrup.name!=="No Extra Syrup"){result.push("Extra Syrup");}
+if(item.specialRequest){
+result.push(selectedLanguage==="ms"?"Permintaan: "+escapeHTML(item.specialRequest):"Request: "+escapeHTML(item.specialRequest));
+}
+return result.join("<br>");
+}
+
+function openCheckout(){
+if(!cart.length){alert(t("cartEmptyAlert"));return;}
+hidePages();
+renderCheckout();
+document.getElementById("checkout-page").classList.remove("hidden");
+document.getElementById("table-input").value="";
+window.scrollTo(0,0);
+}
+
+function renderCheckout(){
+var container=document.getElementById("checkout-items");
+container.innerHTML="";
+cart.forEach(function(item){
+var div=document.createElement("div");
+div.className="cart-item";
+div.innerHTML='<div class="cart-top"><div><div class="cart-name">'+escapeHTML(item.name)+'</div><div class="cart-options">'+getOptionText(item)+'</div></div><strong>RM'+(item.unitPrice*item.quantity).toFixed(2)+'</strong></div><div class="cart-bottom"><span>'+t("quantity")+': '+item.quantity+'</span></div>';
+container.appendChild(div);
+});
+var total=getCartTotal();
+document.getElementById("checkout-subtotal").textContent="RM"+total.toFixed(2);
+document.getElementById("checkout-total").textContent="RM"+total.toFixed(2);
+}
+
+function selectPayment(method){
+selectedPayment=method;
+document.getElementById("qr-payment").classList.toggle("hidden",method!=="DuitNow QR");
+}
+
+function placeOrder(){
+if(!cart.length){alert(t("cartEmptyAlert"));return;}
+if(!selectedPayment){alert(t("paymentMissing"));return;}
+var tableInput=document.getElementById("table-input");
+var table=tableInput.value.trim();
+if(!table){alert(t("tableMissing"));tableInput.focus();return;}
+var customerName=localStorage.getItem("ngopiCustomerName")||document.getElementById("welcome-name").value.trim();
+if(!customerName){alert(t("nameMissing"));return;}
+var orderNumber=generateOrderNumber();
+var total=getCartTotal();
+var orderData={
+orderNumber:orderNumber,
+customerName:customerName,
+tableNumber:table,
+items:cart,
+total:total,
+paymentMethod:selectedPayment,
+paymentStatus:"Pending",
+status:"Pending",
+language:selectedLanguage,
+createdAt:firebase.firestore.FieldValue.serverTimestamp()
+};
+db.collection("orders").add(orderData).then(function(ref){
+currentOrderFirebaseId=ref.id;
+var dataCopy=Object.assign({},orderData);
+dataCopy.firebaseId=ref.id;
+lastOrderData=dataCopy;
+localStorage.setItem("ngopiCurrentOrder",JSON.stringify({firebaseId:ref.id,orderNumber:orderNumber}));
+cart=[];
+saveCart();
+updateCartUI();
+hidePages();
+document.getElementById("status-page").classList.remove("hidden");
+document.getElementById("status-order-number").textContent="#"+orderNumber;
+resetStatus();
+showMiniReceipt(lastOrderData);
+listenToOrder(ref.id);
+window.scrollTo(0,0);
+}).catch(function(error){
+console.error("ORDER ERROR:",error);
+alert("Order gagal: "+error.message);
+});
+}
+
+function generateOrderNumber(){
+return String(Math.floor(100+Math.random()*900));
+}
+
+function listenToOrder(id){
+if(unsubscribeOrder)unsubscribeOrder();
+unsubscribeOrder=db.collection("orders").doc(id).onSnapshot(function(snapshot){
+if(!snapshot.exists)return;
+var data=snapshot.data();
+lastOrderData=Object.assign({},data);
+lastOrderData.firebaseId=id;
+var status=String(data.status||"").toLowerCase();
+if(status==="accepted"){
+animateSteps(3,4);
+setTimeout(function(){showFullReceipt(lastOrderData,false);},900);
+}else if(status==="selesai (completed)"||status==="completed"||status==="complete"){
+animateSteps(3,5);
+setTimeout(function(){showFullReceipt(lastOrderData,true);},900);
+}
+},function(error){
+console.error("LISTENER ERROR:",error);
+});
+}
+
+function resumeCurrentOrder(){
+var saved=localStorage.getItem("ngopiCurrentOrder");
+if(!saved)return false;
+try{
+var parsed=JSON.parse(saved);
+if(!parsed.firebaseId)return false;
+currentOrderFirebaseId=parsed.firebaseId;
+db.collection("orders").doc(parsed.firebaseId).get().then(function(doc){
+if(!doc.exists){
+localStorage.removeItem("ngopiCurrentOrder");
+return;
+}
+var data=doc.data();
+lastOrderData=Object.assign({},data);
+lastOrderData.firebaseId=parsed.firebaseId;
+hidePages();
+document.getElementById("status-page").classList.remove("hidden");
+document.getElementById("status-order-number").textContent="#"+parsed.orderNumber;
+var status=String(data.status||"").toLowerCase();
+if(status==="pending"){
+resetStatus();
+showMiniReceipt(lastOrderData);
+}else if(status==="accepted"){
+setStep("step-1","done");
+setStep("step-2","done");
+setStep("step-3","done");
+setStep("step-4","done");
+setStep("step-5","idle");
+showFullReceipt(lastOrderData,false);
+}else if(status==="selesai (completed)"||status==="completed"||status==="complete"){
+setStep("step-1","done");
+setStep("step-2","done");
+setStep("step-3","done");
+setStep("step-4","done");
+setStep("step-5","done");
+showFullReceipt(lastOrderData,true);
+document.getElementById("new-order-btn").style.display="block";
+document.getElementById("rate-us-btn").style.display="flex";
+}
+listenToOrder(parsed.firebaseId);
+window.scrollTo(0,0);
+});
+return true;
+}catch(e){return false;}
+}
+
+function setStep(id,state){
+var el=document.getElementById(id);
+if(!el)return;
+el.classList.remove("done","current");
+var circle=el.querySelector(".status-circle");
+if(state==="done"){
+el.classList.add("done");
+circle.textContent="✓";
+}else if(state==="current"){
+el.classList.add("current");
+circle.textContent=id.replace("step-","");
+}
+}
+
+function resetStatus(){
+animationTimers.forEach(function(t){clearTimeout(t);});
+animationTimers=[];
+setStep("step-1","done");
+setStep("step-2","done");
+setStep("step-3","current");
+setStep("step-4","idle");
+setStep("step-5","idle");
+document.getElementById("receipt-container").innerHTML="";
+document.getElementById("download-receipt-btn").style.display="none";
+document.getElementById("rate-us-btn").style.display="none";
+document.getElementById("new-order-btn").style.display="none";
+}
+
+function animateSteps(from,to){
+animationTimers.forEach(function(t){clearTimeout(t);});
+animationTimers=[];
+var delay=0;
+for(var i=from;i<=to;i++){
+(function(stepIndex){
+var tid=setTimeout(function(){
+setStep("step-"+stepIndex,"done");
+if(stepIndex<to){
+var nextTid=setTimeout(function(){
+setStep("step-"+(stepIndex+1),"current");
+},120);
+animationTimers.push(nextTid);
+}
+},delay);
+animationTimers.push(tid);
+})(i);
+delay+=500;
+}
+if(to===5){
+document.getElementById("new-order-btn").style.display="block";
+document.getElementById("rate-us-btn").style.display="flex";
+}
+}
+
+function showMiniReceipt(data){
+var container=document.getElementById("receipt-container");
+container.innerHTML=buildReceiptHTML(data,false,false);
+document.getElementById("download-receipt-btn").style.display="block";
+}
+
+function showFullReceipt(data,completed){
+var container=document.getElementById("receipt-container");
+container.innerHTML=buildReceiptHTML(data,true,completed);
+document.getElementById("download-receipt-btn").style.display="block";
+}
+
+function buildReceiptHTML(data,full,completed){
+var itemsHTML=(data.items||[]).map(function(item){
+var unit=Number(item.unitPrice||item.price||0);
+return '<div class="receipt-item"><div style="flex:1"><div class="receipt-item-name">'+escapeHTML(item.name)+' x'+item.quantity+'</div><div class="receipt-item-options">'+getOptionText(item)+'</div></div><div class="receipt-item-price">RM'+(unit*item.quantity).toFixed(2)+'</div></div>';
+}).join("");
+
+var dateStr=formatDateTime(new Date());
+
+var addressHTML="";
+if(full){
+addressHTML='<div class="address">'+SHOP.name+'<br>'+SHOP.address1+'<br>'+SHOP.address2+'<br>'+SHOP.address3+'<br>'+SHOP.address4+'</div>';
+}
+
+var warningHTML="";
+if(!full){
+warningHTML='<div class="receipt-warning">SILA KE KAUNTER & TUNJUK RESIT INI UNTUK BAYAR</div>';
+}
+
+var successHTML="";
+if(full&&completed){
+successHTML='<div class="receipt-success">Order anda telah SIAP! Sila ambil di kaunter.</div>';
+}
+
+return '<div class="receipt '+(full?"":"receipt-mini")+'"><div class="receipt-header"><h2>NIKOPI</h2>'+addressHTML+'</div><div class="receipt-order-num">#'+escapeHTML(data.orderNumber||"---")+'</div><div class="receipt-row"><span class="label">Customer</span><span>'+escapeHTML(data.customerName||"-")+'</span></div><div class="receipt-row"><span class="label">Meja</span><span>'+escapeHTML(String(data.tableNumber||"-"))+'</span></div><div class="receipt-row"><span class="label">Tarikh</span><span>'+dateStr+'</span></div><div class="receipt-row"><span class="label">Pembayaran</span><span>'+escapeHTML(data.paymentMethod||"-")+'</span></div><div class="receipt-line"></div>'+itemsHTML+'<div class="receipt-line"></div><div class="receipt-total"><span>TOTAL</span><span>RM'+Number(data.total||0).toFixed(2)+'</span></div>'+warningHTML+successHTML+'<div style="text-align:center;margin-top:14px;font-size:10px;color:#888">Terima kasih kerana memilih NIKOPI</div></div>';
+}
+
+function formatDateTime(date){
+var d=String(date.getDate()).padStart(2,"0");
+var m=String(date.getMonth()+1).padStart(2,"0");
+var y=date.getFullYear();
+var hh=String(date.getHours()).padStart(2,"0");
+var mm=String(date.getMinutes()).padStart(2,"0");
+return d+"/"+m+"/"+y+" "+hh+":"+mm;
+}
+
+function downloadReceiptPDF(){
+if(!lastOrderData){alert(t("receiptMissing"));return;}
+var jsPDF=window.jspdf ? window.jspdf.jsPDF : null;
+if(!jsPDF){alert(t("pdfMissing"));return;}
+var data=lastOrderData;
+var doc=new jsPDF({unit:"mm",format:[80,250]});
+var y=10;
+
+doc.setFont("helvetica","bold");
+doc.setFontSize(15);
+doc.text("NIKOPI",40,y,{align:"center"});
+y+=5;
+doc.setFontSize(7);
+doc.setFont("helvetica","normal");
+doc.text(SHOP.name,40,y,{align:"center"});y+=3;
+doc.text(SHOP.address1,40,y,{align:"center"});y+=3;
+doc.text(SHOP.address2,40,y,{align:"center"});y+=3;
+doc.text(SHOP.address3,40,y,{align:"center"});y+=3;
+doc.text(SHOP.address4,40,y,{align:"center"});y+=6;
+
+doc.setDrawColor(150);
+doc.line(7,y,73,y);
+y+=6;
+
+doc.setFont("helvetica","bold");
+doc.setFontSize(14);
+doc.text("#"+(data.orderNumber||"---"),40,y,{align:"center"});
+y+=7;
+
+doc.setFontSize(8);
+doc.setFont("helvetica","normal");
+doc.text("Customer: "+(data.customerName||"-"),7,y);y+=4;
+doc.text("Meja: "+(data.tableNumber||"-"),7,y);y+=4;
+doc.text("Tarikh: "+formatDateTime(new Date()),7,y);y+=4;
+doc.text("Bayaran: "+(data.paymentMethod||"-"),7,y);y+=5;
+
+doc.line(7,y,73,y);
+y+=5;
+
+(data.items||[]).forEach(function(item){
+var unit=Number(item.unitPrice||item.price||0);
+doc.setFont("helvetica","bold");
+doc.setFontSize(8);
+doc.text(item.name+" x"+item.quantity,7,y);
+doc.text("RM"+(unit*item.quantity).toFixed(2),73,y,{align:"right"});
+y+=4;
+
+doc.setFont("helvetica","normal");
+doc.setFontSize(7);
+var opts=[];
+if(item.variant && item.variant.name){opts.push((item.variantTitle||"Variant")+": "+item.variant.name);}
+if(item.options && item.options.sugar && item.options.sugar.name){opts.push("Gula: "+item.options.sugar.name);}
+if(item.options && item.options.milk && item.options.milk.name){opts.push("Susu: "+item.options.milk.name);}
+if(item.options && item.options.temperature && item.options.temperature.name){opts.push("Suhu: "+item.options.temperature.name);}
+if(item.options && item.options.shot && item.options.shot.name && item.options.shot.name!=="No Extra Shot")opts.push("Extra Shot");
+if(item.options && item.options.syrup && item.options.syrup.name && item.options.syrup.name!=="No Extra Syrup")opts.push("Extra Syrup");
+if(opts.length){
+var lines=doc.splitTextToSize(opts.join(" - "),62);
+doc.text(lines,9,y);
+y+=lines.length*3;
+}
+if(item.specialRequest){
+var lines2=doc.splitTextToSize("Nota: "+item.specialRequest,62);
+doc.text(lines2,9,y);
+y+=lines2.length*3;
+}
+y+=2;
+});
+
+doc.line(7,y,73,y);
+y+=6;
+doc.setFont("helvetica","bold");
+doc.setFontSize(12);
+doc.text("TOTAL",7,y);
+doc.text("RM"+Number(data.total||0).toFixed(2),73,y,{align:"right"});
+y+=10;
+
+doc.setFont("helvetica","normal");
+doc.setFontSize(7);
+doc.text("Terima kasih kerana memilih NIKOPI",40,y,{align:"center"});
+
+doc.save("NIKOPI-"+String(data.orderNumber||"receipt")+".pdf");
+}
+
+function hidePages(){
+document.getElementById("menu-page").classList.add("hidden");
+document.getElementById("cart-page").classList.add("hidden");
+document.getElementById("checkout-page").classList.add("hidden");
+document.getElementById("status-page").classList.add("hidden");
+}
+
+function showMenu(){
+hidePages();
+document.getElementById("menu-page").classList.remove("hidden");
+window.scrollTo(0,0);
+}
+
+function newOrder(){
+if(unsubscribeOrder){unsubscribeOrder();unsubscribeOrder=null;}
+animationTimers.forEach(function(t){clearTimeout(t);});
+animationTimers=[];
+currentOrderFirebaseId=null;
+lastOrderData=null;
+selectedPayment="";
+cart=[];
+saveCart();
+updateCartUI();
+localStorage.removeItem("ngopiCurrentOrder");
+document.querySelectorAll('input[name="payment"]').forEach(function(input){input.checked=false;});
+document.getElementById("qr-payment").classList.add("hidden");
+showMenu();
+}
+
+function escapeHTML(value){
+return String(value==null?"":value)
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;")
+.replace(/'/g,"&#039;");
+}
+
+/* ============ INITIAL LOAD ============ */
+var savedLanguage=localStorage.getItem("ngopiLanguage");
+if(savedLanguage==="ms"||savedLanguage==="en"){ selectedLanguage=savedLanguage; }
+
+loadCart();
+loadStockRealtime();
+renderCategories();
+renderMenu();
+updateCartUI();
+applyLanguage();
+
+var savedName=localStorage.getItem("ngopiCustomerName");
+if(savedName){
+enterApp(savedName);
+setTimeout(function(){resumeCurrentOrder();},500);
+}
+
+document.getElementById("product-overlay").addEventListener("click",function(event){
+if(event.target===this)closeProduct();
+});
+</script>
+
+</body>
+</html>

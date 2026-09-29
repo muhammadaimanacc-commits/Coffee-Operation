@@ -1,0 +1,6765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>NIKOPI Admin</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+<!-- PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- Chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+:root{
+    --brown:#3e2723;
+    --brown2:#5d4037;
+    --cream:#f7f5f0;
+    --white:#fff;
+    --border:#e0d9d0;
+    --green:#2e7d32;
+    --red:#d32f2f;
+    --orange:#c2410c;
+    --blue:#1976d2;
+    --yellow:#f9a825;
+    --text:#2c2c2c;
+    --muted:#777;
+}
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    padding:20px;
+    background:var(--cream);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+}
+
+button,
+input,
+select,
+textarea{
+    font-family:inherit;
+}
+
+button{
+    cursor:pointer;
+}
+
+.container{
+    width:100%;
+    max-width:700px;
+    margin:auto;
+}
+
+.page{
+    display:none;
+}
+
+.page.active{
+    display:block;
+}
+
+/* =========================
+   GENERAL
+========================= */
+
+h1,
+h2,
+h3{
+    color:var(--brown);
+}
+
+.subtitle{
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+    margin-top:-10px;
+    margin-bottom:20px;
+}
+
+.card{
+    background:var(--white);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:18px;
+    margin-bottom:18px;
+    box-shadow:0 4px 15px rgba(0,0,0,.05);
+}
+
+.section-title{
+    margin:0 0 15px;
+    padding-bottom:9px;
+    border-bottom:2px solid var(--border);
+    font-size:18px;
+    color:var(--brown);
+}
+
+.page-title{
+    text-align:center;
+    color:var(--brown);
+    font-size:22px;
+    font-weight:bold;
+    margin-bottom:20px;
+}
+
+.back-btn{
+    width:100%;
+    border:0;
+    background:var(--brown);
+    color:#fff;
+    padding:12px;
+    border-radius:8px;
+    font-weight:bold;
+    margin-bottom:20px;
+}
+
+/* =========================
+   HOME SALES
+========================= */
+
+.sales-box{
+    background:linear-gradient(
+        135deg,
+        var(--brown),
+        var(--brown2)
+    );
+    color:white;
+    padding:20px;
+    border-radius:14px;
+    margin-bottom:18px;
+}
+
+.sales-box h2{
+    color:#d7ccc8;
+    font-size:15px;
+    margin:0 0 8px;
+    text-align:center;
+}
+
+.sales-amount{
+    text-align:center;
+    font-size:34px;
+    font-weight:bold;
+    color:#81c784;
+    margin:0;
+}
+
+.payment-summary{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:16px;
+}
+
+.payment-box{
+    background:rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.2);
+    border-radius:8px;
+    padding:10px;
+    text-align:center;
+}
+
+.payment-box span{
+    display:block;
+    font-size:11px;
+    color:#d7ccc8;
+}
+
+.payment-box strong{
+    font-size:17px;
+    color:#fff;
+}
+
+.sales-date{
+    text-align:center;
+    font-size:11px;
+    color:#d7ccc8;
+    margin-top:12px;
+}
+
+/* =========================
+   NAV
+========================= */
+
+.nav-buttons{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-bottom:18px;
+}
+
+.nav-big-btn{
+    border:0;
+    border-radius:12px;
+    padding:20px 12px;
+    color:#fff;
+    font-size:13px;
+    font-weight:bold;
+    background:linear-gradient(
+        135deg,
+        var(--brown),
+        var(--brown2)
+    );
+}
+
+.nav-big-btn.menu{
+    background:linear-gradient(
+        135deg,
+        #c2410c,
+        #ea580c
+    );
+}
+
+.nav-big-btn.sales{
+    background:linear-gradient(
+        135deg,
+        #1565c0,
+        #1976d2
+    );
+}
+
+.nav-big-btn.staff{
+    background:linear-gradient(
+        135deg,
+        #2e7d32,
+        #43a047
+    );
+}
+
+.nav-big-btn .icon{
+    display:block;
+    font-size:30px;
+    margin-bottom:8px;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.download-sales-btn{
+    width:100%;
+    border:0;
+    background:var(--brown);
+    color:#fff;
+    padding:12px;
+    border-radius:8px;
+    font-weight:bold;
+}
+
+.add-new-btn{
+    width:100%;
+    border:0;
+    background:var(--orange);
+    color:#fff;
+    padding:14px;
+    border-radius:10px;
+    font-weight:bold;
+    font-size:14px;
+    margin-bottom:18px;
+}
+
+.btn-green{
+    border:0;
+    background:var(--green);
+    color:#fff;
+    padding:9px 12px;
+    border-radius:7px;
+    font-weight:bold;
+    font-size:12px;
+}
+
+.btn-red{
+    border:0;
+    background:var(--red);
+    color:#fff;
+    padding:9px 12px;
+    border-radius:7px;
+    font-weight:bold;
+    font-size:12px;
+}
+
+.btn-blue{
+    border:0;
+    background:var(--blue);
+    color:#fff;
+    padding:9px 12px;
+    border-radius:7px;
+    font-weight:bold;
+    font-size:12px;
+}
+
+.btn-grey{
+    border:0;
+    background:#eee;
+    color:#333;
+    padding:9px 12px;
+    border-radius:7px;
+    font-weight:bold;
+    font-size:12px;
+}
+
+.btn-pdf{
+    border:0;
+    background:var(--brown);
+    color:#fff;
+    padding:7px 10px;
+    border-radius:6px;
+    font-size:11px;
+    font-weight:bold;
+}
+
+/* =========================
+   MENU
+========================= */
+
+.category-heading{
+    color:var(--brown2);
+    font-size:15px;
+    font-weight:bold;
+    border-bottom:1px solid var(--border);
+    padding:8px 0;
+    margin-top:20px;
+}
+
+.combo-heading{
+    color:var(--orange);
+    border-color:#fdba74;
+}
+
+.menu-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin:12px 0;
+}
+
+.menu-item-card{
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px;
+    background:#fafafa;
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+}
+
+.menu-item-card.soldout{
+    opacity:.5;
+}
+
+.combo-card{
+    border:2px solid #fdba74;
+    background:#fff7ed;
+}
+
+.menu-name{
+    font-size:13px;
+    font-weight:bold;
+    min-height:34px;
+}
+
+.menu-price{
+    color:#666;
+    font-size:12px;
+    font-weight:bold;
+}
+
+.menu-actions{
+    display:flex;
+    gap:5px;
+}
+
+.menu-actions button{
+    flex:1;
+    border:0;
+    padding:8px 4px;
+    border-radius:6px;
+    color:#fff;
+    font-size:10px;
+    font-weight:bold;
+}
+
+.stock-on{
+    background:var(--green);
+}
+
+.stock-off{
+    background:var(--red);
+}
+
+.edit-btn{
+    background:var(--blue);
+}
+
+.variant-group{
+    background:#fff;
+    border:2px solid var(--border);
+    border-radius:10px;
+    padding:12px;
+    margin:12px 0;
+}
+
+.variant-title{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    margin-bottom:10px;
+}
+
+.variant-title-name{
+    flex:1;
+    font-size:13px;
+    font-weight:bold;
+}
+
+.variant-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:#f9f7f4;
+    border-radius:6px;
+    padding:8px;
+    margin-bottom:6px;
+    font-size:12px;
+}
+
+.variant-row.soldout{
+    opacity:.5;
+}
+
+.variant-name{
+    flex:1;
+}
+
+/* =========================
+   ORDERS
+========================= */
+
+.order-card{
+    background:#fff8e1;
+    border:1px solid #ffe0b2;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:12px;
+}
+
+.order-header{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:flex-start;
+    border-bottom:1px solid #f0dfc0;
+    padding-bottom:8px;
+    margin-bottom:8px;
+}
+
+.order-title{
+    font-weight:bold;
+    color:var(--brown);
+    font-size:14px;
+}
+
+.order-time{
+    font-size:10px;
+    color:#777;
+    text-align:right;
+}
+
+.order-info{
+    font-size:12px;
+    margin:4px 0;
+}
+
+.status{
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:6px;
+    font-size:10px;
+    font-weight:bold;
+}
+
+.status-pending{
+    background:#fff3cd;
+    color:#856404;
+}
+
+.status-accepted{
+    background:#cfe2ff;
+    color:#084298;
+}
+
+.status-completed{
+    background:#d1e7dd;
+    color:#0f5132;
+}
+
+.item-line{
+    background:#fff;
+    border-left:3px solid var(--brown);
+    padding:8px;
+    margin:5px 0;
+    border-radius:5px;
+    font-size:12px;
+}
+
+.item-options{
+    color:#777;
+    font-size:10px;
+    margin-top:3px;
+    line-height:1.5;
+}
+
+.order-total{
+    text-align:right;
+    color:var(--green);
+    font-weight:bold;
+    margin-top:8px;
+}
+
+.order-buttons{
+    display:flex;
+    gap:6px;
+    margin-top:10px;
+}
+
+.order-buttons button{
+    flex:1;
+}
+
+/* =========================
+   HISTORY
+========================= */
+
+.history-card{
+    background:#fdfbf7;
+    border:1px solid var(--border);
+    padding:12px;
+    border-radius:9px;
+    margin-bottom:10px;
+}
+
+.history-header{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    font-weight:bold;
+    font-size:12px;
+    border-bottom:1px solid var(--border);
+    padding-bottom:7px;
+    margin-bottom:7px;
+}
+
+.history-total{
+    text-align:right;
+    color:var(--green);
+    font-weight:bold;
+    border-top:1px dashed var(--border);
+    padding-top:7px;
+    margin-top:7px;
+}
+
+.history-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:6px;
+    margin-top:8px;
+}
+
+.empty-text{
+    text-align:center;
+    color:#777;
+    font-size:13px;
+    padding:15px;
+}
+
+/* =========================
+   CHART
+========================= */
+
+.chart-toggle{
+    display:flex;
+    gap:7px;
+    margin-bottom:15px;
+}
+
+.chart-toggle button{
+    flex:1;
+    padding:10px 5px;
+    border:2px solid var(--border);
+    background:#fff;
+    border-radius:8px;
+    color:#555;
+    font-weight:bold;
+    font-size:11px;
+}
+
+.chart-toggle button.active{
+    background:var(--brown);
+    color:#fff;
+}
+
+.chart-total{
+    text-align:center;
+    color:var(--green);
+    font-size:24px;
+    font-weight:bold;
+    margin-bottom:5px;
+}
+
+.chart-total small{
+    display:block;
+    color:#777;
+    font-size:11px;
+    font-weight:normal;
+}
+
+.chart-wrapper{
+    position:relative;
+    height:330px;
+}
+
+/* =========================
+   STAFF
+========================= */
+
+.form-group{
+    margin-bottom:14px;
+}
+
+.form-group label{
+    display:block;
+    font-size:13px;
+    font-weight:bold;
+    color:var(--brown);
+    margin-bottom:6px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea{
+    width:100%;
+    border:1px solid #ccc;
+    border-radius:8px;
+    padding:11px;
+    font-size:14px;
+    outline:none;
+}
+
+.form-group textarea{
+    min-height:80px;
+    resize:vertical;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus{
+    border-color:var(--brown2);
+}
+
+.clock-buttons{
+    display:flex;
+    gap:8px;
+}
+
+.clock-buttons button{
+    flex:1;
+    padding:13px;
+    border:0;
+    border-radius:8px;
+    color:#fff;
+    font-weight:bold;
+}
+
+.clock-in{
+    background:var(--green);
+}
+
+.clock-out{
+    background:var(--orange);
+}
+
+.staff-card{
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:12px;
+    margin-bottom:8px;
+    background:#fafafa;
+}
+
+.staff-card-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.staff-name{
+    font-weight:bold;
+    color:var(--brown);
+}
+
+.staff-code{
+    color:#777;
+    font-size:11px;
+}
+
+.staff-history-row{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    padding:8px 0;
+    border-bottom:1px solid var(--border);
+    font-size:11px;
+}
+
+/* =========================
+   MODAL
+========================= */
+
+.modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.65);
+    z-index:9999;
+    padding:20px;
+    overflow-y:auto;
+}
+
+.modal.show{
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+}
+
+.modal-box{
+    width:100%;
+    max-width:560px;
+    background:#fff;
+    border-radius:14px;
+    padding:20px;
+    margin:auto;
+}
+
+.modal-title{
+    color:var(--brown);
+    margin:0 0 20px;
+}
+
+.checkbox-grid{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+}
+
+.checkbox-grid label{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    background:#f5f2ed;
+    border-radius:6px;
+    padding:8px;
+    font-size:12px;
+    font-weight:normal;
+}
+
+.checkbox-grid input{
+    width:auto;
+}
+
+.combo-row{
+    display:flex;
+    gap:5px;
+    margin-bottom:6px;
+}
+
+.combo-row input{
+    flex:1;
+}
+
+.combo-row button{
+    width:35px;
+    border:0;
+    background:#eee;
+    border-radius:6px;
+}
+
+.add-row-btn{
+    width:100%;
+    border:1px dashed #aaa;
+    background:#fafafa;
+    padding:9px;
+    border-radius:6px;
+    margin-top:5px;
+}
+
+.modal-actions{
+    display:flex;
+    gap:8px;
+    margin-top:18px;
+}
+
+.modal-actions button{
+    flex:1;
+    padding:12px;
+    border:0;
+    border-radius:8px;
+    font-weight:bold;
+}
+
+.cancel-btn{
+    background:#eee;
+}
+
+.save-btn{
+    background:var(--green);
+    color:#fff;
+}
+
+.delete-btn{
+    background:var(--red);
+    color:#fff;
+}
+
+/* =========================
+   SHIFT
+========================= */
+
+.end-shift-btn{
+    width:100%;
+    background:#b71c1c;
+    color:#fff;
+    border:0;
+    padding:14px;
+    border-radius:8px;
+    font-size:15px;
+    font-weight:bold;
+}
+
+.reset-btn{
+    width:100%;
+    border:0;
+    background:none;
+    color:#888;
+    text-decoration:underline;
+    margin-top:10px;
+    padding:8px;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:600px){
+
+    body{
+        padding:12px;
+    }
+
+    .menu-grid{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .chart-wrapper{
+        height:280px;
+    }
+
+    .nav-big-btn{
+        padding:18px 8px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- =========================================================
+     HOME
+========================================================= -->
+
+<section id="page-home" class="page active">
+
+<h1>☕ NIKOPI Admin</h1>
+<p class="subtitle">
+Stock Control · Sales Report · Staff Management
+</p>
+
+<div class="sales-box">
+
+<h2>Today's Total Sales</h2>
+
+<p class="sales-amount">
+RM <span id="total-sales">0.00</span>
+</p>
+
+<div class="payment-summary">
+
+<div class="payment-box">
+<span>Cash</span>
+<strong>
+RM <span id="cash-sales">0.00</span>
+</strong>
+</div>
+
+<div class="payment-box">
+<span>QR</span>
+<strong>
+RM <span id="qr-sales">0.00</span>
+</strong>
+</div>
+
+</div>
+
+<div class="sales-date" id="sales-date"></div>
+
+</div>
+
+<div class="card">
+
+<button
+class="download-sales-btn"
+onclick="downloadTodaySalesPDF()"
+>
+📄 Download Today's Sales Report PDF
+</button>
+
+</div>
+
+<div class="nav-buttons">
+
+<button
+class="nav-big-btn menu"
+onclick="showPage('stock')"
+>
+<span class="icon">📦</span>
+Stock / Menu
+</button>
+
+<button
+class="nav-big-btn sales"
+onclick="showPage('sales')"
+>
+<span class="icon">📊</span>
+Sales Report
+</button>
+
+</div>
+
+<div class="nav-buttons">
+
+<button
+class="nav-big-btn staff"
+onclick="showPage('staff')"
+style="grid-column:1/-1"
+>
+<span class="icon">👥</span>
+Staff Management
+</button>
+
+</div>
+
+<!-- LIVE ORDERS -->
+
+<div class="card">
+
+<h2 class="section-title">
+🔴 Live Orders
+</h2>
+
+<div id="orders-container">
+<p class="empty-text">
+Loading orders...
+</p>
+</div>
+
+</div>
+
+<!-- HISTORY -->
+
+<div class="card">
+
+<h2 class="section-title">
+📋 All Order History
+</h2>
+
+<div id="sales-history-container">
+<p class="empty-text">
+Loading...
+</p>
+</div>
+
+</div>
+
+<!-- SHIFT -->
+
+<div class="card">
+
+<h2 class="section-title">
+🔒 Shift Management
+</h2>
+
+<p style="font-size:12px;color:#777">
+End Shift akan memadam order hari ini daripada collection
+<code>orders</code>.
+</p>
+
+<button
+class="end-shift-btn"
+onclick="endShift()"
+>
+🔒 END SHIFT
+</button>
+
+<button
+class="reset-btn"
+onclick="resetTesting()"
+>
+reset testing mode
+</button>
+
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     STOCK
+========================================================= -->
+
+<section id="page-stock" class="page">
+
+<button
+class="back-btn"
+onclick="showPage('home')"
+>
+← Kembali ke Home
+</button>
+
+<div class="page-title">
+📦 Stock / Menu Management
+</div>
+
+<button
+class="add-new-btn"
+onclick="openAddItem()"
+>
+➕ Tambah Menu Baru
+</button>
+
+<div id="admin-menu-container">
+<p class="empty-text">
+Loading menu...
+</p>
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     SALES
+========================================================= -->
+
+<section id="page-sales" class="page">
+
+<button
+class="back-btn"
+onclick="showPage('home')"
+>
+← Kembali ke Home
+</button>
+
+<div class="page-title">
+📊 Sales Report
+</div>
+
+<div class="card">
+
+<div class="chart-toggle">
+
+<button
+id="btn-daily"
+class="active"
+onclick="switchChart('daily')"
+>
+Daily
+</button>
+
+<button
+id="btn-monthly"
+onclick="switchChart('monthly')"
+>
+Monthly
+</button>
+
+<button
+id="btn-hourly"
+onclick="switchChart('hourly')"
+>
+Per Hour
+</button>
+
+</div>
+
+<div class="chart-total">
+
+RM <span id="chart-total-value">0.00</span>
+
+<small id="chart-total-label">
+Total 7 hari terakhir
+</small>
+
+</div>
+
+<div class="chart-wrapper">
+
+<canvas id="sales-chart"></canvas>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     STAFF
+========================================================= -->
+
+<section id="page-staff" class="page">
+
+<button
+class="back-btn"
+onclick="showPage('home')"
+>
+← Kembali ke Home
+</button>
+
+<div class="page-title">
+👥 Staff Management
+</div>
+
+
+<!-- CLOCK -->
+
+<div class="card">
+
+<h2 class="section-title">
+🕐 Clock In / Clock Out
+</h2>
+
+<div class="form-group">
+
+<label>
+Pilih Staff
+</label>
+
+<select id="clock-staff-select">
+
+<option value="">
+-- Pilih Staff --
+</option>
+
+</select>
+
+</div>
+
+<div class="form-group">
+
+<label>
+Staff Code
+</label>
+
+<input
+type="password"
+id="clock-staff-code"
+inputmode="numeric"
+placeholder="Masukkan code staff"
+>
+
+</div>
+
+<div
+id="clock-staff-info"
+style="
+text-align:center;
+font-size:12px;
+margin-bottom:10px;
+"
+>
+</div>
+
+<div class="clock-buttons">
+
+<button
+class="clock-in"
+onclick="clockIn()"
+>
+🟢 CLOCK IN
+</button>
+
+<button
+class="clock-out"
+onclick="clockOut()"
+>
+🔴 CLOCK OUT
+</button>
+
+</div>
+
+</div>
+
+
+<!-- ACTIVE -->
+
+<div class="card">
+
+<h2 class="section-title">
+🟢 Staff Aktif Hari Ini
+</h2>
+
+<div id="active-staff-container">
+Loading...
+</div>
+
+</div>
+
+
+<!-- ADD STAFF -->
+
+<div class="card">
+
+<h2 class="section-title">
+➕ Tambah Staff
+</h2>
+
+<div class="form-group">
+
+<label>
+Nama Staff
+</label>
+
+<input
+id="new-staff-name"
+placeholder="Nama"
+>
+
+</div>
+
+<div class="form-group">
+
+<label>
+Staff Code
+</label>
+
+<input
+id="new-staff-code"
+inputmode="numeric"
+maxlength="6"
+placeholder="Contoh: 1234"
+>
+
+</div>
+
+<button
+class="add-new-btn"
+style="background:#2e7d32;margin-bottom:0"
+onclick="addNewStaff()"
+>
+💾 Simpan Staff
+</button>
+
+</div>
+
+
+<!-- STAFF LIST -->
+
+<div class="card">
+
+<h2 class="section-title">
+👥 Senarai Staff
+</h2>
+
+<div id="staff-list-container">
+Loading...
+</div>
+
+</div>
+
+
+<!-- STAFF HISTORY -->
+
+<div class="card">
+
+<h2 class="section-title">
+📊 Rekod Kerja 30 Hari
+</h2>
+
+<div id="staff-history-container">
+Loading...
+</div>
+
+</div>
+
+</section>
+
+</div>
+
+
+<!-- =========================================================
+     MENU MODAL
+========================================================= -->
+
+<div
+id="item-form-modal"
+class="modal"
+>
+
+<div class="modal-box">
+
+<h2
+id="form-modal-title"
+class="modal-title"
+>
+Tambah Menu Baru
+</h2>
+
+<input
+type="hidden"
+id="form-item-id"
+>
+
+<div class="form-group">
+
+<label>
+Nama Item *
+</label>
+
+<input
+id="form-name"
+placeholder="Nama menu"
+>
+
+</div>
+
+
+<div class="form-group">
+
+<label>
+Kategori *
+</label>
+
+<select id="form-category">
+
+<option value="COMBO BEST VALUE">
+COMBO BEST VALUE
+</option>
+
+<option value="COFFEE">
+COFFEE
+</option>
+
+<option value="NON COFFEE">
+NON COFFEE
+</option>
+
+<option value="MATCHA">
+MATCHA
+</option>
+
+<option value="PASTA">
+PASTA
+</option>
+
+<option value="SOFT COOKIES">
+SOFT COOKIES
+</option>
+
+<option value="BITES">
+BITES
+</option>
+
+<option value="ADD ON">
+ADD ON
+</option>
+
+</select>
+
+</div>
+
+
+<div class="form-group">
+
+<label>
+Harga RM *
+</label>
+
+<input
+type="number"
+id="form-price"
+step="0.01"
+min="0"
+placeholder="0.00"
+>
+
+</div>
+
+
+<div class="form-group">
+
+<label>
+Description
+</label>
+
+<textarea
+id="form-description"
+placeholder="Description menu"
+></textarea>
+
+</div>
+
+
+<div class="form-group">
+
+<label>
+Image URL
+</label>
+
+<input
+id="form-image"
+placeholder="https://..."
+>
+
+</div>
+
+
+<div class="form-group">
+
+<label>
+Emoji
+</label>
+
+<input
+id="form-emoji"
+maxlength="4"
+placeholder="☕"
+>
+
+</div>
+
+
+<div class="form-group">
+
+<label>
+Jenis Item
+</label>
+
+<select
+id="form-type"
+onchange="onTypeChange()"
+>
+
+<option value="simple">
+Simple
+</option>
+
+<option value="combo">
+Combo
+</option>
+
+</select>
+
+</div>
+
+
+<div class="form-group">
+
+<label>
+Customization
+</label>
+
+<div class="checkbox-grid">
+
+<label>
+<input
+type="checkbox"
+id="form-sugar"
+>
+Gula
+</label>
+
+<label>
+<input
+type="checkbox"
+id="form-milk"
+>
+Susu
+</label>
+
+<label>
+<input
+type="checkbox"
+id="form-temperature"
+>
+Suhu
+</label>
+
+<label>
+<input
+type="checkbox"
+id="form-shot"
+>
+Extra Shot
+</label>
+
+<label>
+<input
+type="checkbox"
+id="form-syrup"
+>
+Extra Syrup
+</label>
+
+</div>
+
+</div>
+
+
+<!-- COMBO -->
+
+<div
+id="combo-contents-group"
+class="form-group"
+style="display:none"
+>
+
+<label>
+Kandungan Combo
+</label>
+
+<div id="combo-contents-list"></div>
+
+<button
+type="button"
+class="add-row-btn"
+onclick="addComboContent()"
+>
++ Tambah Kandungan
+</button>
+
+</div>
+
+
+<div
+id="combo-choice-group"
+class="form-group"
+style="display:none"
+>
+
+<label>
+Combo Choice
+</label>
+
+<input
+id="form-combo-choice-title"
+placeholder="Contoh: Pilih Pasta"
+>
+
+<div
+id="combo-choice-list"
+style="margin-top:8px"
+></div>
+
+<button
+type="button"
+class="add-row-btn"
+onclick="addComboChoice()"
+>
++ Tambah Pilihan
+</button>
+
+</div>
+
+
+<div class="modal-actions">
+
+<button
+class="cancel-btn"
+onclick="closeItemForm()"
+>
+Batal
+</button>
+
+<button
+id="form-delete-btn"
+class="delete-btn"
+onclick="deleteCurrentItem()"
+style="display:none"
+>
+Padam
+</button>
+
+<button
+class="save-btn"
+onclick="saveItem()"
+>
+💾 Save
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   FIREBASE
+========================================================= */
+
+const firebaseConfig = {
+
+    apiKey:
+        "AIzaSyA55AmYlP7nPaAXavrFsU5G4GnQtB2Bqc",
+
+    authDomain:
+        "nikopi-operation.firebaseapp.com",
+
+    databaseURL:
+        "https://nikopi-operation-default-rtdb.asia-southeast1.firebasedatabase.app",
+
+    projectId:
+        "nikopi-operation",
+
+    storageBucket:
+        "nikopi-operation.firebasestorage.app",
+
+    messagingSenderId:
+        "922893888263",
+
+    appId:
+        "1:922893888263:web:2c113a2db29960044e73a2",
+
+    measurementId:
+        "G-WGEZB8BFW0"
+};
+
+
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+
+const db = firebase.firestore();
+
+
+/* =========================================================
+   PASSWORD
+========================================================= */
+
+const PASSWORD_MENU = "1111";
+const PASSWORD_SHIFT = "0000";
+const PASSWORD_RESET = "nikopistart";
+
+
+/* =========================================================
+   VARIABLES
+========================================================= */
+
+let currentAdminCategories = [];
+
+let allOrders = [];
+let allCompletedOrders = [];
+let todayCompletedOrders = [];
+
+let salesChart = null;
+let currentChartMode = "daily";
+
+let editingItemId = null;
+
+let currentStaffList = [];
+let currentStaffLogs = [];
+
+let menuUnsubscribe = null;
+let orderUnsubscribe = null;
+let staffUnsubscribe = null;
+let staffLogUnsubscribe = null;
+
+
+/* =========================================================
+   DEFAULT MENU
+========================================================= */
+
+const DEFAULT_MENU = [
+
+{
+    category:"COMBO BEST VALUE",
+
+    items:[
+
+        {
+            id:"combo-1",
+            name:"Kaya Toast Combo",
+            price:17.90,
+            available:true,
+
+            customization:{
+                temperature:true
+            },
+
+            combo:true,
+
+            comboContents:[
+                "Roti Kaya",
+                "Hard Boiled Egg",
+                "Cafe Latte (Hot / Ice)"
+            ]
+        },
+
+        {
+            id:"combo-2",
+            name:"Ramen Ribena Combo",
+            price:21.90,
+            available:true,
+
+            customization:{},
+
+            combo:true,
+
+            comboContents:[
+                "Ramen",
+                "Sparkling Ribena"
+            ]
+        },
+
+        {
+            id:"combo-3",
+            name:"Bagel Matcha Combo",
+            price:27.90,
+            available:true,
+
+            customization:{},
+
+            combo:true,
+
+            comboContents:[
+                "Bagel with Cream Cheese",
+                "Matcha Strawberry"
+            ]
+        },
+
+        {
+            id:"combo-4",
+            name:"Couple Set",
+            price:42.50,
+            available:true,
+
+            customization:{},
+
+            combo:true,
+
+            comboContents:[
+                "Ice Latte",
+                "Matcha Latte"
+            ],
+
+            comboChoice:{
+                title:"Pilih Pasta",
+                options:[
+                    "Spaghetti Carbonara",
+                    "Spaghetti Bolognese"
+                ]
+            }
+        },
+
+        {
+            id:"combo-5",
+            name:"Croissant Choc Combo",
+            price:16.90,
+            available:true,
+
+            customization:{
+                temperature:true
+            },
+
+            combo:true,
+
+            comboContents:[
+                "Mini Croissant",
+                "Chocolate (Hot / Ice)"
+            ]
+        }
+
+    ]
+},
+
+{
+    category:"COFFEE",
+
+    items:[
+
+        {
+            id:"coffee-1",
+            name:"Cinnamon Latte",
+            price:15,
+            available:true,
+            customization:{
+                sugar:false,
+                milk:true,
+                temperature:true,
+                extraShot:true,
+                extraSyrup:true
+            }
+        },
+
+        {
+            id:"coffee-2",
+            name:"Spanish Latte",
+            price:15,
+            available:true,
+            customization:{
+                sugar:true,
+                milk:true,
+                temperature:true,
+                extraShot:true,
+                extraSyrup:false
+            }
+        },
+
+        {
+            id:"coffee-3",
+            name:"Hazelnut Latte",
+            price:15,
+            available:true,
+            customization:{
+                sugar:false,
+                milk:true,
+                temperature:true,
+                extraShot:true,
+                extraSyrup:true
+            }
+        },
+
+        {
+            id:"coffee-4",
+            name:"Caramel Latte",
+            price:15,
+            available:true,
+            customization:{
+                sugar:false,
+                milk:true,
+                temperature:true,
+                extraShot:true,
+                extraSyrup:true
+            }
+        },
+
+        {
+            id:"coffee-5",
+            name:"Cafe Latte / Flat White",
+            price:12,
+            available:true,
+            customization:{
+                sugar:true,
+                milk:true,
+                temperature:true,
+                extraShot:true,
+                extraSyrup:false
+            }
+        },
+
+        {
+            id:"coffee-6",
+            name:"Cappuccino",
+            price:12,
+            available:true,
+            customization:{
+                sugar:true,
+                milk:true,
+                temperature:true,
+                extraShot:true,
+                extraSyrup:false
+            }
+        },
+
+        {
+            id:"coffee-7",
+            name:"Americano / Long Black",
+            price:10,
+            available:true,
+            customization:{
+                sugar:true,
+                milk:false,
+                temperature:true,
+                extraShot:true,
+                extraSyrup:false
+            }
+        },
+
+        {
+            id:"coffee-8",
+            name:"Sparkling Americano",
+            price:12,
+            available:true,
+            customization:{
+                sugar:false,
+                milk:false,
+                temperature:false,
+                extraShot:true,
+                extraSyrup:false
+            }
+        },
+
+        {
+            id:"coffee-9",
+            name:"Mocha",
+            price:17,
+            available:true,
+            customization:{
+                sugar:true,
+                milk:true,
+                temperature:true,
+                extraShot:true,
+                extraSyrup:false
+            }
+        },
+
+        {
+            id:"coffee-10",
+            name:"Espresso",
+            price:5,
+            available:true,
+            customization:{
+                sugar:false,
+                milk:false,
+                temperature:false,
+                extraShot:false,
+                extraSyrup:false
+            }
+        }
+
+    ]
+},
+
+{
+    category:"NON COFFEE",
+
+    items:[
+
+        {
+            id:"noncoffee-1",
+            name:"Chocolate",
+            price:12,
+            available:true,
+            customization:{
+                sugar:true,
+                milk:true,
+                temperature:true
+            }
+        },
+
+        {
+            id:"noncoffee-2",
+            name:"Chocolate Hazelnut",
+            price:14,
+            available:true,
+            customization:{
+                sugar:false,
+                milk:true,
+                temperature:true,
+                extraSyrup:true
+            }
+        },
+
+        {
+            id:"noncoffee-3",
+            name:"Sparkling Yuzu",
+            price:14,
+            available:true,
+            customization:{}
+        },
+
+        {
+            id:"noncoffee-4",
+            name:"Sparkling Ribena",
+            price:10,
+            available:true,
+            customization:{}
+        },
+
+        {
+            id:"noncoffee-5",
+            name:"Ribena",
+            price:6,
+            available:true,
+            customization:{}
+        },
+
+        {
+            id:"noncoffee-6",
+            name:"Belgium Choc With Apple Fiber",
+            price:10,
+            available:true,
+            customization:{
+                sugar:true,
+                milk:true,
+                temperature:true
+            }
+        }
+
+    ]
+},
+
+{
+    category:"MATCHA",
+
+    items:[
+
+        {
+            id:"matcha-1",
+            name:"Matcha Latte",
+            price:15,
+            available:true,
+            customization:{
+                sugar:true,
+                milk:true,
+                temperature:true,
+                extraShot:false,
+                extraSyrup:false
+            }
+        },
+
+        {
+            id:"matcha-2",
+            name:"Matcha Strawberry",
+            price:17,
+            available:true,
+            customization:{
+                sugar:true,
+                milk:true,
+                temperature:true,
+                extraShot:false,
+                extraSyrup:false
+            }
+        }
+
+    ]
+},
+
+{
+    category:"PASTA",
+
+    items:[
+
+        {
+            id:"pasta-1",
+            name:"Spaghetti Carbonara",
+            price:15,
+            available:true,
+            customization:{}
+        },
+
+        {
+            id:"pasta-2",
+            name:"Spaghetti Bolognese",
+            price:15,
+            available:true,
+            customization:{}
+        }
+
+    ]
+},
+
+{
+    category:"SOFT COOKIES",
+
+    items:[
+
+        {
+            id:"cookie-1",
+            name:"Cookies",
+            price:11.90,
+            available:true,
+            customization:{},
+
+            variants:[
+                {
+                    name:"Classic Choc Chip",
+                    available:true
+                },
+                {
+                    name:"S’mores",
+                    available:true
+                },
+                {
+                    name:"Red Velvet Cheesecake",
+                    available:true
+                }
+            ]
+        },
+
+        {
+            id:"cookie-4",
+            name:"Add On Milk",
+            price:3,
+            available:true,
+            customization:{}
+        }
+
+    ]
+},
+
+{
+    category:"BITES",
+
+    items:[
+
+        {
+            id:"bites-1",
+            name:"Bagel With Cream Cheese",
+            price:12,
+            available:true,
+            customization:{},
+
+            variants:[
+                {
+                    name:"Poppy seed",
+                    available:true
+                },
+                {
+                    name:"Sesame",
+                    available:true
+                },
+                {
+                    name:"Garlic",
+                    available:true
+                },
+                {
+                    name:"Plain",
+                    available:true
+                }
+            ]
+        },
+
+        {
+            id:"bites-2",
+            name:"Mini Croissant",
+            price:6,
+            available:true,
+            customization:{}
+        },
+
+        {
+            id:"bites-3",
+            name:"Koko Crunch With Milk",
+            price:5,
+            available:true,
+            customization:{}
+        },
+
+        {
+            id:"bites-4",
+            name:"Ramen",
+            price:9,
+            available:true,
+            customization:{},
+
+            variants:[
+                {
+                    name:"Carbonara",
+                    available:true
+                },
+                {
+                    name:"Quattro Cheese",
+                    available:true
+                }
+            ]
+        },
+
+        {
+            id:"bites-5",
+            name:"Kaya Toast With Hard Boiled Egg",
+            price:7,
+            available:true,
+            customization:{}
+        },
+
+        {
+            id:"bites-6",
+            name:"Kaya Toast",
+            price:5.50,
+            available:true,
+            customization:{}
+        },
+
+        {
+            id:"bites-7",
+            name:"Nutella Toast",
+            price:5.50,
+            available:true,
+            customization:{}
+        },
+
+        {
+            id:"bites-8",
+            name:"Maggie Cup",
+            price:4.50,
+            available:true,
+            customization:{}
+        },
+
+        {
+            id:"bites-9",
+            name:"Indo Mee",
+            price:6,
+            available:true,
+            customization:{}
+        },
+
+        {
+            id:"bites-10",
+            name:"Hard Boiled Egg",
+            price:2,
+            available:true,
+            customization:{}
+        }
+
+    ]
+},
+
+{
+    category:"ADD ON",
+
+    items:[
+
+        {
+            id:"addon-1",
+            name:"Oatmilk",
+            price:3,
+            available:true,
+            customization:{}
+        },
+
+        {
+            id:"addon-2",
+            name:"Extra Shot",
+            price:4,
+            available:true,
+            customization:{}
+        },
+
+        {
+            id:"addon-3",
+            name:"Extra Syrup",
+            price:2,
+            available:true,
+            customization:{}
+        },
+
+        {
+            id:"addon-4",
+            name:"Ice Water",
+            price:2,
+            available:true,
+            customization:{}
+        }
+
+    ]
+}
+];
+
+
+const CATEGORY_ORDER = [
+    "COMBO BEST VALUE",
+    "COFFEE",
+    "NON COFFEE",
+    "MATCHA",
+    "PASTA",
+    "SOFT COOKIES",
+    "BITES",
+    "ADD ON"
+];
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function cloneData(data){
+
+    return JSON.parse(
+        JSON.stringify(data)
+    );
+
+}
+
+
+function escapeHTML(value){
+
+    return String(value ?? "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+
+}
+
+
+function getOrderDate(order){
+
+    const fields = [
+        "timestamp",
+        "createdAt",
+        "completedAt"
+    ];
+
+    for(const field of fields){
+
+        const value = order?.[field];
+
+        if(!value) continue;
+
+        if(
+            value &&
+            typeof value.toDate === "function"
+        ){
+
+            return value.toDate();
+
+        }
+
+        if(
+            typeof value === "number"
+        ){
+
+            return new Date(value);
+
+        }
+
+        if(
+            typeof value === "string"
+        ){
+
+            const date = new Date(value);
+
+            if(!isNaN(date.getTime())){
+
+                return date;
+
+            }
+
+        }
+
+    }
+
+    return null;
+
+}
+
+
+function isToday(date){
+
+    if(!date) return false;
+
+    const now = new Date();
+
+    return (
+        date.getFullYear() === now.getFullYear() &&
+        date.getMonth() === now.getMonth() &&
+        date.getDate() === now.getDate()
+    );
+
+}
+
+
+function formatDate(date){
+
+    if(!date) return "-";
+
+    return date.toLocaleDateString(
+        "en-MY",
+        {
+            day:"2-digit",
+            month:"2-digit",
+            year:"numeric"
+        }
+    );
+
+}
+
+
+function formatDateTime(date){
+
+    if(!date) return "-";
+
+    return date.toLocaleString(
+        "en-MY",
+        {
+            day:"2-digit",
+            month:"2-digit",
+            year:"numeric",
+            hour:"2-digit",
+            minute:"2-digit"
+        }
+    );
+
+}
+
+
+function getPaymentType(order){
+
+    const value = String(
+        order?.paymentMethod ||
+        order?.payment ||
+        order?.method ||
+        ""
+    ).toLowerCase();
+
+    if(
+        value.includes("cash") ||
+        value.includes("tunai") ||
+        value.includes("counter")
+    ){
+
+        return "Cash";
+
+    }
+
+    if(
+        value.includes("qr") ||
+        value.includes("duitnow") ||
+        value.includes("online")
+    ){
+
+        return "QR";
+
+    }
+
+    return value || "Other";
+
+}
+
+
+function getOrderTotal(order){
+
+    const values = [
+        order?.total,
+        order?.grandTotal,
+        order?.amount,
+        order?.totalAmount
+    ];
+
+    for(const value of values){
+
+        const number = Number(value);
+
+        if(!isNaN(number)){
+
+            return number;
+
+        }
+
+    }
+
+    if(Array.isArray(order?.items)){
+
+        return order.items.reduce(
+            (sum,item)=>{
+
+                const price =
+                    Number(
+                        item.price ??
+                        item.unitPrice ??
+                        0
+                    );
+
+                const qty =
+                    Number(
+                        item.quantity ??
+                        item.qty ??
+                        1
+                    );
+
+                return sum + (
+                    price * qty
+                );
+
+            },
+            0
+        );
+
+    }
+
+    return 0;
+
+}
+
+
+function getOrderStatus(order){
+
+    return String(
+        order?.status ||
+        "Pending"
+    );
+
+}
+
+
+function isCompleted(order){
+
+    const status =
+        getOrderStatus(order)
+            .toLowerCase();
+
+    return (
+        status === "selesai (completed)" ||
+        status === "completed" ||
+        status === "complete" ||
+        status === "selesai"
+    );
+
+}
+
+
+/* =========================================================
+   PAGE NAV
+========================================================= */
+
+function showPage(page){
+
+    document
+        .querySelectorAll(".page")
+        .forEach(
+            element =>
+                element.classList.remove("active")
+        );
+
+    const target =
+        document.getElementById(
+            "page-" + page
+        );
+
+    if(target){
+
+        target.classList.add("active");
+
+    }
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
+
+    if(page === "sales"){
+
+        setTimeout(
+            renderChart,
+            100
+        );
+
+    }
+
+    if(page === "staff"){
+
+        renderStaffSelect();
+        renderActiveStaff();
+        renderStaffList();
+        renderStaffHistory();
+
+    }
+
+}
+
+
+/* =========================================================
+   MENU MIGRATION
+========================================================= */
+
+function migrateMenu(firebaseCategories){
+
+    if(!Array.isArray(firebaseCategories)){
+        return cloneData(DEFAULT_MENU);
+    }
+
+    const result = [];
+
+    for(const category of firebaseCategories){
+
+        const defaultCategory =
+            DEFAULT_MENU.find(
+                x =>
+                    x.category === category.category
+            );
+
+        const defaultItems =
+            defaultCategory?.items || [];
+
+        const items =
+            Array.isArray(category.items)
+                ? category.items
+                : [];
+
+        const migratedItems =
+            items.map(item => {
+
+                const defaultItem =
+                    defaultItems.find(
+                        x =>
+                            x.id === item.id
+                    );
+
+                const merged = {
+                    ...(
+                        defaultItem
+                        ? cloneData(defaultItem)
+                        : {}
+                    ),
+                    ...item
+                };
+
+                merged.available =
+                    item.available !== undefined
+                        ? item.available
+                        : true;
+
+                merged.customization =
+                    {
+                        ...(
+                            defaultItem?.customization ||
+                            {}
+                        ),
+                        ...(
+                            item.customization ||
+                            {}
+                        )
+                    };
+
+                if(
+                    defaultItem?.variants &&
+                    !item.variants
+                ){
+
+                    merged.variants =
+                        cloneData(
+                            defaultItem.variants
+                        );
+
+                }
+
+                if(
+                    Array.isArray(item.variants)
+                ){
+
+                    merged.variants =
+                        item.variants.map(
+                            variant => ({
+                                ...variant,
+                                available:
+                                    variant.available !== false
+                            })
+                        );
+
+                }
+
+                return merged;
+
+            });
+
+        result.push({
+            category:category.category,
+            items:migratedItems
+        });
+
+    }
+
+    /*
+       Add missing default categories/items.
+    */
+
+    for(const defaultCategory of DEFAULT_MENU){
+
+        let existingCategory =
+            result.find(
+                x =>
+                    x.category ===
+                    defaultCategory.category
+            );
+
+        if(!existingCategory){
+
+            result.push(
+                cloneData(
+                    defaultCategory
+                )
+            );
+
+            continue;
+
+        }
+
+        for(
+            const defaultItem
+            of defaultCategory.items
+        ){
+
+            const exists =
+                existingCategory.items.some(
+                    item =>
+                        item.id ===
+                        defaultItem.id
+                );
+
+            if(!exists){
+
+                existingCategory.items.push(
+                    cloneData(defaultItem)
+                );
+
+            }
+
+        }
+
+    }
+
+    return result;
+
+}
+
+
+/* =========================================================
+   LOAD MENU
+========================================================= */
+
+function loadMenuRealtime(){
+
+    if(menuUnsubscribe){
+
+        menuUnsubscribe();
+
+    }
+
+    menuUnsubscribe =
+        db
+        .collection("settings")
+        .doc("menu")
+        .onSnapshot(
+            async snapshot => {
+
+                if(!snapshot.exists){
+
+                    currentAdminCategories =
+                        cloneData(DEFAULT_MENU);
+
+                    await saveMenuToFirebase();
+
+                    return;
+
+                }
+
+                const data =
+                    snapshot.data() || {};
+
+                currentAdminCategories =
+                    migrateMenu(
+                        data.categories
+                    );
+
+                renderAdminMenu();
+
+            },
+            error => {
+
+                console.error(
+                    "Menu listener error:",
+                    error
+                );
+
+                document.getElementById(
+                    "admin-menu-container"
+                ).innerHTML = `
+                    <p class="empty-text">
+                        Gagal load menu.<br>
+                        ${escapeHTML(error.message)}
+                    </p>
+                `;
+
+            }
+        );
+
+}
+
+
+async function saveMenuToFirebase(){
+
+    try{
+
+        await db
+            .collection("settings")
+            .doc("menu")
+            .set({
+
+                categories:
+                    currentAdminCategories
+
+            });
+
+    }catch(error){
+
+        console.error(error);
+
+        alert(
+            "Gagal save menu:\n" +
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   FIND MENU
+========================================================= */
+
+function findItemById(id){
+
+    for(
+        const category
+        of currentAdminCategories
+    ){
+
+        for(
+            const item
+            of category.items || []
+        ){
+
+            if(
+                String(item.id) ===
+                String(id)
+            ){
+
+                return item;
+
+            }
+
+        }
+
+    }
+
+    return null;
+
+}
+
+
+function findCategoryOfItem(id){
+
+    return currentAdminCategories.find(
+        category =>
+            (category.items || []).some(
+                item =>
+                    String(item.id) ===
+                    String(id)
+            )
+    );
+
+}
+
+
+/* =========================================================
+   RENDER MENU
+========================================================= */
+
+function renderAdminMenu(){
+
+    const container =
+        document.getElementById(
+            "admin-menu-container"
+        );
+
+    if(!container) return;
+
+    let html = "";
+
+    const sortedCategories = [
+        ...CATEGORY_ORDER
+            .map(
+                name =>
+                    currentAdminCategories.find(
+                        x =>
+                            x.category === name
+                    )
+            )
+            .filter(Boolean),
+
+        ...currentAdminCategories.filter(
+            category =>
+                !CATEGORY_ORDER.includes(
+                    category.category
+                )
+        )
+    ];
+
+    for(
+        const category
+        of sortedCategories
+    ){
+
+        html += `
+            <div
+                class="
+                    category-heading
+                    ${
+                        category.category ===
+                        "COMBO BEST VALUE"
+                            ? "combo-heading"
+                            : ""
+                    }
+                "
+            >
+                ${escapeHTML(
+                    category.category
+                )}
+            </div>
+        `;
+
+        const normalItems =
+            (category.items || [])
+                .filter(
+                    item =>
+                        !(
+                            Array.isArray(
+                                item.variants
+                            ) &&
+                            item.variants.length
+                        )
+                );
+
+        const variantItems =
+            (category.items || [])
+                .filter(
+                    item =>
+                        Array.isArray(
+                            item.variants
+                        ) &&
+                        item.variants.length
+                );
+
+        if(normalItems.length){
+
+            html += `
+                <div class="menu-grid">
+                    ${
+                        normalItems
+                            .map(
+                                buildSimpleCardHTML
+                            )
+                            .join("")
+                    }
+                </div>
+            `;
+
+        }
+
+        for(
+            const item
+            of variantItems
+        ){
+
+            html +=
+                buildVariantGroupHTML(
+                    item
+                );
+
+        }
+
+    }
+
+    if(!html){
+
+        html = `
+            <p class="empty-text">
+                Tiada menu.
+            </p>
+        `;
+
+    }
+
+    container.innerHTML = html;
+
+}
+
+
+/* =========================================================
+   SIMPLE MENU CARD
+========================================================= */
+
+function buildSimpleCardHTML(item){
+
+    const available =
+        item.available !== false;
+
+    return `
+        <div
+            class="
+                menu-item-card
+                ${available ? "" : "soldout"}
+                ${item.combo ? "combo-card" : ""}
+            "
+        >
+
+            <div class="menu-name">
+                ${escapeHTML(item.emoji || "")}
+                ${escapeHTML(item.name)}
+            </div>
+
+            <div class="menu-price">
+                RM${Number(
+                    item.price || 0
+                ).toFixed(2)}
+            </div>
+
+            <div class="menu-actions">
+
+                <button
+                    class="${
+                        available
+                            ? "stock-on"
+                            : "stock-off"
+                    }"
+                    onclick="
+                        toggleStock(
+                            '${escapeHTML(item.id)}'
+                        )
+                    "
+                >
+                    ${
+                        available
+                            ? "Sold Out"
+                            : "Available"
+                    }
+                </button>
+
+                <button
+                    class="edit-btn"
+                    onclick="
+                        openEditItem(
+                            '${escapeHTML(item.id)}'
+                        )
+                    "
+                >
+                    ✏️
+                </button>
+
+            </div>
+
+        </div>
+    `;
+
+}
+
+
+/* =========================================================
+   VARIANT CARD
+========================================================= */
+
+function buildVariantGroupHTML(item){
+
+    const available =
+        item.available !== false;
+
+    let html = `
+        <div class="variant-group">
+
+            <div class="variant-title">
+
+                <span class="variant-title-name">
+                    ${escapeHTML(item.name)}
+                    · RM${Number(
+                        item.price || 0
+                    ).toFixed(2)}
+                </span>
+
+                <button
+                    class="${
+                        available
+                            ? "btn-red"
+                            : "btn-green"
+                    }"
+                    onclick="
+                        toggleStock(
+                            '${escapeHTML(item.id)}'
+                        )
+                    "
+                >
+                    ${
+                        available
+                            ? "Sold Out Semua"
+                            : "Available Semua"
+                    }
+                </button>
+
+                <button
+                    class="btn-blue"
+                    onclick="
+                        openEditItem(
+                            '${escapeHTML(item.id)}'
+                        )
+                    "
+                >
+                    ✏️
+                </button>
+
+            </div>
+    `;
+
+    item.variants.forEach(
+        (variant,index) => {
+
+            const vAvailable =
+                variant.available !== false;
+
+            html += `
+                <div
+                    class="
+                        variant-row
+                        ${
+                            vAvailable
+                                ? ""
+                                : "soldout"
+                        }
+                    "
+                >
+
+                    <span class="variant-name">
+                        • ${escapeHTML(
+                            variant.name
+                        )}
+                    </span>
+
+                    <button
+                        class="${
+                            vAvailable
+                                ? "btn-red"
+                                : "btn-green"
+                        }"
+                        onclick="
+                            toggleVariantStock(
+                                '${escapeHTML(
+                                    item.id
+                                )}',
+                                ${index}
+                            )
+                        "
+                    >
+                        ${
+                            vAvailable
+                                ? "Sold Out"
+                                : "Available"
+                        }
+                    </button>
+
+                </div>
+            `;
+
+        }
+    );
+
+    html += `
+        </div>
+    `;
+
+    return html;
+
+}
+
+
+/* =========================================================
+   STOCK
+========================================================= */
+
+async function toggleStock(id){
+
+    const item =
+        findItemById(id);
+
+    if(!item) return;
+
+    item.available =
+        item.available === false;
+
+    await saveMenuToFirebase();
+
+    renderAdminMenu();
+
+}
+
+
+async function toggleVariantStock(
+    itemId,
+    variantIndex
+){
+
+    const item =
+        findItemById(itemId);
+
+    if(
+        !item ||
+        !Array.isArray(item.variants) ||
+        !item.variants[variantIndex]
+    ){
+
+        return;
+
+    }
+
+    item.variants[variantIndex].available =
+        item.variants[variantIndex].available === false;
+
+    await saveMenuToFirebase();
+
+    renderAdminMenu();
+
+}
+
+
+/* =========================================================
+   MENU FORM
+========================================================= */
+
+function resetItemForm(){
+
+    document.getElementById(
+        "form-item-id"
+    ).value = "";
+
+    document.getElementById(
+        "form-name"
+    ).value = "";
+
+    document.getElementById(
+        "form-price"
+    ).value = "";
+
+    document.getElementById(
+        "form-description"
+    ).value = "";
+
+    document.getElementById(
+        "form-image"
+    ).value = "";
+
+    document.getElementById(
+        "form-emoji"
+    ).value = "";
+
+    document.getElementById(
+        "form-type"
+    ).value = "simple";
+
+    document.getElementById(
+        "form-category"
+    ).value = "COFFEE";
+
+    [
+        "form-sugar",
+        "form-milk",
+        "form-temperature",
+        "form-shot",
+        "form-syrup"
+    ].forEach(
+        id =>
+            document.getElementById(
+                id
+            ).checked = false
+    );
+
+    document.getElementById(
+        "combo-contents-list"
+    ).innerHTML = "";
+
+    document.getElementById(
+        "combo-choice-list"
+    ).innerHTML = "";
+
+    document.getElementById(
+        "form-combo-choice-title"
+    ).value = "";
+
+}
+
+
+function openAddItem(){
+
+    const password =
+        prompt(
+            "Masukkan password menu:"
+        );
+
+    if(password !== PASSWORD_MENU){
+
+        if(password !== null){
+
+            alert("Password salah.");
+
+        }
+
+        return;
+
+    }
+
+    editingItemId = null;
+
+    resetItemForm();
+
+    document.getElementById(
+        "form-modal-title"
+    ).textContent =
+        "Tambah Menu Baru";
+
+    document.getElementById(
+        "form-delete-btn"
+    ).style.display = "none";
+
+    onTypeChange();
+
+    document.getElementById(
+        "item-form-modal"
+    ).classList.add("show");
+
+}
+
+
+function openEditItem(id){
+
+    const password =
+        prompt(
+            "Masukkan password menu:"
+        );
+
+    if(password !== PASSWORD_MENU){
+
+        if(password !== null){
+
+            alert("Password salah.");
+
+        }
+
+        return;
+
+    }
+
+    const item =
+        findItemById(id);
+
+    if(!item) return;
+
+    editingItemId = id;
+
+    resetItemForm();
+
+    document.getElementById(
+        "form-item-id"
+    ).value = id;
+
+    document.getElementById(
+        "form-name"
+    ).value =
+        item.name || "";
+
+    document.getElementById(
+        "form-price"
+    ).value =
+        item.price || "";
+
+    document.getElementById(
+        "form-description"
+    ).value =
+        item.description || "";
+
+    document.getElementById(
+        "form-image"
+    ).value =
+        item.image || "";
+
+    document.getElementById(
+        "form-emoji"
+    ).value =
+        item.emoji || "";
+
+    const category =
+        findCategoryOfItem(id);
+
+    if(category){
+
+        document.getElementById(
+            "form-category"
+        ).value =
+            category.category;
+
+    }
+
+    document.getElementById(
+        "form-type"
+    ).value =
+        item.combo
+            ? "combo"
+            : "simple";
+
+    const customization =
+        item.customization || {};
+
+    document.getElementById(
+        "form-sugar"
+    ).checked =
+        !!customization.sugar;
+
+    document.getElementById(
+        "form-milk"
+    ).checked =
+        !!customization.milk;
+
+    document.getElementById(
+        "form-temperature"
+    ).checked =
+        !!customization.temperature;
+
+    document.getElementById(
+        "form-shot"
+    ).checked =
+        !!customization.extraShot;
+
+    document.getElementById(
+        "form-syrup"
+    ).checked =
+        !!customization.extraSyrup;
+
+
+    /*
+       Combo contents
+    */
+
+    if(
+        Array.isArray(
+            item.comboContents
+        )
+    ){
+
+        item.comboContents.forEach(
+            value =>
+                addComboContent(value)
+        );
+
+    }
+
+
+    /*
+       Combo choices
+    */
+
+    if(item.comboChoice){
+
+        document.getElementById(
+            "form-combo-choice-title"
+        ).value =
+            item.comboChoice.title || "";
+
+        (
+            item.comboChoice.options ||
+            []
+        ).forEach(
+            value =>
+                addComboChoice(value)
+        );
+
+    }
+
+
+    document.getElementById(
+        "form-modal-title"
+    ).textContent =
+        "Edit Menu";
+
+    document.getElementById(
+        "form-delete-btn"
+    ).style.display =
+        "block";
+
+    onTypeChange();
+
+    document.getElementById(
+        "item-form-modal"
+    ).classList.add("show");
+
+}
+
+
+function closeItemForm(){
+
+    document.getElementById(
+        "item-form-modal"
+    ).classList.remove("show");
+
+    editingItemId = null;
+
+}
+
+
+function onTypeChange(){
+
+    const combo =
+        document.getElementById(
+            "form-type"
+        ).value === "combo";
+
+    document.getElementById(
+        "combo-contents-group"
+    ).style.display =
+        combo
+            ? "block"
+            : "none";
+
+    document.getElementById(
+        "combo-choice-group"
+    ).style.display =
+        combo
+            ? "block"
+            : "none";
+
+}
+
+
+/* =========================================================
+   COMBO FORM
+========================================================= */
+
+function addComboContent(value=""){
+
+    const wrapper =
+        document.getElementById(
+            "combo-contents-list"
+        );
+
+    const row =
+        document.createElement(
+            "div"
+        );
+
+    row.className =
+        "combo-row";
+
+    row.innerHTML = `
+        <input
+            type="text"
+            value="${escapeHTML(value)}"
+            placeholder="Contoh: Roti Kaya"
+        >
+
+        <button
+            type="button"
+            onclick="
+                this.parentElement.remove()
+            "
+        >
+            ×
+        </button>
+    `;
+
+    wrapper.appendChild(row);
+
+}
+
+
+function addComboChoice(value=""){
+
+    const wrapper =
+        document.getElementById(
+            "combo-choice-list"
+        );
+
+    const row =
+        document.createElement(
+            "div"
+        );
+
+    row.className =
+        "combo-row";
+
+    row.innerHTML = `
+        <input
+            type="text"
+            value="${escapeHTML(value)}"
+            placeholder="Contoh: Spaghetti Carbonara"
+        >
+
+        <button
+            type="button"
+            onclick="
+                this.parentElement.remove()
+            "
+        >
+            ×
+        </button>
+    `;
+
+    wrapper.appendChild(row);
+
+}
+
+
+function getRowsValues(containerId){
+
+    return [
+        ...document.querySelectorAll(
+            `#${containerId} input`
+        )
+    ]
+    .map(
+        input =>
+            input.value.trim()
+    )
+    .filter(Boolean);
+
+}
+
+
+/* =========================================================
+   SAVE MENU ITEM
+========================================================= */
+
+async function saveItem(){
+
+    const name =
+        document.getElementById(
+            "form-name"
+        ).value.trim();
+
+    const price =
+        Number(
+            document.getElementById(
+                "form-price"
+            ).value
+        );
+
+    const category =
+        document.getElementById(
+            "form-category"
+        ).value;
+
+    if(!name){
+
+        alert(
+            "Sila masukkan nama menu."
+        );
+
+        return;
+
+    }
+
+    if(
+        !price ||
+        price < 0
+    ){
+
+        alert(
+            "Sila masukkan harga yang betul."
+        );
+
+        return;
+
+    }
+
+
+    const type =
+        document.getElementById(
+            "form-type"
+        ).value;
+
+    const customization = {
+
+        sugar:
+            document.getElementById(
+                "form-sugar"
+            ).checked,
+
+        milk:
+            document.getElementById(
+                "form-milk"
+            ).checked,
+
+        temperature:
+            document.getElementById(
+                "form-temperature"
+            ).checked,
+
+        extraShot:
+            document.getElementById(
+                "form-shot"
+            ).checked,
+
+        extraSyrup:
+            document.getElementById(
+                "form-syrup"
+            ).checked
+
+    };
+
+
+    let item;
+
+    if(editingItemId){
+
+        const oldItem =
+            findItemById(
+                editingItemId
+            );
+
+        if(!oldItem) return;
+
+        item = {
+
+            ...oldItem,
+
+            name:name,
+
+            price:price,
+
+            description:
+                document.getElementById(
+                    "form-description"
+                ).value.trim(),
+
+            image:
+                document.getElementById(
+                    "form-image"
+                ).value.trim(),
+
+            emoji:
+                document.getElementById(
+                    "form-emoji"
+                ).value.trim(),
+
+            customization:
+
+                customization,
+
+            combo:
+                type === "combo"
+
+        };
+
+    }else{
+
+        item = {
+
+            id:
+                "item-" +
+                Date.now(),
+
+            name:name,
+
+            price:price,
+
+            available:true,
+
+            description:
+                document.getElementById(
+                    "form-description"
+                ).value.trim(),
+
+            image:
+                document.getElementById(
+                    "form-image"
+                ).value.trim(),
+
+            emoji:
+                document.getElementById(
+                    "form-emoji"
+                ).value.trim(),
+
+            customization:
+
+                customization,
+
+            combo:
+                type === "combo"
+
+        };
+
+    }
+
+
+    if(type === "combo"){
+
+        item.comboContents =
+            getRowsValues(
+                "combo-contents-list"
+            );
+
+        const choiceTitle =
+            document.getElementById(
+                "form-combo-choice-title"
+            ).value.trim();
+
+        const choices =
+            getRowsValues(
+                "combo-choice-list"
+            );
+
+        if(
+            choiceTitle &&
+            choices.length
+        ){
+
+            item.comboChoice = {
+
+                title:
+                    choiceTitle,
+
+                options:
+                    choices
+
+            };
+
+        }else{
+
+            delete item.comboChoice;
+
+        }
+
+    }else{
+
+        delete item.comboContents;
+        delete item.comboChoice;
+
+    }
+
+
+    let targetCategory =
+        currentAdminCategories.find(
+            category =>
+                category.category ===
+                category
+        );
+
+    /*
+       Remove item from old category
+       when editing and category changed.
+    */
+
+    if(editingItemId){
+
+        for(
+            const cat
+            of currentAdminCategories
+        ){
+
+            cat.items =
+                (cat.items || [])
+                    .filter(
+                        existing =>
+                            String(
+                                existing.id
+                            ) !==
+                            String(
+                                editingItemId
+                            )
+                    );
+
+        }
+
+    }
+
+
+    targetCategory =
+        currentAdminCategories.find(
+            cat =>
+                cat.category ===
+                category
+        );
+
+    if(!targetCategory){
+
+        targetCategory = {
+
+            category:category,
+
+            items:[]
+
+        };
+
+        currentAdminCategories.push(
+            targetCategory
+        );
+
+    }
+
+
+    targetCategory.items.push(
+        item
+    );
+
+
+    await saveMenuToFirebase();
+
+    closeItemForm();
+
+    renderAdminMenu();
+
+}
+
+
+/* =========================================================
+   DELETE ITEM
+========================================================= */
+
+async function deleteCurrentItem(){
+
+    if(!editingItemId){
+
+        return;
+
+    }
+
+    const item =
+        findItemById(
+            editingItemId
+        );
+
+    if(!item) return;
+
+    const confirmDelete =
+        confirm(
+            `Padam "${item.name}"?`
+        );
+
+    if(!confirmDelete){
+
+        return;
+
+    }
+
+    for(
+        const category
+        of currentAdminCategories
+    ){
+
+        category.items =
+            (category.items || [])
+                .filter(
+                    existing =>
+                        String(
+                            existing.id
+                        ) !==
+                        String(
+                            editingItemId
+                        )
+                );
+
+    }
+
+    await saveMenuToFirebase();
+
+    closeItemForm();
+
+    renderAdminMenu();
+
+}
+
+
+/* =========================================================
+   ORDERS LISTENER
+========================================================= */
+
+function loadOrdersRealtime(){
+
+    if(orderUnsubscribe){
+
+        orderUnsubscribe();
+
+    }
+
+    orderUnsubscribe =
+        db
+        .collection("orders")
+        .onSnapshot(
+            snapshot => {
+
+                allOrders =
+                    snapshot.docs.map(
+                        doc => ({
+                            firebaseId:
+                                doc.id,
+                            ...doc.data()
+                        })
+                    );
+
+                allOrders.sort(
+                    (a,b) =>
+                        getOrderDate(b) -
+                        getOrderDate(a)
+                );
+
+                allCompletedOrders =
+                    allOrders.filter(
+                        isCompleted
+                    );
+
+                todayCompletedOrders =
+                    allCompletedOrders.filter(
+                        order =>
+                            isToday(
+                                getOrderDate(
+                                    order
+                                )
+                            )
+                    );
+
+                renderLiveOrders();
+
+                renderSalesHistory();
+
+                calculateTodaySales();
+
+                if(
+                    document
+                        .getElementById(
+                            "page-sales"
+                        )
+                        .classList
+                        .contains("active")
+                ){
+
+                    renderChart();
+
+                }
+
+            },
+            error => {
+
+                console.error(
+                    "Orders listener:",
+                    error
+                );
+
+                document.getElementById(
+                    "orders-container"
+                ).innerHTML = `
+                    <p class="empty-text">
+                        Gagal load orders.
+                    </p>
+                `;
+
+            }
+        );
+
+}
+
+
+/* =========================================================
+   ORDER ITEMS
+========================================================= */
+
+function buildItemLine(item){
+
+    const quantity =
+        Number(
+            item?.quantity ??
+            item?.qty ??
+            1
+        );
+
+    const name =
+        item?.name ||
+        item?.productName ||
+        "Item";
+
+    const variant =
+        item?.variant ||
+        item?.selectedVariant ||
+        "";
+
+    let options = [];
+
+    if(item?.options){
+
+        if(typeof item.options === "string"){
+
+            options.push(
+                item.options
+            );
+
+        }else if(
+            typeof item.options === "object"
+        ){
+
+            Object.entries(
+                item.options
+            ).forEach(
+                ([key,value]) => {
+
+                    if(
+                        value !== undefined &&
+                        value !== null &&
+                        value !== ""
+                    ){
+
+                        options.push(
+                            `${key}: ${value}`
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+
+    }
+
+    [
+        ["Sugar",item?.sugar],
+        ["Milk",item?.milk],
+        ["Temperature",item?.temperature],
+        ["Shot",item?.shot],
+        ["Syrup",item?.syrup]
+    ].forEach(
+        ([key,value]) => {
+
+            if(
+                value !== undefined &&
+                value !== null &&
+                value !== ""
+            ){
+
+                options.push(
+                    `${key}: ${value}`
+                );
+
+            }
+
+        }
+    );
+
+
+    if(variant){
+
+        options.unshift(
+            `Variant: ${variant}`
+        );
+
+    }
+
+
+    return `
+        <div class="item-line">
+
+            <strong>
+                ${quantity} ×
+                ${escapeHTML(name)}
+            </strong>
+
+            ${
+                options.length
+                    ? `
+                        <div
+                            class="item-options"
+                        >
+                            ${options
+                                .map(
+                                    escapeHTML
+                                )
+                                .join(
+                                    " · "
+                                )}
+                        </div>
+                    `
+                    : ""
+            }
+
+        </div>
+    `;
+
+}
+
+
+function buildItemsBlock(order){
+
+    if(
+        !Array.isArray(
+            order?.items
+        )
+    ){
+
+        return `
+            <div class="item-line">
+                No item details
+            </div>
+        `;
+
+    }
+
+    return order.items
+        .map(buildItemLine)
+        .join("");
+
+}
+
+
+/* =========================================================
+   LIVE ORDERS
+========================================================= */
+
+function renderLiveOrders(){
+
+    const container =
+        document.getElementById(
+            "orders-container"
+        );
+
+    const live =
+        allOrders.filter(
+            order => {
+
+                const status =
+                    getOrderStatus(
+                        order
+                    ).toLowerCase();
+
+                return (
+                    status === "pending" ||
+                    status === "accepted"
+                );
+
+            }
+        );
+
+    if(!live.length){
+
+        container.innerHTML = `
+            <p class="empty-text">
+                Tiada live order sekarang.
+            </p>
+        `;
+
+        return;
+
+    }
+
+    container.innerHTML =
+        live
+            .map(
+                buildLiveOrderCard
+            )
+            .join("");
+
+}
+
+
+function buildLiveOrderCard(order){
+
+    const status =
+        getOrderStatus(
+            order
+        );
+
+    const isPending =
+        status.toLowerCase() ===
+        "pending";
+
+    const customer =
+        order.customerName ||
+        order.name ||
+        order.customer ||
+        "Customer";
+
+    const table =
+        order.table ||
+        order.tableNumber ||
+        "-";
+
+    const paymentMethod =
+        getPaymentType(order);
+
+    const date =
+        getOrderDate(order);
+
+    return `
+        <div class="order-card">
+
+            <div class="order-header">
+
+                <div>
+
+                    <div class="order-title">
+                        🧾 ${
+                            escapeHTML(
+                                order.orderNumber ||
+                                order.orderId ||
+                                order.firebaseId
+                            )
+                        }
+                    </div>
+
+                    <div class="order-info">
+                        👤 ${escapeHTML(
+                            customer
+                        )}
+                    </div>
+
+                    <div class="order-info">
+                        🪑 Table:
+                        ${escapeHTML(table)}
+                    </div>
+
+                </div>
+
+                <div class="order-time">
+
+                    <span
+                        class="
+                            status
+                            ${
+                                isPending
+                                    ? "status-pending"
+                                    : "status-accepted"
+                            }
+                        "
+                    >
+                        ${escapeHTML(status)}
+                    </span>
+
+                    <br><br>
+
+                    ${formatDateTime(date)}
+
+                </div>
+
+            </div>
+
+            ${buildItemsBlock(order)}
+
+            <div class="order-total">
+
+                RM${getOrderTotal(order)
+                    .toFixed(2)}
+
+                · ${escapeHTML(
+                    paymentMethod
+                )}
+
+            </div>
+
+            <div class="order-buttons">
+
+                ${
+                    isPending
+                        ? `
+                            <button
+                                class="btn-blue"
+                                onclick="
+                                    acceptOrder(
+                                        '${escapeHTML(
+                                            order.firebaseId
+                                        )}'
+                                    )
+                                "
+                            >
+                                ✅ Accept Order
+                            </button>
+                        `
+                        : `
+                            <button
+                                class="btn-green"
+                                onclick="
+                                    completeOrder(
+                                        '${escapeHTML(
+                                            order.firebaseId
+                                        )}'
+                                    )
+                                "
+                            >
+                                ✔️ Mark Completed
+                            </button>
+                        `
+                }
+
+                <button
+                    class="btn-pdf"
+                    onclick="
+                        downloadOrderReceiptPDF(
+                            '${escapeHTML(
+                                order.firebaseId
+                            )}'
+                        )
+                    "
+                >
+                    PDF
+                </button>
+
+            </div>
+
+        </div>
+    `;
+
+}
+
+
+/* =========================================================
+   ACCEPT ORDER
+========================================================= */
+
+async function acceptOrder(firebaseId){
+
+    const order =
+        findOrder(firebaseId);
+
+    if(!order) return;
+
+    try{
+
+        await db
+            .collection("orders")
+            .doc(firebaseId)
+            .update({
+
+                status:"Accepted",
+
+                acceptedAt:
+                    Date.now()
+
+            });
+
+    }catch(error){
+
+        console.error(error);
+
+        alert(
+            "Gagal accept order:\n" +
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   COMPLETE ORDER
+========================================================= */
+
+async function completeOrder(firebaseId){
+
+    const order =
+        findOrder(firebaseId);
+
+    if(!order) return;
+
+    const confirmComplete =
+        confirm(
+            "Tandakan order ini sebagai selesai?"
+        );
+
+    if(!confirmComplete){
+
+        return;
+
+    }
+
+    try{
+
+        await db
+            .collection("orders")
+            .doc(firebaseId)
+            .update({
+
+                status:
+                    "Selesai (Completed)",
+
+                completedAt:
+                    Date.now()
+
+            });
+
+    }catch(error){
+
+        console.error(error);
+
+        alert(
+            "Gagal complete order:\n" +
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   FIND ORDER
+========================================================= */
+
+function findOrder(firebaseId){
+
+    return allOrders.find(
+        order =>
+            order.firebaseId ===
+            firebaseId
+    );
+
+}
+
+
+/* =========================================================
+   SALES CALCULATION
+========================================================= */
+
+function calculateTodaySales(){
+
+    const orders =
+        allCompletedOrders.filter(
+            order =>
+                isToday(
+                    getOrderDate(order)
+                )
+        );
+
+    let total = 0;
+    let cash = 0;
+    let qr = 0;
+
+    orders.forEach(
+        order => {
+
+            const amount =
+                getOrderTotal(order);
+
+            total += amount;
+
+            const method =
+                getPaymentType(order);
+
+            if(method === "Cash"){
+
+                cash += amount;
+
+            }else if(method === "QR"){
+
+                qr += amount;
+
+            }
+
+        }
+    );
+
+
+    document.getElementById(
+        "total-sales"
+    ).textContent =
+        total.toFixed(2);
+
+    document.getElementById(
+        "cash-sales"
+    ).textContent =
+        cash.toFixed(2);
+
+    document.getElementById(
+        "qr-sales"
+    ).textContent =
+        qr.toFixed(2);
+
+    document.getElementById(
+        "sales-date"
+    ).textContent =
+        new Date().toLocaleDateString(
+            "en-MY",
+            {
+                weekday:"long",
+                day:"2-digit",
+                month:"long",
+                year:"numeric"
+            }
+        );
+
+}
+
+
+/* =========================================================
+   HISTORY
+========================================================= */
+
+function renderSalesHistory(){
+
+    const container =
+        document.getElementById(
+            "sales-history-container"
+        );
+
+    const history =
+        [...allCompletedOrders]
+            .sort(
+                (a,b) =>
+                    getOrderDate(b) -
+                    getOrderDate(a)
+            );
+
+    if(!history.length){
+
+        container.innerHTML = `
+            <p class="empty-text">
+                Tiada completed order.
+            </p>
+        `;
+
+        return;
+
+    }
+
+    container.innerHTML =
+        history
+            .map(
+                order => {
+
+                    const date =
+                        getOrderDate(order);
+
+                    return `
+                        <div
+                            class="history-card"
+                        >
+
+                            <div
+                                class="
+                                    history-header
+                                "
+                            >
+
+                                <span>
+                                    🧾 ${
+                                        escapeHTML(
+                                            order.orderNumber ||
+                                            order.orderId ||
+                                            order.firebaseId
+                                        )
+                                    }
+                                </span>
+
+                                <span>
+                                    ${formatDateTime(
+                                        date
+                                    )}
+                                </span>
+
+                            </div>
+
+                            <div>
+                                👤 ${
+                                    escapeHTML(
+                                        order.customerName ||
+                                        order.name ||
+                                        "Customer"
+                                    )
+                                }
+                            </div>
+
+                            <div>
+                                🪑 Table:
+                                ${
+                                    escapeHTML(
+                                        order.table ||
+                                        order.tableNumber ||
+                                        "-"
+                                    )
+                                }
+                            </div>
+
+                            <div>
+                                💳 ${
+                                    escapeHTML(
+                                        getPaymentType(
+                                            order
+                                        )
+                                    )
+                                }
+                            </div>
+
+                            <div>
+                                ${buildItemsBlock(
+                                    order
+                                )}
+                            </div>
+
+                            <div
+                                class="history-total"
+                            >
+                                RM${getOrderTotal(
+                                    order
+                                ).toFixed(2)}
+                            </div>
+
+                            <div
+                                class="history-actions"
+                            >
+
+                                <button
+                                    class="btn-pdf"
+                                    onclick="
+                                        downloadOrderReceiptPDF(
+                                            '${escapeHTML(
+                                                order.firebaseId
+                                            )}'
+                                        )
+                                    "
+                                >
+                                    📄 Receipt PDF
+                                </button>
+
+                            </div>
+
+                        </div>
+                    `;
+
+                }
+            )
+            .join("");
+
+}
+
+
+/* =========================================================
+   CHART
+========================================================= */
+
+function switchChart(mode){
+
+    currentChartMode =
+        mode;
+
+    document
+        .querySelectorAll(
+            ".chart-toggle button"
+        )
+        .forEach(
+            button =>
+                button.classList.remove(
+                    "active"
+                )
+        );
+
+    const button =
+        document.getElementById(
+            "btn-" + mode
+        );
+
+    if(button){
+
+        button.classList.add(
+            "active"
+        );
+
+    }
+
+    renderChart();
+
+}
+
+
+function renderChart(){
+
+    const canvas =
+        document.getElementById(
+            "sales-chart"
+        );
+
+    if(!canvas) return;
+
+    let labels = [];
+    let values = [];
+    let total = 0;
+    let labelText = "";
+
+
+    /* =========================
+       DAILY
+    ========================= */
+
+    if(
+        currentChartMode ===
+        "daily"
+    ){
+
+        labelText =
+            "Total 7 hari terakhir";
+
+        for(
+            let i = 6;
+            i >= 0;
+            i--
+        ){
+
+            const date =
+                new Date();
+
+            date.setHours(
+                0,0,0,0
+            );
+
+            date.setDate(
+                date.getDate() - i
+            );
+
+            const key =
+                date.toLocaleDateString(
+                    "en-MY",
+                    {
+                        day:"2-digit",
+                        month:"2-digit"
+                    }
+                );
+
+            labels.push(key);
+
+            let amount = 0;
+
+            allCompletedOrders.forEach(
+                order => {
+
+                    const orderDate =
+                        getOrderDate(order);
+
+                    if(!orderDate) return;
+
+                    if(
+                        orderDate
+                            .getFullYear() ===
+                        date.getFullYear() &&
+
+                        orderDate
+                            .getMonth() ===
+                        date.getMonth() &&
+
+                        orderDate
+                            .getDate() ===
+                        date.getDate()
+                    ){
+
+                        amount +=
+                            getOrderTotal(
+                                order
+                            );
+
+                    }
+
+                }
+            );
+
+            values.push(
+                Number(
+                    amount.toFixed(2)
+                )
+            );
+
+            total += amount;
+
+        }
+
+    }
+
+
+    /* =========================
+       MONTHLY
+    ========================= */
+
+    if(
+        currentChartMode ===
+        "monthly"
+    ){
+
+        labelText =
+            "Total 12 bulan terakhir";
+
+        for(
+            let i = 11;
+            i >= 0;
+            i--
+        ){
+
+            const date =
+                new Date();
+
+            date.setDate(1);
+
+            date.setMonth(
+                date.getMonth() - i
+            );
+
+            const key =
+                date.toLocaleDateString(
+                    "en-MY",
+                    {
+                        month:"short",
+                        year:"numeric"
+                    }
+                );
+
+            labels.push(key);
+
+            let amount = 0;
+
+            allCompletedOrders.forEach(
+                order => {
+
+                    const orderDate =
+                        getOrderDate(order);
+
+                    if(!orderDate) return;
+
+                    if(
+                        orderDate
+                            .getFullYear() ===
+                        date.getFullYear() &&
+
+                        orderDate
+                            .getMonth() ===
+                        date.getMonth()
+                    ){
+
+                        amount +=
+                            getOrderTotal(
+                                order
+                            );
+
+                    }
+
+                }
+            );
+
+            values.push(
+                Number(
+                    amount.toFixed(2)
+                )
+            );
+
+            total += amount;
+
+        }
+
+    }
+
+
+    /* =========================
+       HOURLY
+    ========================= */
+
+    if(
+        currentChartMode ===
+        "hourly"
+    ){
+
+        labelText =
+            "Today's sales by hour";
+
+        labels =
+            Array.from(
+                {
+                    length:24
+                },
+                (_,i) =>
+                    `${String(i).padStart(2,"0")}:00`
+            );
+
+        values =
+            Array(24).fill(0);
+
+        allCompletedOrders.forEach(
+            order => {
+
+                const date =
+                    getOrderDate(order);
+
+                if(
+                    !date ||
+                    !isToday(date)
+                ){
+
+                    return;
+
+                }
+
+                const hour =
+                    date.getHours();
+
+                values[hour] +=
+                    getOrderTotal(
+                        order
+                    );
+
+            }
+        );
+
+        total =
+            values.reduce(
+                (a,b) =>
+                    a + b,
+                0
+            );
+
+    }
+
+
+    document.getElementById(
+        "chart-total-value"
+    ).textContent =
+        total.toFixed(2);
+
+    document.getElementById(
+        "chart-total-label"
+    ).textContent =
+        labelText;
+
+
+    if(salesChart){
+
+        salesChart.destroy();
+
+    }
+
+
+    salesChart =
+        new Chart(
+            canvas.getContext("2d"),
+            {
+
+                type:"bar",
+
+                data:{
+
+                    labels:labels,
+
+                    datasets:[
+                        {
+                            label:"Sales RM",
+                            data:values,
+                            borderWidth:1
+                        }
+                    ]
+
+                },
+
+                options:{
+
+                    responsive:true,
+
+                    maintainAspectRatio:false,
+
+                    scales:{
+
+                        y:{
+                            beginAtZero:true
+                        }
+
+                    },
+
+                    plugins:{
+
+                        legend:{
+                            display:false
+                        }
+
+                    }
+
+                }
+
+            }
+        );
+
+}
+
+
+/* =========================================================
+   PDF HELPERS
+========================================================= */
+
+function pdfText(
+    doc,
+    text,
+    x,
+    y,
+    options={}
+){
+
+    doc.text(
+        String(text ?? ""),
+        x,
+        y,
+        options
+    );
+
+}
+
+
+function downloadPDFFile(
+    doc,
+    filename
+){
+
+    doc.save(
+        filename
+    );
+
+}
+
+
+/* =========================================================
+   ORDER RECEIPT PDF
+========================================================= */
+
+function downloadOrderReceiptPDF(
+    firebaseId
+){
+
+    const order =
+        findOrder(firebaseId);
+
+    if(!order){
+
+        alert(
+            "Order tidak dijumpai."
+        );
+
+        return;
+
+    }
+
+    const {
+        jsPDF
+    } =
+        window.jspdf;
+
+    const doc =
+        new jsPDF();
+
+    let y = 20;
+
+    doc.setFontSize(20);
+
+    pdfText(
+        doc,
+        "NIKOPI",
+        105,
+        y,
+        {
+            align:"center"
+        }
+    );
+
+    y += 10;
+
+    doc.setFontSize(12);
+
+    pdfText(
+        doc,
+        "Order Receipt",
+        105,
+        y,
+        {
+            align:"center"
+        }
+    );
+
+    y += 12;
+
+    doc.setFontSize(10);
+
+    const orderNumber =
+        order.orderNumber ||
+        order.orderId ||
+        order.firebaseId;
+
+    pdfText(
+        doc,
+        `Order: ${orderNumber}`,
+        15,
+        y
+    );
+
+    y += 6;
+
+    pdfText(
+        doc,
+        `Customer: ${
+            order.customerName ||
+            order.name ||
+            "Customer"
+        }`,
+        15,
+        y
+    );
+
+    y += 6;
+
+    pdfText(
+        doc,
+        `Table: ${
+            order.table ||
+            order.tableNumber ||
+            "-"
+        }`,
+        15,
+        y
+    );
+
+    y += 6;
+
+    pdfText(
+        doc,
+        `Payment: ${getPaymentType(
+            order
+        )}`,
+        15,
+        y
+    );
+
+    y += 6;
+
+    pdfText(
+        doc,
+        `Date: ${formatDateTime(
+            getOrderDate(order)
+        )}`,
+        15,
+        y
+    );
+
+    y += 10;
+
+    doc.line(
+        15,
+        y,
+        195,
+        y
+    );
+
+    y += 8;
+
+    if(
+        Array.isArray(
+            order.items
+        )
+    ){
+
+        order.items.forEach(
+            item => {
+
+                const qty =
+                    Number(
+                        item.quantity ??
+                        item.qty ??
+                        1
+                    );
+
+                const name =
+                    item.name ||
+                    item.productName ||
+                    "Item";
+
+                const price =
+                    Number(
+                        item.price ??
+                        item.unitPrice ??
+                        0
+                    );
+
+                const lineTotal =
+                    price * qty;
+
+                pdfText(
+                    doc,
+                    `${qty} x ${name}`,
+                    15,
+                    y
+                );
+
+                pdfText(
+                    doc,
+                    `RM${lineTotal.toFixed(
+                        2
+                    )}`,
+                    195,
+                    y,
+                    {
+                        align:"right"
+                    }
+                );
+
+                y += 7;
+
+            }
+        );
+
+    }
+
+    y += 5;
+
+    doc.line(
+        15,
+        y,
+        195,
+        y
+    );
+
+    y += 9;
+
+    doc.setFontSize(13);
+
+    pdfText(
+        doc,
+        `TOTAL: RM${getOrderTotal(
+            order
+        ).toFixed(2)}`,
+        195,
+        y,
+        {
+            align:"right"
+        }
+    );
+
+    y += 15;
+
+    doc.setFontSize(10);
+
+    pdfText(
+        doc,
+        "Terima kasih kerana memilih NIKOPI ☕",
+        105,
+        y,
+        {
+            align:"center"
+        }
+    );
+
+    downloadPDFFile(
+        doc,
+        `NIKOPI-${orderNumber}.pdf`
+    );
+
+}
+
+
+/* =========================================================
+   TODAY SALES PDF
+========================================================= */
+
+function downloadTodaySalesPDF(){
+
+    const orders =
+        allCompletedOrders
+            .filter(
+                order =>
+                    isToday(
+                        getOrderDate(
+                            order
+                        )
+                    )
+            )
+            .sort(
+                (a,b) =>
+                    getOrderDate(b) -
+                    getOrderDate(a)
+            );
+
+    const {
+        jsPDF
+    } =
+        window.jspdf;
+
+    const doc =
+        new jsPDF();
+
+    let y = 20;
+
+    doc.setFontSize(20);
+
+    pdfText(
+        doc,
+        "NIKOPI",
+        105,
+        y,
+        {
+            align:"center"
+        }
+    );
+
+    y += 8;
+
+    doc.setFontSize(12);
+
+    pdfText(
+        doc,
+        "Today's Sales Report",
+        105,
+        y,
+        {
+            align:"center"
+        }
+    );
+
+    y += 8;
+
+    doc.setFontSize(10);
+
+    pdfText(
+        doc,
+        formatDate(new Date()),
+        105,
+        y,
+        {
+            align:"center"
+        }
+    );
+
+    y += 12;
+
+    let total = 0;
+    let cash = 0;
+    let qr = 0;
+
+    orders.forEach(
+        order => {
+
+            const amount =
+                getOrderTotal(order);
+
+            total += amount;
+
+            if(
+                getPaymentType(
+                    order
+                ) === "Cash"
+            ){
+
+                cash += amount;
+
+            }
+
+            if(
+                getPaymentType(
+                    order
+                ) === "QR"
+            ){
+
+                qr += amount;
+
+            }
+
+        }
+    );
+
+
+    doc.setFontSize(12);
+
+    pdfText(
+        doc,
+        `Total Sales: RM${total.toFixed(
+            2
+        )}`,
+        15,
+        y
+    );
+
+    y += 7;
+
+    pdfText(
+        doc,
+        `Cash: RM${cash.toFixed(
+            2
+        )}`,
+        15,
+        y
+    );
+
+    y += 7;
+
+    pdfText(
+        doc,
+        `QR: RM${qr.toFixed(
+            2
+        )}`,
+        15,
+        y
+    );
+
+    y += 12;
+
+    doc.line(
+        15,
+        y,
+        195,
+        y
+    );
+
+    y += 8;
+
+    doc.setFontSize(9);
+
+    orders.forEach(
+        order => {
+
+            if(y > 275){
+
+                doc.addPage();
+
+                y = 20;
+
+            }
+
+            const number =
+                order.orderNumber ||
+                order.orderId ||
+                order.firebaseId;
+
+            const amount =
+                getOrderTotal(order);
+
+            pdfText(
+                doc,
+                `${number}`,
+                15,
+                y
+            );
+
+            pdfText(
+                doc,
+                `${getPaymentType(
+                    order
+                )}`,
+                90,
+                y
+            );
+
+            pdfText(
+                doc,
+                `RM${amount.toFixed(
+                    2
+                )}`,
+                195,
+                y,
+                {
+                    align:"right"
+                }
+            );
+
+            y += 6;
+
+        }
+    );
+
+    y += 10;
+
+    pdfText(
+        doc,
+        "Terima kasih kerana memilih NIKOPI ☕",
+        105,
+        y,
+        {
+            align:"center"
+        }
+    );
+
+    downloadPDFFile(
+        doc,
+        `NIKOPI-Sales-${formatDate(
+            new Date()
+        ).replaceAll("/","-")}.pdf`
+    );
+
+}
+
+
+/* =========================================================
+   SHIFT MANAGEMENT
+========================================================= */
+
+async function commitDeletes(
+    docs
+){
+
+    const chunkSize = 450;
+
+    for(
+        let i = 0;
+        i < docs.length;
+        i += chunkSize
+    ){
+
+        const chunk =
+            docs.slice(
+                i,
+                i + chunkSize
+            );
+
+        const batch =
+            db.batch();
+
+        chunk.forEach(
+            doc => {
+
+                batch.delete(
+                    db
+                        .collection("orders")
+                        .doc(doc.id)
+                );
+
+            }
+        );
+
+        await batch.commit();
+
+    }
+
+}
+
+
+async function endShift(){
+
+    const password =
+        prompt(
+            "Masukkan password END SHIFT:"
+        );
+
+    if(password !== PASSWORD_SHIFT){
+
+        if(password !== null){
+
+            alert("Password salah.");
+
+        }
+
+        return;
+
+    }
+
+    const todayOrders =
+        allOrders.filter(
+            order =>
+                isToday(
+                    getOrderDate(
+                        order
+                    )
+                )
+        );
+
+    if(!todayOrders.length){
+
+        alert(
+            "Tiada order hari ini."
+        );
+
+        return;
+
+    }
+
+    const confirmEnd =
+        confirm(
+            `End shift dan padam ${todayOrders.length} order hari ini?`
+        );
+
+    if(!confirmEnd){
+
+        return;
+
+    }
+
+    try{
+
+        const refs =
+            todayOrders.map(
+                order =>
+                    {
+                        return {
+                            id:order.firebaseId
+                        };
+                    }
+            );
+
+        await commitDeletes(
+            refs
+        );
+
+        alert(
+            "Shift berjaya ditamatkan."
+        );
+
+    }catch(error){
+
+        console.error(error);
+
+        alert(
+            "Gagal end shift:\n" +
+            error.message
+        );
+
+    }
+
+}
+
+
+async function resetTesting(){
+
+    const password =
+        prompt(
+            "Masukkan password reset:"
+        );
+
+    if(password !== PASSWORD_RESET){
+
+        if(password !== null){
+
+            alert("Password salah.");
+
+        }
+
+        return;
+
+    }
+
+    const confirmReset =
+        confirm(
+            "Reset semua order?"
+        );
+
+    if(!confirmReset){
+
+        return;
+
+    }
+
+    try{
+
+        const refs =
+            allOrders.map(
+                order =>
+                    ({
+                        id:
+                            order.firebaseId
+                    })
+            );
+
+        await commitDeletes(
+            refs
+        );
+
+        alert(
+            "Testing data telah reset."
+        );
+
+    }catch(error){
+
+        console.error(error);
+
+        alert(
+            "Reset gagal:\n" +
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   STAFF
+========================================================= */
+
+function getTodayStr(){
+
+    const d =
+        new Date();
+
+    const year =
+        d.getFullYear();
+
+    const month =
+        String(
+            d.getMonth() + 1
+        ).padStart(2,"0");
+
+    const day =
+        String(
+            d.getDate()
+        ).padStart(2,"0");
+
+    return `${year}-${month}-${day}`;
+
+}
+
+
+/* =========================================================
+   LOAD STAFF
+========================================================= */
+
+function loadStaffRealtime(){
+
+    if(staffUnsubscribe){
+
+        staffUnsubscribe();
+
+    }
+
+    staffUnsubscribe =
+        db
+        .collection("staff")
+        .onSnapshot(
+            snapshot => {
+
+                currentStaffList =
+                    snapshot.docs.map(
+                        doc => ({
+                            id:doc.id,
+                            ...doc.data()
+                        })
+                    );
+
+                renderStaffSelect();
+
+                renderStaffList();
+
+                renderActiveStaff();
+
+            },
+            error => {
+
+                console.error(
+                    error
+                );
+
+            }
+        );
+
+}
+
+
+function loadStaffLogsRealtime(){
+
+    if(staffLogUnsubscribe){
+
+        staffLogUnsubscribe();
+
+    }
+
+    staffLogUnsubscribe =
+        db
+        .collection("staff_logs")
+        .onSnapshot(
+            snapshot => {
+
+                currentStaffLogs =
+                    snapshot.docs.map(
+                        doc => ({
+                            id:doc.id,
+                            ...doc.data()
+                        })
+                    );
+
+                currentStaffLogs.sort(
+                    (a,b) =>
+                        Number(
+                            b.clockIn ||
+                            b.timestamp ||
+                            0
+                        ) -
+                        Number(
+                            a.clockIn ||
+                            a.timestamp ||
+                            0
+                        )
+                );
+
+                renderActiveStaff();
+
+                renderStaffHistory();
+
+            },
+            error => {
+
+                console.error(
+                    error
+                );
+
+            }
+        );
+
+}
+
+
+/* =========================================================
+   STAFF SELECT
+========================================================= */
+
+function renderStaffSelect(){
+
+    const select =
+        document.getElementById(
+            "clock-staff-select"
+        );
+
+    if(!select) return;
+
+    const current =
+        select.value;
+
+    select.innerHTML = `
+        <option value="">
+            -- Pilih Staff --
+        </option>
+    `;
+
+    currentStaffList.forEach(
+        staff => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                staff.id;
+
+            option.textContent =
+                staff.name ||
+                staff.staffName ||
+                staff.id;
+
+            select.appendChild(
+                option
+            );
+
+        }
+    );
+
+    if(
+        current &&
+        currentStaffList.some(
+            staff =>
+                staff.id === current
+        )
+    ){
+
+        select.value =
+            current;
+
+    }
+
+}
+
+
+/* =========================================================
+   ADD STAFF
+========================================================= */
+
+async function addNewStaff(){
+
+    const name =
+        document.getElementById(
+            "new-staff-name"
+        ).value.trim();
+
+    const code =
+        document.getElementById(
+            "new-staff-code"
+        ).value.trim();
+
+    if(!name){
+
+        alert(
+            "Masukkan nama staff."
+        );
+
+        return;
+
+    }
+
+    if(!code){
+
+        alert(
+            "Masukkan code staff."
+        );
+
+        return;
+
+    }
+
+    const duplicate =
+        currentStaffList.some(
+            staff =>
+                String(
+                    staff.code
+                ) ===
+                String(code)
+        );
+
+    if(duplicate){
+
+        alert(
+            "Code staff sudah digunakan."
+        );
+
+        return;
+
+    }
+
+    try{
+
+        await db
+            .collection("staff")
+            .add({
+
+                name:name,
+
+                code:code,
+
+                createdAt:
+                    Date.now(),
+
+                active:true
+
+            });
+
+        document.getElementById(
+            "new-staff-name"
+        ).value = "";
+
+        document.getElementById(
+            "new-staff-code"
+        ).value = "";
+
+        alert(
+            "Staff berjaya ditambah."
+        );
+
+    }catch(error){
+
+        console.error(error);
+
+        alert(
+            "Gagal tambah staff:\n" +
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   DELETE STAFF
+========================================================= */
+
+async function deleteStaff(id){
+
+    const staff =
+        currentStaffList.find(
+            x =>
+                x.id === id
+        );
+
+    if(!staff) return;
+
+    const confirmDelete =
+        confirm(
+            `Padam staff "${staff.name}"?`
+        );
+
+    if(!confirmDelete){
+
+        return;
+
+    }
+
+    try{
+
+        await db
+            .collection("staff")
+            .doc(id)
+            .delete();
+
+    }catch(error){
+
+        console.error(error);
+
+        alert(
+            "Gagal padam staff:\n" +
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   STAFF CODE CHECK
+========================================================= */
+
+function getSelectedStaff(){
+
+    const id =
+        document.getElementById(
+            "clock-staff-select"
+        ).value;
+
+    return currentStaffList.find(
+        staff =>
+            staff.id === id
+    );
+
+}
+
+
+function validateStaff(){
+
+    const staff =
+        getSelectedStaff();
+
+    const code =
+        document.getElementById(
+            "clock-staff-code"
+        ).value.trim();
+
+    if(!staff){
+
+        alert(
+            "Sila pilih staff."
+        );
+
+        return null;
+
+    }
+
+    if(
+        String(
+            staff.code
+        ) !==
+        String(code)
+    ){
+
+        alert(
+            "Staff code salah."
+        );
+
+        return null;
+
+    }
+
+    return staff;
+
+}
+
+
+/* =========================================================
+   CLOCK IN
+========================================================= */
+
+async function clockIn(){
+
+    const staff =
+        validateStaff();
+
+    if(!staff) return;
+
+    const today =
+        getTodayStr();
+
+    const active =
+        currentStaffLogs.find(
+            log =>
+                log.staffId === staff.id &&
+                log.date === today &&
+                !log.clockOut
+        );
+
+    if(active){
+
+        alert(
+            "Staff ini sudah clock in."
+        );
+
+        return;
+
+    }
+
+    try{
+
+        await db
+            .collection("staff_logs")
+            .add({
+
+                staffId:
+                    staff.id,
+
+                staffName:
+                    staff.name,
+
+                date:
+                    today,
+
+                clockIn:
+                    Date.now(),
+
+                clockOut:
+                    null,
+
+                duration:
+                    0
+
+            });
+
+        document.getElementById(
+            "clock-staff-code"
+        ).value = "";
+
+    }catch(error){
+
+        console.error(error);
+
+        alert(
+            "Clock in gagal:\n" +
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   CLOCK OUT
+========================================================= */
+
+async function clockOut(){
+
+    const staff =
+        validateStaff();
+
+    if(!staff) return;
+
+    const today =
+        getTodayStr();
+
+    const active =
+        currentStaffLogs.find(
+            log =>
+                log.staffId === staff.id &&
+                log.date === today &&
+                !log.clockOut
+        );
+
+    if(!active){
+
+        alert(
+            "Staff ini belum clock in."
+        );
+
+        return;
+
+    }
+
+    const clockOutTime =
+        Date.now();
+
+    const duration =
+        clockOutTime -
+        Number(
+            active.clockIn
+        );
+
+    try{
+
+        await db
+            .collection("staff_logs")
+            .doc(active.id)
+            .update({
+
+                clockOut:
+                    clockOutTime,
+
+                duration:
+                    duration
+
+            });
+
+        document.getElementById(
+            "clock-staff-code"
+        ).value = "";
+
+    }catch(error){
+
+        console.error(error);
+
+        alert(
+            "Clock out gagal:\n" +
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   ACTIVE STAFF
+========================================================= */
+
+function formatDuration(
+    milliseconds
+){
+
+    if(
+        !milliseconds ||
+        milliseconds < 0
+    ){
+
+        return "0h 0m";
+
+    }
+
+    const minutes =
+        Math.floor(
+            milliseconds /
+            60000
+        );
+
+    const hours =
+        Math.floor(
+            minutes / 60
+        );
+
+    const mins =
+        minutes % 60;
+
+    return `${hours}h ${mins}m`;
+
+}
+
+
+function renderActiveStaff(){
+
+    const container =
+        document.getElementById(
+            "active-staff-container"
+        );
+
+    if(!container) return;
+
+    const today =
+        getTodayStr();
+
+    const active =
+        currentStaffLogs.filter(
+            log =>
+                log.date === today &&
+                !log.clockOut
+        );
+
+    if(!active.length){
+
+        container.innerHTML = `
+            <p class="empty-text">
+                Tiada staff sedang clock in.
+            </p>
+        `;
+
+        return;
+
+    }
+
+    container.innerHTML =
+        active
+            .map(
+                log => {
+
+                    const elapsed =
+                        Date.now() -
+                        Number(
+                            log.clockIn
+                        );
+
+                    return `
+                        <div
+                            class="staff-card"
+                        >
+
+                            <div
+                                class="
+                                    staff-card-header
+                                "
+                            >
+
+                                <span
+                                    class="staff-name"
+                                >
+                                    🟢 ${
+                                        escapeHTML(
+                                            log.staffName
+                                        )
+                                    }
+                                </span>
+
+                                <span
+                                    class="staff-code"
+                                >
+                                    ${
+                                        formatDuration(
+                                            elapsed
+                                        )
+                                    }
+                                </span>
+
+                            </div>
+
+                            <div
+                                style="
+                                    margin-top:6px;
+                                    font-size:11px;
+                                    color:#777;
+                                "
+                            >
+                                Clock in:
+                                ${new Date(
+                                    log.clockIn
+                                ).toLocaleTimeString(
+                                    "en-MY",
+                                    {
+                                        hour:"2-digit",
+                                        minute:"2-digit"
+                                    }
+                                )}
+                            </div>
+
+                        </div>
+                    `;
+
+                }
+            )
+            .join("");
+
+}
+
+
+/* =========================================================
+   STAFF LIST
+========================================================= */
+
+function renderStaffList(){
+
+    const container =
+        document.getElementById(
+            "staff-list-container"
+        );
+
+    if(!container) return;
+
+    if(!currentStaffList.length){
+
+        container.innerHTML = `
+            <p class="empty-text">
+                Tiada staff.
+            </p>
+        `;
+
+        return;
+
+    }
+
+    container.innerHTML =
+        currentStaffList
+            .map(
+                staff => `
+
+                    <div
+                        class="staff-card"
+                    >
+
+                        <div
+                            class="
+                                staff-card-header
+                            "
+                        >
+
+                            <div>
+
+                                <div
+                                    class="staff-name"
+                                >
+                                    ${
+                                        escapeHTML(
+                                            staff.name
+                                        )
+                                    }
+                                </div>
+
+                                <div
+                                    class="staff-code"
+                                >
+                                    Code:
+                                    ${
+                                        escapeHTML(
+                                            staff.code
+                                        )
+                                    }
+                                </div>
+
+                            </div>
+
+                            <button
+                                class="btn-red"
+                                onclick="
+                                    deleteStaff(
+                                        '${escapeHTML(
+                                            staff.id
+                                        )}'
+                                    )
+                                "
+                            >
+                                Delete
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                `
+            )
+            .join("");
+
+}
+
+
+/* =========================================================
+   STAFF HISTORY
+========================================================= */
+
+function renderStaffHistory(){
+
+    const container =
+        document.getElementById(
+            "staff-history-container"
+        );
+
+    if(!container) return;
+
+    const thirtyDaysAgo =
+        Date.now() -
+        (
+            30 *
+            24 *
+            60 *
+            60 *
+            1000
+        );
+
+    const logs =
+        currentStaffLogs.filter(
+            log =>
+                Number(
+                    log.clockIn ||
+                    0
+                ) >= thirtyDaysAgo
+        );
+
+    if(!logs.length){
+
+        container.innerHTML = `
+            <p class="empty-text">
+                Tiada rekod.
+            </p>
+        `;
+
+        return;
+
+    }
+
+    let html = "";
+
+    logs.forEach(
+        log => {
+
+            let duration =
+                Number(
+                    log.duration ||
+                    0
+                );
+
+            if(
+                !log.clockOut &&
+                log.clockIn
+            ){
+
+                duration =
+                    Date.now() -
+                    Number(
+                        log.clockIn
+                    );
+
+            }
+
+            html += `
+
+                <div
+                    class="staff-history-row"
+                >
+
+                    <span>
+                        ${
+                            escapeHTML(
+                                log.staffName ||
+                                "-"
+                            )
+                        }
+                    </span>
+
+                    <span>
+                        ${
+                            escapeHTML(
+                                log.date ||
+                                "-"
+                            )
+                        }
+                    </span>
+
+                    <span>
+                        ${
+                            log.clockIn
+                                ? new Date(
+                                    log.clockIn
+                                ).toLocaleTimeString(
+                                    "en-MY",
+                                    {
+                                        hour:"2-digit",
+                                        minute:"2-digit"
+                                    }
+                                )
+                                : "-"
+                        }
+                    </span>
+
+                    <span>
+                        ${
+                            log.clockOut
+                                ? new Date(
+                                    log.clockOut
+                                ).toLocaleTimeString(
+                                    "en-MY",
+                                    {
+                                        hour:"2-digit",
+                                        minute:"2-digit"
+                                    }
+                                )
+                                : "Active"
+                        }
+                    </span>
+
+                    <strong>
+                        ${
+                            formatDuration(
+                                duration
+                            )
+                        }
+                    </strong>
+
+                </div>
+
+            `;
+
+        }
+    );
+
+    container.innerHTML =
+        html;
+
+}
+
+
+/* =========================================================
+   INIT
+========================================================= */
+
+function init(){
+
+    document.getElementById(
+        "sales-date"
+    ).textContent =
+        new Date().toLocaleDateString(
+            "en-MY",
+            {
+                weekday:"long",
+                day:"2-digit",
+                month:"long",
+                year:"numeric"
+            }
+        );
+
+
+    /*
+       Render default menu immediately
+       so admin doesn't appear blank
+       while Firebase is loading.
+    */
+
+    currentAdminCategories =
+        cloneData(
+            DEFAULT_MENU
+        );
+
+    renderAdminMenu();
+
+
+    /*
+       Firebase listeners
+    */
+
+    loadMenuRealtime();
+
+    loadOrdersRealtime();
+
+    loadStaffRealtime();
+
+    loadStaffLogsRealtime();
+
+
+    /*
+       Initial chart
+    */
+
+    setTimeout(
+        renderChart,
+        500
+    );
+
+}
+
+
+/* =========================================================
+   START
+========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    init
+);
+
+</script>
+
+</body>
+</html>

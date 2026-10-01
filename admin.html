@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NIKOPI Admin</title>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --brown: #3e2723;
+  --brown2: #5d4037;
+  --cream: #f7f5f0;
+  --white: #fff;
+  
+  --border: #e0d9d0;
+  --green: #2e7d32;
+  --red: #d32f2f;
+  --orange: #c2410c;
+  --blue: #1976d2;
+  
+  --text: #2c2c2c;
+  --muted: #777;
+  
+  /* DYNAMIC THEME */
+  --page-bg: #f7f5f0;
+  --card-bg: #ffffff;
+  --heading:#3e2723;
+--title-color:#3e2723;
+--line-color:#e0d9d0;
+  --button: #3e2723;
+  
+  --shadow: 0 4px 15px rgba(0, 0, 0, .05);
+}
+*{box-sizing:border-box}
+body {
+  margin: 0;
+  padding: 20px;
+  background: var(--page-bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  min-height: 100vh;
+  transition: .3s ease;
+}
+button,input,select,textarea{font-family:inherit}
+button{cursor:pointer}
+.container{width:100%;max-width:760px;margin:auto}
+.page{display:none;animation:fadeIn .3s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+h1,h2,h3{
+color:var(--title-color);
+transition:.3s;
+}
+.subtitle{text-align:center;color:var(--muted);font-size:13px;margin-top:-10px;margin-bottom:20px}
+
+.card {
+  background: var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:var(--shadow)}
+.section-title{margin:0 0 15px;padding-bottom:10px;border-bottom:2px solid var(--line-color);font-size:18px;color:var(--title-color);display:flex;align-items:center;gap:8px}
+.page-title{text-align:center;color:var(--brown);font-size:24px;font-weight:800;margin-bottom:20px;letter-spacing:-.5px}
+.back-btn{width:100%;border:0;background:var(--brown);color:#fff;padding:13px;border-radius:10px;font-weight:bold;margin-bottom:20px;transition:transform .15s}
+.back-btn:hover{transform:translateY(-1px)}
+
+.shop-status-card{border-radius:16px;padding:22px;margin-bottom:18px;color:#fff;background:linear-gradient(135deg,#2e7d32,#43a047);box-shadow:0 8px 22px rgba(46,125,50,.25);transition:all .4s ease;position:relative;overflow:hidden}
+.shop-status-card.closed{background:linear-gradient(135deg,#b71c1c,#d32f2f);box-shadow:0 8px 22px rgba(183,28,28,.25)}
+.shop-status-card::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at top right,rgba(255,255,255,.15),transparent 60%);pointer-events:none}
+.shop-status-header{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1}
+.shop-status-icon{font-size:42px;line-height:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.2))}
+.shop-status-text{font-size:14px;opacity:.9;font-weight:600;letter-spacing:.5px}
+.shop-status-label{font-size:26px;font-weight:900;margin-top:2px;letter-spacing:-.5px}
+.shop-status-sub{font-size:12px;opacity:.85;margin-top:8px;position:relative;z-index:1}
+.shop-toggle-btn{margin-top:16px;width:100%;border:2px solid rgba(255,255,255,.6);background:rgba(255,255,255,.15);color:#fff;padding:14px;border-radius:12px;font-weight:bold;font-size:14px;letter-spacing:.3px;transition:all .2s;backdrop-filter:blur(6px)}
+.shop-toggle-btn:hover{background:rgba(255,255,255,.28)}
+.shop-toggle-btn:active{transform:scale(.98)}
+
+.sales-box{background:linear-gradient(135deg,var(--brown),var(--brown2));color:#fff;padding:22px;border-radius:16px;margin-bottom:18px;box-shadow:0 8px 22px rgba(62,39,35,.25)}
+.sales-box h2{color:#d7ccc8;font-size:14px;margin:0 0 8px;text-align:center;letter-spacing:.5px;font-weight:600}
+.sales-amount{text-align:center;font-size:38px;font-weight:900;color:#81c784;margin:0;letter-spacing:-1px}
+.payment-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.payment-box{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:12px;text-align:center}
+.payment-box span{display:block;font-size:11px;color:#d7ccc8;letter-spacing:.5px}
+.payment-box strong{font-size:18px;color:#fff}
+.sales-date{text-align:center;font-size:11px;color:#d7ccc8;margin-top:12px}
+
+.nav-buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.nav-big-btn{border:0;border-radius:14px;padding:20px 12px;color:#fff;font-size:13px;font-weight:bold;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.nav-big-btn:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(0,0,0,.12)}
+.nav-big-btn:active{transform:scale(.98)}
+.nav-big-btn.menu{background:linear-gradient(135deg,#c2410c,#ea580c)}
+.nav-big-btn.sales{background:linear-gradient(135deg,#1565c0,#1976d2)}
+.nav-big-btn.staff{background:linear-gradient(135deg,#2e7d32,#43a047)}
+.nav-big-btn .icon{display:block;font-size:32px;margin-bottom:8px}
+
+.download-sales-btn{width:100%;border:0;background:var(--brown);color:#fff;padding:13px;border-radius:10px;font-weight:bold;transition:transform .15s}
+.download-sales-btn:hover{transform:translateY(-1px)}
+
+.add-new-btn{width:100%;border:0;background:linear-gradient(135deg,#c2410c,#ea580c);color:#fff;padding:14px;border-radius:12px;font-weight:bold;font-size:14px;margin-bottom:18px;box-shadow:0 4px 12px rgba(194,65,12,.25);transition:transform .15s}
+.add-new-btn:hover{transform:translateY(-2px)}
+.btn-green{border:0;background:var(--green);color:#fff;padding:9px 12px;border-radius:8px;font-weight:bold;font-size:12px}
+.btn-red{border:0;background:var(--red);color:#fff;padding:9px 12px;border-radius:8px;font-weight:bold;font-size:12px}
+.btn-blue{border:0;background:var(--blue);color:#fff;padding:9px 12px;border-radius:8px;font-weight:bold;font-size:12px}
+.btn-grey{border:0;background:#eee;color:#333;padding:9px 12px;border-radius:8px;font-weight:bold;font-size:12px}
+.btn-pdf{border:0;background:var(--brown);color:#fff;padding:7px 10px;border-radius:6px;font-size:11px;font-weight:bold}
+
+.category-heading{color:var(--brown2);font-size:15px;font-weight:bold;border-bottom:1px solid var(--border);padding:10px 0;margin-top:22px;letter-spacing:.3px;display:flex;justify-content:space-between;align-items:center}
+.combo-heading{color:var(--orange);border-color:#fdba74}
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.menu-item-card{border:1px solid var(--border);border-radius:12px;padding:12px;background:#fafafa;display:flex;flex-direction:column;gap:8px;transition:box-shadow .15s}
+.menu-item-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.menu-item-card.soldout{opacity:.55}
+.combo-card{border:2px solid #fdba74;background:#fff7ed}
+.menu-thumb{width:100%;aspect-ratio:1/.75;border-radius:8px;overflow:hidden;background:#f0ebe3;display:flex;align-items:center;justify-content:center}
+.menu-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.menu-thumb.no-img{font-size:40px;color:#bbb}
+.menu-name{font-size:13px;font-weight:bold;min-height:34px;line-height:1.25}
+.menu-price{color:#666;font-size:12px;font-weight:bold}
+.menu-actions{display:flex;gap:5px}
+.menu-actions button{flex:1;border:0;padding:8px 4px;border-radius:7px;color:#fff;font-size:10px;font-weight:bold}
+.stock-on{background:var(--green)}
+.stock-off{background:var(--red)}
+.edit-btn{background:var(--blue)}
+
+.variant-group{background:#fff;border:2px solid var(--border);border-radius:12px;padding:12px;margin:12px 0}
+.variant-title{display:flex;align-items:center;gap:5px;margin-bottom:10px}
+.variant-title-name{flex:1;font-size:13px;font-weight:bold}
+.variant-row{display:flex;align-items:center;gap:8px;background:#f9f7f4;border-radius:8px;padding:8px;margin-bottom:6px;font-size:12px}
+.variant-row.soldout{opacity:.5}
+.variant-name{flex:1}
+
+.order-card{background:#fff8e1;border:1px solid #ffe0b2;padding:15px;border-radius:12px;margin-bottom:12px}
+.order-header{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;border-bottom:1px solid #f0dfc0;padding-bottom:8px;margin-bottom:8px}
+.order-title{font-weight:bold;color:var(--brown);font-size:14px}
+.order-time{font-size:10px;color:#777;text-align:right}
+.order-info{font-size:12px;margin:4px 0}
+.status{display:inline-block;padding:4px 8px;border-radius:6px;font-size:10px;font-weight:bold}
+.status-pending{background:#fff3cd;color:#856404}
+.status-accepted{background:#cfe2ff;color:#084298}
+.item-line{background:#fff;border-left:3px solid var(--brown);padding:8px;margin:5px 0;border-radius:6px;font-size:12px}
+.item-options{color:#777;font-size:10px;margin-top:3px;line-height:1.5}
+.order-total{text-align:right;color:var(--green);font-weight:bold;margin-top:8px}
+.order-buttons{display:flex;gap:6px;margin-top:10px}
+.order-buttons button{flex:1}
+
+.history-card{background:#fdfbf7;border:1px solid var(--border);padding:12px;border-radius:10px;margin-bottom:10px}
+.history-header{display:flex;justify-content:space-between;gap:8px;font-weight:bold;font-size:12px;border-bottom:1px solid var(--border);padding-bottom:7px;margin-bottom:7px}
+.history-total{text-align:right;color:var(--green);font-weight:bold;border-top:1px dashed var(--border);padding-top:7px;margin-top:7px}
+.history-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:8px}
+.empty-text{text-align:center;color:#777;font-size:13px;padding:15px}
+
+.chart-toggle{display:flex;gap:7px;margin-bottom:15px}
+.chart-toggle button{flex:1;padding:10px 5px;border:2px solid var(--border);background:#fff;border-radius:10px;color:#555;font-weight:bold;font-size:11px;transition:all .15s}
+.chart-toggle button.active{background:var(--brown);color:#fff}
+.chart-total{text-align:center;color:var(--green);font-size:26px;font-weight:900;margin-bottom:5px}
+.chart-total small{display:block;color:#777;font-size:11px;font-weight:normal}
+.chart-wrapper{position:relative;height:330px}
+
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:13px;font-weight:bold;color:var(--brown);margin-bottom:6px}
+.form-group input,.form-group select,.form-group textarea{width:100%;border:1px solid #ccc;border-radius:8px;padding:11px;font-size:14px;outline:none;transition:border-color .15s}
+.form-group textarea{min-height:80px;resize:vertical}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--brown2);box-shadow:0 0 0 3px rgba(93,64,55,.1)}
+.clock-buttons{display:flex;gap:8px}
+.clock-buttons button{flex:1;padding:13px;border:0;border-radius:10px;color:#fff;font-weight:bold}
+.clock-in{background:var(--green)}
+.clock-out{background:var(--orange)}
+.staff-card{border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;background:#fafafa}
+.staff-card-header{display:flex;justify-content:space-between;align-items:center}
+.staff-name{font-weight:bold;color:var(--brown)}
+.staff-code{color:#777;font-size:11px}
+.staff-history-row{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:11px}
+
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;padding:20px;overflow-y:auto}
+.modal.show{display:flex;align-items:flex-start;justify-content:center}
+.modal-box{width:100%;max-width:560px;background:#fff;border-radius:16px;padding:22px;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-title{color:var(--brown);margin:0 0 20px;font-size:20px}
+.checkbox-grid{display:flex;flex-wrap:wrap;gap:7px}
+.checkbox-grid label{display:flex;align-items:center;gap:5px;background:#f5f2ed;border-radius:8px;padding:8px;font-size:12px;font-weight:normal;cursor:pointer}
+.checkbox-grid input{width:auto}
+.combo-row{display:flex;gap:5px;margin-bottom:6px}
+.combo-row input{flex:1}
+.combo-row button{width:35px;border:0;background:#eee;border-radius:6px;cursor:pointer}
+.add-row-btn{width:100%;border:1px dashed #aaa;background:#fafafa;padding:9px;border-radius:8px;margin-top:5px;cursor:pointer}
+.modal-actions{display:flex;gap:8px;margin-top:18px}
+.modal-actions button{flex:1;padding:12px;border:0;border-radius:8px;font-weight:bold}
+.cancel-btn{background:#eee}
+.save-btn{background:var(--green);color:#fff}
+.delete-btn{background:var(--red);color:#fff}
+
+.image-upload-area{border:2px dashed #ccc;border-radius:12px;padding:16px;text-align:center;background:#fafafa;cursor:pointer;transition:all .2s}
+.image-upload-area:hover{border-color:var(--brown2);background:#f5f2ed}
+.image-upload-area.has-image{padding:8px;border-style:solid;border-color:var(--green);background:#f0f9f1}
+.image-preview{width:100%;max-height:180px;object-fit:contain;border-radius:8px;display:block}
+.image-upload-hint{color:#888;font-size:12px;margin-top:8px}
+.image-upload-hint strong{color:var(--brown2)}
+.image-file-input{display:none}
+.image-url-input{margin-top:10px}
+
+.end-shift-btn{width:100%;background:#b71c1c;color:#fff;border:0;padding:14px;border-radius:10px;font-size:15px;font-weight:bold;transition:transform .15s}
+.end-shift-btn:hover{transform:translateY(-1px)}
+.reset-btn{width:100%;border:0;background:none;color:#888;text-decoration:underline;margin-top:10px;padding:8px}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:#2e7d32;color:#fff;padding:14px 22px;border-radius:12px;font-weight:bold;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:99999;opacity:0;transition:all .35s cubic-bezier(.4,0,.2,1);max-width:90vw}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.error{background:#c62828}
+.toast.info{background:#1565c0}
+.theme-box {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.theme-box button {
+  border: 0;
+  padding: 10px 15px;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  background: var(--button);
+  color: white;
+}
+@media(max-width:600px){
+  body{padding:12px}
+  .menu-grid{grid-template-columns:1fr 1fr}
+  .chart-wrapper{height:280px}
+  .nav-big-btn{padding:18px 8px}
+  .shop-status-label{font-size:22px}
+}
+/* DARK MODE FIX */
+
+/* ================= DARK MODE COMPLETE FIX ================= */
+
+
+.dark-mode .card,
+.dark-mode .order-card,
+.dark-mode .history-card,
+.dark-mode .modal-box,
+.dark-mode .staff-card {
+  background: #1e1e1e !important;
+  color: #ffffff !important;
+  border-color: #444 !important;
+}
+
+
+/* Title */
+.dark-mode .section-title,
+.dark-mode .page-title,
+.dark-mode h1,
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode .order-title,
+.dark-mode .staff-name {
+  color: #ffffff !important;
+}
+
+
+/* Order Header */
+.dark-mode .order-header,
+.dark-mode .history-header {
+  border-color: #444 !important;
+}
+
+
+.dark-mode .order-time,
+.dark-mode .staff-code {
+  color: #cccccc !important;
+}
+
+
+/* Order Info */
+.dark-mode .order-info,
+.dark-mode .history-card div {
+  color: #ffffff;
+}
+
+
+/* Item dalam order */
+.dark-mode .item-line {
+  background: #252525 !important;
+  color: #ffffff !important;
+  border-left-color: #8d6e63 !important;
+}
+
+
+.dark-mode .item-options {
+  color: #cccccc !important;
+}
+
+
+/* Total */
+.dark-mode .order-total,
+.dark-mode .history-total {
+  color: #81c784 !important;
+}
+
+
+/* Empty text */
+.dark-mode .empty-text {
+  color: #bbbbbb !important;
+}
+
+
+/* Form */
+.dark-mode input,
+.dark-mode select,
+.dark-mode textarea {
+  background: #252525 !important;
+  color: white !important;
+  border-color: #555 !important;
+}
+
+
+/* Buttons */
+.dark-mode .btn-pdf {
+  background: #5d4037 !important;
+  color: white !important;
+}
+
+
+/* Chart buttons */
+.dark-mode .chart-toggle button {
+  background: #252525;
+  color: white;
+  border-color: #555;
+}
+
+
+.dark-mode .chart-toggle button.active {
+  background: #1976d2;
+  color: white;
+}
+
+
+/* Receipt button */
+.dark-mode .download-sales-btn,
+.dark-mode .back-btn {
+  color: white !important;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<section id="page-home" class="page active">
+<h1 style="margin-top:0">☕ NIKOPI Admin</h1>
+<p class="subtitle">Stock Control · Sales Report · Staff Management</p>
+<div class="theme-box">
+  
+  <button onclick="changeTheme('coffee')">
+    ☕ Coffee
+  </button>
+  
+  <button onclick="changeTheme('dark')">
+    🌙 Dark
+  </button>
+  
+  <button onclick="changeTheme('matcha')">
+    🍵 Matcha
+  </button>
+  
+</div>
+
+<div id="shop-status-card" class="shop-status-card">
+  <div class="shop-status-header">
+    <div>
+      <div class="shop-status-text">SHOP STATUS</div>
+      <div id="shop-status-label" class="shop-status-label">OPEN</div>
+    </div>
+    <div id="shop-status-icon" class="shop-status-icon">🟢</div>
+  </div>
+  <div id="shop-status-sub" class="shop-status-sub">Customer boleh buat order sekarang</div>
+  <button type="button" class="shop-toggle-btn" onclick="toggleShopStatus()">🔒 TUTUP KEDAI</button>
+</div>
+
+<div class="sales-box">
+  <h2>TODAY'S TOTAL SALES</h2>
+  <p class="sales-amount">RM <span id="total-sales">0.00</span></p>
+  <div class="payment-summary">
+    <div class="payment-box"><span>CASH</span><strong>RM <span id="cash-sales">0.00</span></strong></div>
+    <div class="payment-box"><span>QR</span><strong>RM <span id="qr-sales">0.00</span></strong></div>
+  </div>
+  <div class="sales-date" id="sales-date"></div>
+</div>
+
+<div class="card">
+  <button class="download-sales-btn" onclick="downloadTodaySalesPDF()">📄 Download Today's Sales Report PDF</button>
+</div>
+
+<div class="nav-buttons">
+  <button class="nav-big-btn menu" onclick="showPage('stock')"><span class="icon">📦</span>Stock / Menu</button>
+  <button class="nav-big-btn sales" onclick="showPage('sales')"><span class="icon">📊</span>Sales Report</button>
+</div>
+
+<div class="nav-buttons">
+  <button class="nav-big-btn staff" onclick="showPage('staff')" style="grid-column:1/-1"><span class="icon">👥</span>Staff Management</button>
+</div>
+
+<div class="card">
+  <h2 class="section-title">🔴 Live Orders</h2>
+  <div id="orders-container"><p class="empty-text">Loading orders...</p></div>
+</div>
+
+<div class="card">
+  <h2 class="section-title">📋 All Order History</h2>
+  <div id="sales-history-container"><p class="empty-text">Loading...</p></div>
+</div>
+
+<div class="card">
+  <h2 class="section-title">🔒 Shift Management</h2>
+  <p style="font-size:12px;color:#777">End Shift akan memadam order hari ini daripada collection <code>orders</code>.</p>
+  <button class="end-shift-btn" onclick="endShift()">🔒 END SHIFT</button>
+  <button class="reset-btn" onclick="resetTesting()">reset testing mode</button>
+</div>
+</section>
+
+<section id="page-stock" class="page">
+<button class="back-btn" onclick="showPage('home')">← Kembali ke Home</button>
+<div class="page-title">📦 Stock / Menu Management</div>
+<button class="add-new-btn" onclick="openAddItem()">➕ Tambah Menu Baru</button>
+<div id="admin-menu-container"><p class="empty-text">Loading menu...</p></div>
+</section>
+
+<section id="page-sales" class="page">
+<button class="back-btn" onclick="showPage('home')">← Kembali ke Home</button>
+<div class="page-title">📊 Sales Report</div>
+<div class="card">
+  <div class="chart-toggle">
+    <button id="btn-daily" class="active" onclick="switchChart('daily')">Daily</button>
+    <button id="btn-monthly" onclick="switchChart('monthly')">Monthly</button>
+    <button id="btn-hourly" onclick="switchChart('hourly')">Per Hour</button>
+  </div>
+  <div class="chart-total">
+    RM <span id="chart-total-value">0.00</span>
+    <small id="chart-total-label">Total 7 hari terakhir</small>
+  </div>
+  <div class="chart-wrapper"><canvas id="sales-chart"></canvas></div>
+</div>
+</section>
+
+<section id="page-staff" class="page">
+<button class="back-btn" onclick="showPage('home')">← Kembali ke Home</button>
+<div class="page-title">👥 Staff Management</div>
+
+<div class="card">
+  <h2 class="section-title">🕐 Clock In / Clock Out</h2>
+  <div class="form-group"><label>Pilih Staff</label><select id="clock-staff-select"><option value="">-- Pilih Staff --</option></select></div>
+  <div class="form-group"><label>Staff Code</label><input type="password" id="clock-staff-code" inputmode="numeric" placeholder="Masukkan code staff"></div>
+  <div id="clock-staff-info" style="text-align:center;font-size:12px;margin-bottom:10px"></div>
+  <div class="clock-buttons">
+    <button class="clock-in" onclick="clockIn()">🟢 CLOCK IN</button>
+    <button class="clock-out" onclick="clockOut()">🔴 CLOCK OUT</button>
+  </div>
+</div>
+
+<div class="card">
+  <h2 class="section-title">🟢 Staff Aktif Hari Ini</h2>
+  <div id="active-staff-container">Loading...</div>
+</div>
+
+<div class="card">
+  <h2 class="section-title">➕ Tambah Staff</h2>
+  <div class="form-group"><label>Nama Staff</label><input id="new-staff-name" placeholder="Nama"></div>
+  <div class="form-group"><label>Staff Code</label><input id="new-staff-code" inputmode="numeric" maxlength="6" placeholder="Contoh: 1234"></div>
+  <button class="add-new-btn" style="background:#2e7d32;margin-bottom:0" onclick="addNewStaff()">💾 Simpan Staff</button>
+</div>
+
+<div class="card">
+  <h2 class="section-title">👥 Senarai Staff</h2>
+  <div id="staff-list-container">Loading...</div>
+</div>
+
+<div class="card">
+  <h2 class="section-title">📊 Rekod Kerja 30 Hari</h2>
+  <div id="staff-history-container">Loading...</div>
+</div>
+</section>
+
+</div>
+
+<div id="item-form-modal" class="modal">
+<div class="modal-box">
+<h2 id="form-modal-title" class="modal-title">Tambah Menu Baru</h2>
+<input type="hidden" id="form-item-id">
+
+<div class="form-group"><label>Nama Item *</label><input id="form-name" placeholder="Nama menu"></div>
+
+<div class="form-group">
+  <label>Kategori *</label>
+  <select id="form-category">
+    <option value="COMBO BEST VALUE">COMBO BEST VALUE</option>
+    <option value="COFFEE">COFFEE</option>
+    <option value="NON COFFEE">NON COFFEE</option>
+    <option value="MATCHA">MATCHA</option>
+    <option value="PASTA">PASTA</option>
+    <option value="SOFT COOKIES">SOFT COOKIES</option>
+    <option value="BITES">BITES</option>
+    <option value="ADD ON">ADD ON</option>
+  </select>
+</div>
+
+<div class="form-group"><label>Harga RM *</label><input type="number" id="form-price" step="0.01" min="0" placeholder="0.00"></div>
+<div class="form-group"><label>Description</label><textarea id="form-description" placeholder="Description menu"></textarea></div>
+
+<div class="form-group">
+  <label>Gambar Menu</label>
+  <div class="image-upload-area" id="image-upload-area" onclick="document.getElementById('form-image-file').click()">
+    <div id="image-upload-content">
+      <div style="font-size:38px;margin-bottom:6px">📷</div>
+      <div class="image-upload-hint"><strong>Klik untuk upload gambar</strong><br>dari device anda (JPG/PNG, max 2MB)</div>
+    </div>
+  </div>
+  <input type="file" id="form-image-file" class="image-file-input" accept="image/*" onchange="handleImageUpload(event)">
+  <input id="form-image" class="image-url-input" placeholder="Atau paste Image URL (https://...)" style="width:100%;border:1px solid #ccc;border-radius:8px;padding:11px;font-size:13px;outline:none">
+</div>
+
+<div class="form-group"><label>Emoji (fallback kalau takde gambar)</label><input id="form-emoji" maxlength="4" placeholder="☕"></div>
+
+<div class="form-group">
+  <label>Jenis Item</label>
+  <select id="form-type" onchange="onTypeChange()">
+    <option value="simple">Simple</option>
+    <option value="combo">Combo</option>
+  </select>
+</div>
+
+<div class="form-group">
+  <label>Customization</label>
+  <div class="checkbox-grid">
+    <label><input type="checkbox" id="form-sugar"> Gula</label>
+    <label><input type="checkbox" id="form-milk"> Susu</label>
+    <label><input type="checkbox" id="form-temperature"> Suhu</label>
+    <label><input type="checkbox" id="form-shot"> Extra Shot</label>
+    <label><input type="checkbox" id="form-syrup"> Extra Syrup</label>
+  </div>
+</div>
+
+<div id="combo-contents-group" class="form-group" style="display:none">
+  <label>Kandungan Combo</label>
+  <div id="combo-contents-list"></div>
+  <button type="button" class="add-row-btn" onclick="addComboContent()">+ Tambah Kandungan</button>
+</div>
+
+<div id="combo-choice-group" class="form-group" style="display:none">
+  <label>Combo Choice</label>
+  <input id="form-combo-choice-title" placeholder="Contoh: Pilih Pasta">
+  <div id="combo-choice-list" style="margin-top:8px"></div>
+  <button type="button" class="add-row-btn" onclick="addComboChoice()">+ Tambah Pilihan</button>
+</div>
+
+<div class="modal-actions">
+  <button class="cancel-btn" onclick="closeItemForm()">Batal</button>
+  <button id="form-delete-btn" class="delete-btn" onclick="deleteCurrentItem()" style="display:none">Padam</button>
+  <button class="save-btn" onclick="saveItem()">💾 Save</button>
+</div>
+
+</div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyA55AmYlP7nPaAXavrFsU5G4GnQtB2Bqc",
+  authDomain: "nikopi-operation.firebaseapp.com",
+  databaseURL: "https://nikopi-operation-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nikopi-operation",
+  storageBucket: "nikopi-operation.firebasestorage.app",
+  messagingSenderId: "922893888263",
+  appId: "1:922893888263:web:2c113a2db29960044e73a2",
+  measurementId: "G-WGEZB8BFW0"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const PASSWORD_MENU = "1111";
+const PASSWORD_SHIFT = "0000";
+const PASSWORD_RESET = "nikopistart";
+
+let currentAdminCategories = [];
+let allOrders = [];
+let allCompletedOrders = [];
+let salesChart = null;
+let currentChartMode = "daily";
+let editingItemId = null;
+let currentStaffList = [];
+let currentStaffLogs = [];
+let menuUnsubscribe = null;
+let orderUnsubscribe = null;
+let staffUnsubscribe = null;
+let staffLogUnsubscribe = null;
+let shopStatusUnsubscribe = null;
+let currentShopStatus = "open";
+let currentImageDataUrl = "";
+
+const DEFAULT_MENU = [
+  { category:"COMBO BEST VALUE", items:[
+    { id:"combo-1", name:"Kaya Toast Combo", price:17.90, available:true, customization:{temperature:true}, combo:true, comboContents:["Roti Kaya","Hard Boiled Egg","Cafe Latte (Hot / Ice)"] },
+    { id:"combo-2", name:"Ramen Ribena Combo", price:21.90, available:true, customization:{}, combo:true, comboContents:["Ramen","Sparkling Ribena"] },
+    { id:"combo-3", name:"Bagel Matcha Combo", price:27.90, available:true, customization:{}, combo:true, comboContents:["Bagel with Cream Cheese","Matcha Strawberry"] },
+    { id:"combo-4", name:"Couple Set", price:42.50, available:true, customization:{}, combo:true, comboContents:["Ice Latte","Matcha Latte"], comboChoice:{title:"Pilih Pasta", options:["Spaghetti Carbonara","Spaghetti Bolognese"]} },
+    { id:"combo-5", name:"Croissant Choc Combo", price:16.90, available:true, customization:{temperature:true}, combo:true, comboContents:["Mini Croissant","Chocolate (Hot / Ice)"] }
+  ]},
+  { category:"COFFEE", items:[
+    { id:"coffee-1", name:"Cinnamon Latte", price:15, available:true, customization:{sugar:false,milk:true,temperature:true,extraShot:true,extraSyrup:true} },
+    { id:"coffee-2", name:"Spanish Latte", price:15, available:true, customization:{sugar:true,milk:true,temperature:true,extraShot:true,extraSyrup:false} },
+    { id:"coffee-3", name:"Hazelnut Latte", price:15, available:true, customization:{sugar:false,milk:true,temperature:true,extraShot:true,extraSyrup:true} },
+    { id:"coffee-4", name:"Caramel Latte", price:15, available:true, customization:{sugar:false,milk:true,temperature:true,extraShot:true,extraSyrup:true} },
+    { id:"coffee-5", name:"Cafe Latte / Flat White", price:12, available:true, customization:{sugar:true,milk:true,temperature:true,extraShot:true,extraSyrup:false} },
+    { id:"coffee-6", name:"Cappuccino", price:12, available:true, customization:{sugar:true,milk:true,temperature:true,extraShot:true,extraSyrup:false} },
+    { id:"coffee-7", name:"Americano / Long Black", price:10, available:true, customization:{sugar:true,milk:false,temperature:true,extraShot:true,extraSyrup:false} },
+    { id:"coffee-8", name:"Sparkling Americano", price:12, available:true, customization:{sugar:false,milk:false,temperature:false,extraShot:true,extraSyrup:false} },
+    { id:"coffee-9", name:"Mocha", price:17, available:true, customization:{sugar:true,milk:true,temperature:true,extraShot:true,extraSyrup:false} },
+    { id:"coffee-10", name:"Espresso", price:5, available:true, customization:{sugar:false,milk:false,temperature:false,extraShot:false,extraSyrup:false} }
+  ]},
+  { category:"NON COFFEE", items:[
+    { id:"noncoffee-1", name:"Chocolate", price:12, available:true, customization:{sugar:true,milk:true,temperature:true} },
+    { id:"noncoffee-2", name:"Chocolate Hazelnut", price:14, available:true, customization:{sugar:false,milk:true,temperature:true,extraSyrup:true} },
+    { id:"noncoffee-3", name:"Sparkling Yuzu", price:14, available:true, customization:{} },
+    { id:"noncoffee-4", name:"Sparkling Ribena", price:10, available:true, customization:{} },
+    { id:"noncoffee-5", name:"Ribena", price:6, available:true, customization:{} },
+    { id:"noncoffee-6", name:"Belgium Choc With Apple Fiber", price:10, available:true, customization:{sugar:true,milk:true,temperature:true} }
+  ]},
+  { category:"MATCHA", items:[
+    { id:"matcha-1", name:"Matcha Latte", price:15, available:true, customization:{sugar:true,milk:true,temperature:true,extraShot:false,extraSyrup:false} },
+    { id:"matcha-2", name:"Matcha Strawberry", price:17, available:true, customization:{sugar:true,milk:true,temperature:true,extraShot:false,extraSyrup:false} }
+  ]},
+  { category:"PASTA", items:[
+    { id:"pasta-1", name:"Spaghetti Carbonara", price:16.90, available:true, customization:{} },
+    { id:"pasta-2", name:"Spaghetti Bolognese", price:16.90, available:true, customization:{} }
+  ]},
+  { category:"SOFT COOKIES", items:[
+    { id:"cookie-1", name:"Cookies", price:11.90, available:true, customization:{}, variants:[{name:"Classic Choc Chip",available:true},{name:"S'mores",available:true},{name:"Red Velvet Cheesecake",available:true}] },
+    { id:"cookie-4", name:"Add On Milk", price:3, available:true, customization:{} }
+  ]},
+  { category:"BITES", items:[
+    { id:"bites-1", name:"Bagel With Cream Cheese", price:12, available:true, customization:{}, variants:[{name:"Poppy seed",available:true},{name:"Sesame",available:true},{name:"Garlic",available:true},{name:"Plain",available:true}] },
+    { id:"bites-2", name:"Mini Croissant", price:6, available:true, customization:{} },
+    { id:"bites-3", name:"Koko Crunch With Milk", price:5, available:true, customization:{} },
+    { id:"bites-4", name:"Ramen", price:9, available:true, customization:{}, variants:[{name:"Carbonara",available:true},{name:"Quattro Cheese",available:true}] },
+    { id:"bites-5", name:"Kaya Toast With Hard Boiled Egg", price:7, available:true, customization:{} },
+    { id:"bites-6", name:"Kaya Toast", price:5.50, available:true, customization:{} },
+    { id:"bites-7", name:"Nutella Toast", price:5.50, available:true, customization:{} },
+    { id:"bites-8", name:"Maggie Cup", price:4.50, available:true, customization:{} },
+    { id:"bites-9", name:"Indo Mee", price:6, available:true, customization:{} },
+    { id:"bites-10", name:"Hard Boiled Egg", price:2, available:true, customization:{} }
+  ]},
+  { category:"ADD ON", items:[
+    { id:"addon-1", name:"Oatmilk", price:3, available:true, customization:{} },
+    { id:"addon-2", name:"Extra Shot", price:4, available:true, customization:{} },
+    { id:"addon-3", name:"Extra Syrup", price:2, available:true, customization:{} },
+    { id:"addon-4", name:"Ice Water", price:2, available:true, customization:{} }
+  ]}
+];
+
+const CATEGORY_ORDER = ["COMBO BEST VALUE","COFFEE","NON COFFEE","MATCHA","PASTA","SOFT COOKIES","BITES","ADD ON"];
+
+function cloneData(d){ return JSON.parse(JSON.stringify(d)); }
+function escapeHTML(v){ return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;"); }
+
+function showToast(msg,type="success"){
+  const t=document.getElementById("toast");
+  if(!t) return;
+  t.textContent=msg;
+  t.className="toast "+(type==="error"?"error":type==="info"?"info":"")+" show";
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.classList.remove("show"),2600);
+}
+
+function getOrderDate(order){
+  const fields=["timestamp","createdAt","completedAt"];
+  for(const f of fields){
+    const v=order?.[f]; if(!v) continue;
+    if(v&&typeof v.toDate==="function") return v.toDate();
+    if(typeof v==="number") return new Date(v);
+    if(typeof v==="string"){ const d=new Date(v); if(!isNaN(d.getTime())) return d; }
+  }
+  return null;
+}
+function isToday(d){ if(!d) return false; const n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate(); }
+function formatDate(d){ return d?d.toLocaleDateString("en-MY",{day:"2-digit",month:"2-digit",year:"numeric"}):"-"; }
+function formatDateTime(d){ return d?d.toLocaleString("en-MY",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"-"; }
+function getPaymentType(order){
+  const v=String(order?.paymentMethod||order?.payment||order?.method||"").toLowerCase();
+  if(v.includes("cash")||v.includes("tunai")||v.includes("counter")) return "Cash";
+  if(v.includes("qr")||v.includes("duitnow")||v.includes("online")) return "QR";
+  return v||"Other";
+}
+function getOrderTotal(order){
+  const vals=[order?.total,order?.grandTotal,order?.amount,order?.totalAmount];
+  for(const v of vals){ const n=Number(v); if(!isNaN(n)) return n; }
+  if(Array.isArray(order?.items)){
+    return order.items.reduce((s,i)=>{
+      const p=Number(i.price??i.unitPrice??0);
+      const q=Number(i.quantity??i.qty??1);
+      return s+p*q;
+    },0);
+  }
+  return 0;
+}
+function getOrderStatus(order){ return String(order?.status||"Pending"); }
+function isCompleted(order){
+  const s=getOrderStatus(order).toLowerCase();
+  return s==="selesai (completed)"||s==="completed"||s==="complete"||s==="selesai";
+}
+
+function showPage(page){
+  document.querySelectorAll(".page").forEach(el=>el.classList.remove("active"));
+  const target=document.getElementById("page-"+page);
+  if(target) target.classList.add("active");
+  window.scrollTo({top:0,behavior:"smooth"});
+  if(page==="sales") setTimeout(renderChart,100);
+  if(page==="staff"){ renderStaffSelect(); renderActiveStaff(); renderStaffList(); renderStaffHistory(); }
+}
+
+function loadShopStatusRealtime(){
+  if(shopStatusUnsubscribe) shopStatusUnsubscribe();
+  shopStatusUnsubscribe=db.collection("settings").doc("shop").onSnapshot(doc=>{
+    const data=doc.exists?doc.data():{};
+    currentShopStatus=data.status||"open";
+    renderShopStatus();
+  },err=>{ console.error("Shop status error:",err); });
+}
+
+function renderShopStatus(){
+  const card=document.getElementById("shop-status-card");
+  const label=document.getElementById("shop-status-label");
+  const icon=document.getElementById("shop-status-icon");
+  const sub=document.getElementById("shop-status-sub");
+  const btn=card.querySelector(".shop-toggle-btn");
+  if(!card) return;
+  if(currentShopStatus==="closed"){
+    card.classList.add("closed");
+    label.textContent="CLOSED";
+    icon.textContent="🔴";
+    sub.textContent="Kedai sedang tutup. Customer tidak boleh order.";
+    btn.innerHTML="🔓 BUKA KEDAI";
+  }else{
+    card.classList.remove("closed");
+    label.textContent="OPEN";
+    icon.textContent="🟢";
+    sub.textContent="Customer boleh buat order sekarang";
+    btn.innerHTML="🔒 TUTUP KEDAI";
+  }
+}
+
+async function toggleShopStatus(){
+  const password=prompt("Masukkan password (0000):");
+  if(password!==PASSWORD_SHIFT){
+    if(password!==null) showToast("Password salah","error");
+    return;
+  }
+  const newStatus=currentShopStatus==="open"?"closed":"open";
+  const confirmMsg=newStatus==="closed"
+    ? "Tutup kedai? Customer tidak akan boleh order sehingga dibuka semula."
+    : "Buka kedai? Customer boleh mula order.";
+  if(!confirm(confirmMsg)) return;
+  try{
+    await db.collection("settings").doc("shop").set({
+      status:newStatus,
+      updatedAt:Date.now()
+    },{merge:true});
+    showToast(newStatus==="closed"?"🔒 Kedai ditutup":"🔓 Kedai dibuka");
+  }catch(err){
+    console.error(err);
+    showToast("Gagal update status: "+err.message,"error");
+  }
+}
+
+function migrateMenu(firebaseCategories){
+  if(!Array.isArray(firebaseCategories)) return cloneData(DEFAULT_MENU);
+  const result=[];
+  for(const category of firebaseCategories){
+    const defaultCat=DEFAULT_MENU.find(x=>x.category===category.category);
+    const defaultItems=defaultCat?.items||[];
+    const items=Array.isArray(category.items)?category.items:[];
+    const migrated=items.map(item=>{
+      const defItem=defaultItems.find(x=>x.id===item.id);
+      const merged={...(defItem?cloneData(defItem):{}),...item};
+      merged.available=item.available!==undefined?item.available:true;
+      merged.customization={...(defItem?.customization||{}),...(item.customization||{})};
+      if(defItem?.variants&&!item.variants) merged.variants=cloneData(defItem.variants);
+      if(Array.isArray(item.variants)){
+        merged.variants=item.variants.map(v=>({...v,available:v.available!==false}));
+      }
+      return merged;
+    });
+    result.push({category:category.category,items:migrated});
+  }
+  for(const defCat of DEFAULT_MENU){
+    let existCat=result.find(x=>x.category===defCat.category);
+    if(!existCat){ result.push(cloneData(defCat)); continue; }
+    for(const defItem of defCat.items){
+      const exists=existCat.items.some(i=>i.id===defItem.id);
+      if(!exists) existCat.items.push(cloneData(defItem));
+    }
+  }
+  return result;
+}
+
+function loadMenuRealtime(){
+  if(menuUnsubscribe) menuUnsubscribe();
+  menuUnsubscribe=db.collection("settings").doc("menu").onSnapshot(async snapshot=>{
+    if(!snapshot.exists){
+      currentAdminCategories=cloneData(DEFAULT_MENU);
+      await saveMenuToFirebase();
+      return;
+    }
+    const data=snapshot.data()||{};
+    currentAdminCategories=migrateMenu(data.categories);
+    renderAdminMenu();
+  },err=>{
+    console.error("Menu listener error:",err);
+    const c=document.getElementById("admin-menu-container");
+    if(c) c.innerHTML=`<p class="empty-text">Gagal load menu.<br>${escapeHTML(err.message)}</p>`;
+  });
+}
+
+async function saveMenuToFirebase(){
+  try{
+    await db.collection("settings").doc("menu").set({categories:currentAdminCategories});
+  }catch(err){
+    console.error(err);
+    showToast("Gagal save menu: "+err.message,"error");
+    throw err;
+  }
+}
+
+function findItemById(id){
+  for(const cat of currentAdminCategories){
+    for(const item of cat.items||[]){
+      if(String(item.id)===String(id)) return item;
+    }
+  }
+  return null;
+}
+function findCategoryOfItem(id){
+  return currentAdminCategories.find(cat=>(cat.items||[]).some(i=>String(i.id)===String(id)));
+}
+
+function renderAdminMenu(){
+  const container=document.getElementById("admin-menu-container");
+  if(!container) return;
+  let html="";
+  const sortedCats=[
+    ...CATEGORY_ORDER.map(n=>currentAdminCategories.find(x=>x.category===n)).filter(Boolean),
+    ...currentAdminCategories.filter(c=>!CATEGORY_ORDER.includes(c.category))
+  ];
+  for(const category of sortedCats){
+    html+=`<div class="category-heading ${category.category==="COMBO BEST VALUE"?"combo-heading":""}">
+      <span>${escapeHTML(category.category)}</span>
+    </div>`;
+    const normalItems=(category.items||[]).filter(i=>!(Array.isArray(i.variants)&&i.variants.length));
+    const variantItems=(category.items||[]).filter(i=>Array.isArray(i.variants)&&i.variants.length);
+    if(normalItems.length){
+      html+=`<div class="menu-grid">${normalItems.map(buildSimpleCardHTML).join("")}</div>`;
+    }
+    for(const item of variantItems) html+=buildVariantGroupHTML(item);
+  }
+  if(!html) html=`<p class="empty-text">Tiada menu.</p>`;
+  container.innerHTML=html;
+}
+
+function buildThumbHTML(item){
+  if(item.image){
+    return `<div class="menu-thumb"><img src="${escapeHTML(item.image)}" alt="${escapeHTML(item.name)}" loading="lazy"></div>`;
+  }
+  return `<div class="menu-thumb no-img">${escapeHTML(item.emoji||"🍽️")}</div>`;
+}
+
+function buildSimpleCardHTML(item){
+  const available=item.available!==false;
+  return `<div class="menu-item-card ${available?"":"soldout"} ${item.combo?"combo-card":""}">
+    ${buildThumbHTML(item)}
+    <div class="menu-name">${escapeHTML(item.name)}</div>
+    <div class="menu-price">RM${Number(item.price||0).toFixed(2)}</div>
+    <div class="menu-actions">
+      <button class="${available?"stock-on":"stock-off"}" onclick="toggleStock('${escapeHTML(item.id)}')">
+        ${available?"Sold Out":"Available"}
+      </button>
+      <button class="edit-btn" onclick="openEditItem('${escapeHTML(item.id)}')">✏️</button>
+    </div>
+  </div>`;
+}
+
+function buildVariantGroupHTML(item){
+  const available=item.available!==false;
+  let html=`<div class="variant-group">
+    <div class="variant-title">
+      <span class="variant-title-name">${escapeHTML(item.name)} · RM${Number(item.price||0).toFixed(2)}</span>
+      <button class="${available?"btn-red":"btn-green"}" onclick="toggleStock('${escapeHTML(item.id)}')">
+        ${available?"Sold Out Semua":"Available Semua"}
+      </button>
+      <button class="btn-blue" onclick="openEditItem('${escapeHTML(item.id)}')">✏️</button>
+    </div>`;
+  item.variants.forEach((v,i)=>{
+    const vAvail=v.available!==false;
+    html+=`<div class="variant-row ${vAvail?"":"soldout"}">
+      <span class="variant-name">• ${escapeHTML(v.name)}</span>
+      <button class="${vAvail?"btn-red":"btn-green"}" onclick="toggleVariantStock('${escapeHTML(item.id)}',${i})">
+        ${vAvail?"Sold Out":"Available"}
+      </button>
+    </div>`;
+  });
+  html+=`</div>`;
+  return html;
+}
+
+async function toggleStock(id){
+  const item=findItemById(id);
+  if(!item) return;
+  item.available=item.available===false;
+  try{
+    await saveMenuToFirebase();
+    renderAdminMenu();
+    showToast(item.available?"✅ Item available":"⛔ Item sold out");
+  }catch(err){}
+}
+
+async function toggleVariantStock(itemId,variantIndex){
+  const item=findItemById(itemId);
+  if(!item||!Array.isArray(item.variants)||!item.variants[variantIndex]) return;
+  item.variants[variantIndex].available=item.variants[variantIndex].available===false;
+  try{
+    await saveMenuToFirebase();
+    renderAdminMenu();
+    showToast(item.variants[variantIndex].available?"✅ Variant available":"⛔ Variant sold out");
+  }catch(err){}
+}
+
+function handleImageUpload(event){
+  const file=event.target.files&&event.target.files[0];
+  if(!file) return;
+  if(!file.type.startsWith("image/")){ showToast("Sila pilih fail gambar sahaja","error"); return; }
+  if(file.size>2*1024*1024){ showToast("Gambar terlalu besar (max 2MB)","error"); return; }
+  const reader=new FileReader();
+  reader.onload=function(e){
+    currentImageDataUrl=e.target.result;
+    renderImagePreview(e.target.result);
+    const urlInput=document.getElementById("form-image");
+    if(urlInput) urlInput.value="";
+  };
+  reader.onerror=function(){ showToast("Gagal baca gambar","error"); };
+  reader.readAsDataURL(file);
+}
+
+function renderImagePreview(dataUrl){
+  const area=document.getElementById("image-upload-area");
+  const content=document.getElementById("image-upload-content");
+  if(!area||!content) return;
+  if(dataUrl){
+    area.classList.add("has-image");
+    content.innerHTML=`
+      <img src="${dataUrl}" class="image-preview" alt="Preview">
+      <div class="image-upload-hint" style="color:#2e7d32"><strong>✅ Gambar sedia</strong><br>Klik untuk tukar</div>
+    `;
+  }else{
+    area.classList.remove("has-image");
+    content.innerHTML=`
+      <div style="font-size:38px;margin-bottom:6px">📷</div>
+      <div class="image-upload-hint"><strong>Klik untuk upload gambar</strong><br>dari device anda (JPG/PNG, max 2MB)</div>
+    `;
+  }
+}
+
+function resetImageUpload(){
+  currentImageDataUrl="";
+  renderImagePreview(null);
+  const fileInput=document.getElementById("form-image-file");
+  if(fileInput) fileInput.value="";
+}
+
+function resetItemForm(){
+  document.getElementById("form-item-id").value="";
+  document.getElementById("form-name").value="";
+  document.getElementById("form-price").value="";
+  document.getElementById("form-description").value="";
+  document.getElementById("form-image").value="";
+  document.getElementById("form-emoji").value="";
+  document.getElementById("form-type").value="simple";
+  document.getElementById("form-category").value="COFFEE";
+  ["form-sugar","form-milk","form-temperature","form-shot","form-syrup"].forEach(id=>{
+    document.getElementById(id).checked=false;
+  });
+  document.getElementById("combo-contents-list").innerHTML="";
+  document.getElementById("combo-choice-list").innerHTML="";
+  document.getElementById("form-combo-choice-title").value="";
+  resetImageUpload();
+}
+
+function openAddItem(){
+  const password=prompt("Masukkan password menu:");
+  if(password!==PASSWORD_MENU){ if(password!==null) showToast("Password salah","error"); return; }
+  editingItemId=null;
+  resetItemForm();
+  document.getElementById("form-modal-title").textContent="Tambah Menu Baru";
+  document.getElementById("form-delete-btn").style.display="none";
+  onTypeChange();
+  document.getElementById("item-form-modal").classList.add("show");
+}
+
+function openEditItem(id){
+  const password=prompt("Masukkan password menu:");
+  if(password!==PASSWORD_MENU){ if(password!==null) showToast("Password salah","error"); return; }
+  const item=findItemById(id);
+  if(!item) return;
+  editingItemId=id;
+  resetItemForm();
+  document.getElementById("form-item-id").value=id;
+  document.getElementById("form-name").value=item.name||"";
+  document.getElementById("form-price").value=item.price||"";
+  document.getElementById("form-description").value=item.description||"";
+  document.getElementById("form-image").value=item.image||"";
+  document.getElementById("form-emoji").value=item.emoji||"";
+  const cat=findCategoryOfItem(id);
+  if(cat) document.getElementById("form-category").value=cat.category;
+  document.getElementById("form-type").value=item.combo?"combo":"simple";
+  const c=item.customization||{};
+  document.getElementById("form-sugar").checked=!!c.sugar;
+  document.getElementById("form-milk").checked=!!c.milk;
+  document.getElementById("form-temperature").checked=!!c.temperature;
+  document.getElementById("form-shot").checked=!!c.extraShot;
+  document.getElementById("form-syrup").checked=!!c.extraSyrup;
+  if(item.image&&item.image.startsWith("data:")){
+    currentImageDataUrl=item.image;
+    renderImagePreview(item.image);
+  }
+  if(Array.isArray(item.comboContents)) item.comboContents.forEach(v=>addComboContent(v));
+  if(item.comboChoice){
+    document.getElementById("form-combo-choice-title").value=item.comboChoice.title||"";
+    (item.comboChoice.options||[]).forEach(v=>addComboChoice(v));
+  }
+  document.getElementById("form-modal-title").textContent="Edit Menu";
+  document.getElementById("form-delete-btn").style.display="block";
+  onTypeChange();
+  document.getElementById("item-form-modal").classList.add("show");
+}
+
+function closeItemForm(){
+  document.getElementById("item-form-modal").classList.remove("show");
+  editingItemId=null;
+  resetImageUpload();
+}
+
+function onTypeChange(){
+  const combo=document.getElementById("form-type").value==="combo";
+  document.getElementById("combo-contents-group").style.display=combo?"block":"none";
+  document.getElementById("combo-choice-group").style.display=combo?"block":"none";
+}
+
+function addComboContent(value=""){
+  const wrapper=document.getElementById("combo-contents-list");
+  const row=document.createElement("div");
+  row.className="combo-row";
+  row.innerHTML=`<input type="text" value="${escapeHTML(value)}" placeholder="Contoh: Roti Kaya">
+    <button type="button" onclick="this.parentElement.remove()">×</button>`;
+  wrapper.appendChild(row);
+}
+function addComboChoice(value=""){
+  const wrapper=document.getElementById("combo-choice-list");
+  const row=document.createElement("div");
+  row.className="combo-row";
+  row.innerHTML=`<input type="text" value="${escapeHTML(value)}" placeholder="Contoh: Spaghetti Carbonara">
+    <button type="button" onclick="this.parentElement.remove()">×</button>`;
+  wrapper.appendChild(row);
+}
+function getRowsValues(containerId){
+  return [...document.querySelectorAll(`#${containerId} input`)].map(i=>i.value.trim()).filter(Boolean);
+}
+
+async function saveItem() {
+    
+  
+  const name=document.getElementById("form-name").value.trim();
+  const price=Number(document.getElementById("form-price").value);
+  const category=document.getElementById("form-category").value;
+  if(!name){ showToast("Sila masukkan nama menu","error"); return; }
+  if(!price||price<0){ showToast("Sila masukkan harga yang betul","error"); return; }
+  const type=document.getElementById("form-type").value;
+  const customization={
+    sugar:document.getElementById("form-sugar").checked,
+    milk:document.getElementById("form-milk").checked,
+    temperature:document.getElementById("form-temperature").checked,
+    extraShot:document.getElementById("form-shot").checked,
+    extraSyrup:document.getElementById("form-syrup").checked
+  };
+  let imageValue="";
+  if(currentImageDataUrl) imageValue=currentImageDataUrl;
+  else imageValue=document.getElementById("form-image").value.trim();
+
+  let item;
+  if(editingItemId){
+    const old=findItemById(editingItemId);
+    if(!old) return;
+    item={...old, name, price, description:document.getElementById("form-description").value.trim(),
+      image:imageValue, emoji:document.getElementById("form-emoji").value.trim(),
+      customization, combo:type==="combo"};
+  }else{
+    item={ id:"item-"+Date.now(), name, price, available:true,
+      description:document.getElementById("form-description").value.trim(),
+      image:imageValue, emoji:document.getElementById("form-emoji").value.trim(),
+      customization, combo:type==="combo"};
+  }
+  if(type==="combo"){
+    item.comboContents=getRowsValues("combo-contents-list");
+    const choiceTitle=document.getElementById("form-combo-choice-title").value.trim();
+    const choices=getRowsValues("combo-choice-list");
+    if(choiceTitle&&choices.length){ item.comboChoice={title:choiceTitle,options:choices}; }
+    else{ delete item.comboChoice; }
+  }else{
+    delete item.comboContents;
+    delete item.comboChoice;
+  }
+  if(editingItemId){
+    for(const cat of currentAdminCategories){
+      cat.items=(cat.items||[]).filter(ex=>String(ex.id)!==String(editingItemId));
+    }
+  }
+  let targetCategory=currentAdminCategories.find(cat=>cat.category===category);
+  if(!targetCategory){
+    targetCategory={category:category,items:[]};
+    currentAdminCategories.push(targetCategory);
+  }
+  targetCategory.items.push(item);
+ const isEditing = !!editingItemId;
+
+try {
+  await saveMenuToFirebase();
+  closeItemForm();
+  renderAdminMenu();
+  showToast(isEditing ? "✅ Menu dikemaskini" : "✅ Menu ditambah");
+} catch (err) {}
+}
+
+async function deleteCurrentItem(){
+  if(!editingItemId) return;
+  const item=findItemById(editingItemId);
+  if(!item) return;
+  if(!confirm(`Padam "${item.name}"?`)) return;
+  for(const category of currentAdminCategories){
+    category.items=(category.items||[]).filter(ex=>String(ex.id)!==String(editingItemId));
+  }
+  try{
+    await saveMenuToFirebase();
+    closeItemForm();
+    renderAdminMenu();
+    showToast("🗑️ Menu dipadam");
+  }catch(err){}
+}
+
+function loadOrdersRealtime(){
+  if(orderUnsubscribe) orderUnsubscribe();
+  orderUnsubscribe=db.collection("orders").onSnapshot(snapshot=>{
+    allOrders=snapshot.docs.map(doc=>({firebaseId:doc.id,...doc.data()}));
+    allOrders.sort((a,b)=>{
+  return (getOrderDate(b)?.getTime()||0)
+  -
+  (getOrderDate(a)?.getTime()||0);
+});
+    allCompletedOrders=allOrders.filter(isCompleted);
+    renderLiveOrders();
+    renderSalesHistory();
+    calculateTodaySales();
+    if(document.getElementById("page-sales").classList.contains("active")) renderChart();
+  },err=>{
+    console.error("Orders listener:",err);
+    const c=document.getElementById("orders-container");
+    if(c) c.innerHTML=`<p class="empty-text">Gagal load orders.</p>`;
+  });
+}
+
+function buildItemLine(item){
+  const qty=Number(item?.quantity??item?.qty??1);
+  const name=item?.name||item?.productName||"Item";
+  const variant=item?.variant?.name||"";
+  let options=[];
+  if(item?.options&&typeof item.options==="object"){
+    Object.entries(item.options).forEach(([k,v])=>{
+      if(v&&typeof v==="object"&&v.name) options.push(`${k}: ${v.name}`);
+      else if(v!==undefined&&v!==null&&v!=="") options.push(`${k}: ${v}`);
+    });
+  }
+  if(item?.comboContents&&item.comboContents.length) options.unshift(`Combo: ${item.comboContents.join(", ")}`);
+  if(variant) options.unshift(`Variant: ${variant}`);
+  if(item?.specialRequest) options.push(`📝 ${item.specialRequest}`);
+  return `<div class="item-line">
+    <strong>${qty} × ${escapeHTML(name)}</strong>
+    ${options.length?`<div class="item-options">${options.map(escapeHTML).join(" · ")}</div>`:""}
+  </div>`;
+}
+function buildItemsBlock(order){
+  if(!Array.isArray(order?.items)) return `<div class="item-line">No item details</div>`;
+  return order.items.map(buildItemLine).join("");
+}
+
+function renderLiveOrders(){
+  const container=document.getElementById("orders-container");
+  if(!container) return;
+  const live=allOrders.filter(o=>{
+    const s=getOrderStatus(o).toLowerCase();
+    return s==="pending"||s==="accepted";
+  });
+  if(!live.length){ container.innerHTML=`<p class="empty-text">Tiada live order sekarang.</p>`; return; }
+  container.innerHTML=live.map(buildLiveOrderCard).join("");
+}
+
+function buildLiveOrderCard(order){
+  const status=getOrderStatus(order);
+  const isPending=status.toLowerCase()==="pending";
+  const customer=order.customerName||order.name||order.customer||"Customer";
+  const table=order.table||order.tableNumber||"-";
+  const paymentMethod=getPaymentType(order);
+  const date=getOrderDate(order);
+  const diningMode=order.diningMode||"Dine In";
+  const diningBadge=diningMode==="Takeaway"
+    ? '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:bold">🥡 Takeaway</span>'
+    : '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:bold">🍽️ Dine In</span>';
+  return `<div class="order-card">
+    <div class="order-header">
+      <div>
+        <div class="order-title">🧾 ${escapeHTML(order.orderNumber||order.orderId||order.firebaseId)}</div>
+        <div class="order-info">👤 ${escapeHTML(customer)}</div>
+        <div class="order-info">🪑 Table: ${escapeHTML(String(table))}</div>
+        <div class="order-info">${diningBadge}</div>
+      </div>
+      <div class="order-time">
+        <span class="status ${isPending?"status-pending":"status-accepted"}">${escapeHTML(status)}</span>
+        <br><br>${formatDateTime(date)}
+      </div>
+    </div>
+    ${buildItemsBlock(order)}
+    <div class="order-total">RM${getOrderTotal(order).toFixed(2)} · ${escapeHTML(paymentMethod)}</div>
+    <div class="order-buttons">
+      ${isPending
+        ? `<button class="btn-blue" onclick="acceptOrder('${escapeHTML(order.firebaseId)}')">✅ Accept Order</button>`
+        : `<button class="btn-green" onclick="completeOrder('${escapeHTML(order.firebaseId)}')">✔️ Mark Completed</button>`}
+      <button class="btn-pdf" onclick="downloadOrderReceiptPDF('${escapeHTML(order.firebaseId)}')">PDF</button>
+    </div>
+  </div>`;
+}
+
+async function acceptOrder(firebaseId){
+  try{
+    await db.collection("orders").doc(firebaseId).update({status:"Accepted",acceptedAt:Date.now()});
+    showToast("✅ Order accepted");
+  }catch(err){ showToast("Gagal accept order","error"); }
+}
+async function completeOrder(firebaseId){
+  if(!confirm("Tandakan order ini sebagai selesai?")) return;
+  try{
+    await db.collection("orders").doc(firebaseId).update({status:"Selesai (Completed)",completedAt:Date.now()});
+    showToast("✅ Order completed");
+  }catch(err){ showToast("Gagal complete order","error"); }
+}
+function findOrder(id){ return allOrders.find(o=>o.firebaseId===id); }
+
+function calculateTodaySales(){
+  const orders=allCompletedOrders.filter(o=>isToday(getOrderDate(o)));
+  let total=0,cash=0,qr=0;
+  orders.forEach(o=>{
+    const amt=getOrderTotal(o); total+=amt;
+    const m=getPaymentType(o);
+    if(m==="Cash") cash+=amt;
+    else if(m==="QR") qr+=amt;
+  });
+  const t=document.getElementById("total-sales"); if(t) t.textContent=total.toFixed(2);
+  const c=document.getElementById("cash-sales"); if(c) c.textContent=cash.toFixed(2);
+  const q=document.getElementById("qr-sales"); if(q) q.textContent=qr.toFixed(2);
+  const d=document.getElementById("sales-date");
+  if(d) d.textContent=new Date().toLocaleDateString("en-MY",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+}
+
+function renderSalesHistory(){
+  const container=document.getElementById("sales-history-container");
+  if(!container) return;
+  const history=[...allCompletedOrders].sort(
+(a,b)=>(getOrderDate(b)?.getTime()||0)
+-
+(getOrderDate(a)?.getTime()||0)
+);
+  if(!history.length){ container.innerHTML=`<p class="empty-text">Tiada completed order.</p>`; return; }
+  container.innerHTML=history.map(order=>{
+    const date=getOrderDate(order);
+    const diningMode=order.diningMode||"Dine In";
+    const diningBadge=diningMode==="Takeaway"
+      ? '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:bold">🥡 Takeaway</span>'
+      : '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:bold">🍽️ Dine In</span>';
+    return `<div class="history-card">
+      <div class="history-header">
+        <span>🧾 ${escapeHTML(order.orderNumber||order.orderId||order.firebaseId)}</span>
+        <span>${formatDateTime(date)}</span>
+      </div>
+      <div>👤 ${escapeHTML(order.customerName||order.name||"Customer")}</div>
+      <div>🪑 Table: ${escapeHTML(String(order.table||order.tableNumber||"-"))}</div>
+      <div>${diningBadge}</div>
+      <div>💳 ${escapeHTML(getPaymentType(order))}</div>
+      <div>${buildItemsBlock(order)}</div>
+      <div class="history-total">RM${getOrderTotal(order).toFixed(2)}</div>
+      <div class="history-actions">
+        <button class="btn-pdf" onclick="downloadOrderReceiptPDF('${escapeHTML(order.firebaseId)}')">📄 Receipt PDF</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function switchChart(mode){
+  currentChartMode=mode;
+  document.querySelectorAll(".chart-toggle button").forEach(b=>b.classList.remove("active"));
+  const b=document.getElementById("btn-"+mode); if(b) b.classList.add("active");
+  renderChart();
+}
+
+function renderChart(){
+  const canvas=document.getElementById("sales-chart"); if(!canvas) return;
+  let labels=[],values=[],total=0,labelText="";
+  if(currentChartMode==="daily"){
+    labelText="Total 7 hari terakhir";
+    for(let i=6;i>=0;i--){
+      const date=new Date(); date.setHours(0,0,0,0); date.setDate(date.getDate()-i);
+      labels.push(date.toLocaleDateString("en-MY",{day:"2-digit",month:"2-digit"}));
+      let amt=0;
+      allCompletedOrders.forEach(o=>{
+        const d=getOrderDate(o); if(!d) return;
+        if(d.getFullYear()===date.getFullYear()&&d.getMonth()===date.getMonth()&&d.getDate()===date.getDate()) amt+=getOrderTotal(o);
+      });
+      values.push(Number(amt.toFixed(2))); total+=amt;
+    }
+  }
+  if(currentChartMode==="monthly"){
+    labelText="Total 12 bulan terakhir";
+    for(let i=11;i>=0;i--){
+      const date=new Date(); date.setDate(1); date.setMonth(date.getMonth()-i);
+      labels.push(date.toLocaleDateString("en-MY",{month:"short",year:"numeric"}));
+      let amt=0;
+      allCompletedOrders.forEach(o=>{
+        const d=getOrderDate(o); if(!d) return;
+        if(d.getFullYear()===date.getFullYear()&&d.getMonth()===date.getMonth()) amt+=getOrderTotal(o);
+      });
+      values.push(Number(amt.toFixed(2))); total+=amt;
+    }
+  }
+  if(currentChartMode==="hourly"){
+    labelText="Today's sales by hour";
+    labels=Array.from({length:24},(_,i)=>`${String(i).padStart(2,"0")}:00`);
+    values=Array(24).fill(0);
+    allCompletedOrders.forEach(o=>{
+      const d=getOrderDate(o); if(!d||!isToday(d)) return;
+      values[d.getHours()]+=getOrderTotal(o);
+    });
+    total=values.reduce((a,b)=>a+b,0);
+  }
+  document.getElementById("chart-total-value").textContent=total.toFixed(2);
+  document.getElementById("chart-total-label").textContent=labelText;
+  if(salesChart) salesChart.destroy();
+  salesChart=new Chart(canvas.getContext("2d"),{
+    type:"bar",
+    data:{labels,datasets:[{label:"Sales RM",data:values,borderWidth:1,backgroundColor: getComputedStyle(document.documentElement)
+  .getPropertyValue("--brown2"),
+  
+  borderColor: getComputedStyle(document.documentElement)
+  .getPropertyValue("--brown"),borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}},plugins:{legend:{display:false}}}
+  });
+}
+
+function pdfText(doc,text,x,y,options={}){ doc.text(String(text??""),x,y,options); }
+function downloadPDFFile(doc,filename){ doc.save(filename); }
+
+function downloadOrderReceiptPDF(firebaseId){
+  const order=findOrder(firebaseId);
+  if(!order){ showToast("Order tidak dijumpai","error"); return; }
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  let y=20;
+  doc.setFontSize(20); pdfText(doc,"NIKOPI",105,y,{align:"center"}); y+=10;
+  doc.setFontSize(12); pdfText(doc,"Order Receipt",105,y,{align:"center"}); y+=12;
+  doc.setFontSize(10);
+  const orderNumber=order.orderNumber||order.orderId||order.firebaseId;
+  const diningMode=order.diningMode||"Dine In";
+  pdfText(doc,`Order: ${orderNumber}`,15,y); y+=6;
+  pdfText(doc,`Customer: ${order.customerName||order.name||"Customer"}`,15,y); y+=6;
+  pdfText(doc,`Table: ${order.table||order.tableNumber||"-"}`,15,y); y+=6;
+  pdfText(doc,`Type: ${diningMode}`,15,y); y+=6;
+  pdfText(doc,`Payment: ${getPaymentType(order)}`,15,y); y+=6;
+  pdfText(doc,`Date: ${formatDateTime(getOrderDate(order))}`,15,y); y+=10;
+  doc.line(15,y,195,y); y+=8;
+  if(Array.isArray(order.items)){
+    order.items.forEach(item=>{
+      const qty=Number(item.quantity??item.qty??1);
+      const name=item.name||item.productName||"Item";
+      const price=Number(item.price??item.unitPrice??0);
+      pdfText(doc,`${qty} x ${name}`,15,y);
+      pdfText(doc,`RM${(price*qty).toFixed(2)}`,195,y,{align:"right"});
+      y+=7;
+    });
+  }
+  y+=5; doc.line(15,y,195,y); y+=8;
+
+  // Tax breakdown
+  doc.setFontSize(10);
+  const subA=Number(order.subtotal||0);
+  const scA=Number(order.serviceCharge||0);
+  const sstA=Number(order.sst||0);
+  const isDineIn=diningMode==="Dine In";
+  if(subA>0){ pdfText(doc,`Subtotal: RM${subA.toFixed(2)}`,15,y); y+=6; }
+  if(isDineIn&&scA>0){ pdfText(doc,`Service Charge (8%): RM${scA.toFixed(2)}`,15,y); y+=6; }
+  if(sstA>0){ pdfText(doc,`SST (0%): RM${sstA.toFixed(2)}`,15,y); y+=6; }
+  doc.line(15,y,195,y); y+=9;
+
+  doc.setFontSize(13);
+  pdfText(doc,`TOTAL: RM${getOrderTotal(order).toFixed(2)}`,195,y,{align:"right"}); y+=15;
+  doc.setFontSize(10);
+  pdfText(doc,"Terima kasih kerana memilih NIKOPI",105,y,{align:"center"});
+  downloadPDFFile(doc,`NIKOPI-${orderNumber}.pdf`);
+}
+
+function downloadTodaySalesPDF(){
+  const orders=allCompletedOrders.filter(o=>isToday(getOrderDate(o))).sort((a,b)=>getOrderDate(b)-getOrderDate(a));
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  let y=20;
+  doc.setFontSize(20); pdfText(doc,"NIKOPI",105,y,{align:"center"}); y+=8;
+  doc.setFontSize(12); pdfText(doc,"Today's Sales Report",105,y,{align:"center"}); y+=8;
+  doc.setFontSize(10); pdfText(doc,formatDate(new Date()),105,y,{align:"center"}); y+=12;
+  let total=0,cash=0,qr=0;
+  orders.forEach(o=>{
+    const amt=getOrderTotal(o); total+=amt;
+    if(getPaymentType(o)==="Cash") cash+=amt;
+    if(getPaymentType(o)==="QR") qr+=amt;
+  });
+  doc.setFontSize(12);
+  pdfText(doc,`Total Sales: RM${total.toFixed(2)}`,15,y); y+=7;
+  pdfText(doc,`Cash: RM${cash.toFixed(2)}`,15,y); y+=7;
+  pdfText(doc,`QR: RM${qr.toFixed(2)}`,15,y); y+=12;
+  doc.line(15,y,195,y); y+=8;
+  doc.setFontSize(9);
+  orders.forEach(o=>{
+    if(y>275){ doc.addPage(); y=20; }
+    const number=o.orderNumber||o.orderId||o.firebaseId;
+    const amt=getOrderTotal(o);
+    pdfText(doc,`${number}`,15,y);
+    pdfText(doc,`${getPaymentType(o)}`,90,y);
+    pdfText(doc,`RM${amt.toFixed(2)}`,195,y,{align:"right"});
+    y+=6;
+  });
+  y+=10; pdfText(doc,"Terima kasih kerana memilih NIKOPI",105,y,{align:"center"});
+  downloadPDFFile(doc,`NIKOPI-Sales-${formatDate(new Date()).replaceAll("/","-")}.pdf`);
+}
+
+async function commitDeletes(refs){
+  const chunkSize=450;
+  for(let i=0;i<refs.length;i+=chunkSize){
+    const chunk=refs.slice(i,i+chunkSize);
+    const batch=db.batch();
+    chunk.forEach(r=>batch.delete(db.collection("orders").doc(r.id)));
+    await batch.commit();
+  }
+}
+
+async function endShift() {
+  const password = prompt("Masukkan password END SHIFT:");
+  
+  if (password !== PASSWORD_SHIFT) {
+    if (password !== null) showToast("Password salah", "error");
+    return;
+  }
+  
+  const todayOrders = allOrders.filter(o => isToday(getOrderDate(o)));
+  
+  if (!todayOrders.length) {
+    showToast("Tiada order hari ini", "info");
+    return;
+  }
+  
+  if (!confirm(`End shift dan archive ${todayOrders.length} order hari ini?`)) {
+    return;
+  }
+  
+  try {
+    
+    const batch = db.batch();
+    
+    todayOrders.forEach(order => {
+      batch.update(
+        db.collection("orders").doc(order.firebaseId),
+        {
+          archived: true,
+          shiftDate: getTodayStr(),
+          archivedAt: Date.now()
+        }
+      );
+    });
+    
+    await batch.commit();
+    
+    showToast("✅ Shift berjaya ditamatkan");
+    
+  } catch (err) {
+    
+    showToast("Gagal end shift: " + err.message, "error");
+    
+  }
+}
+
+async function resetTesting(){
+  const password=prompt("Masukkan password reset:");
+  if(password!==PASSWORD_RESET){ if(password!==null) showToast("Password salah","error"); return; }
+  if(!confirm("Reset semua order?")) return;
+  try{
+    const refs=allOrders.map(o=>({id:o.firebaseId}));
+    await commitDeletes(refs);
+    showToast("✅ Testing data telah reset");
+  }catch(err){ showToast("Reset gagal: "+err.message,"error"); }
+}
+
+function getTodayStr(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+function loadStaffRealtime(){
+  if(staffUnsubscribe) staffUnsubscribe();
+  staffUnsubscribe=db.collection("staff").onSnapshot(snapshot=>{
+    currentStaffList=snapshot.docs.map(doc=>({id:doc.id,...doc.data()}));
+    renderStaffSelect(); renderStaffList(); renderActiveStaff();
+  },err=>console.error(err));
+}
+
+function loadStaffLogsRealtime(){
+  if(staffLogUnsubscribe) staffLogUnsubscribe();
+  staffLogUnsubscribe=db.collection("staff_logs").onSnapshot(snapshot=>{
+    currentStaffLogs=snapshot.docs.map(doc=>({id:doc.id,...doc.data()}));
+    currentStaffLogs.sort((a,b)=>Number(b.clockIn||b.timestamp||0)-Number(a.clockIn||a.timestamp||0));
+    renderActiveStaff(); renderStaffHistory();
+  },err=>console.error(err));
+}
+
+function renderStaffSelect(){
+  const select=document.getElementById("clock-staff-select");
+  if(!select) return;
+  const current=select.value;
+  select.innerHTML=`<option value="">-- Pilih Staff --</option>`;
+  currentStaffList.forEach(s=>{
+    const opt=document.createElement("option");
+    opt.value=s.id; opt.textContent=s.name||s.staffName||s.id;
+    select.appendChild(opt);
+  });
+  if(current&&currentStaffList.some(s=>s.id===current)) select.value=current;
+}
+
+async function addNewStaff(){
+  const name=document.getElementById("new-staff-name").value.trim();
+  const code=document.getElementById("new-staff-code").value.trim();
+  if(!name){ showToast("Masukkan nama staff","error"); return; }
+  if(!code){ showToast("Masukkan code staff","error"); return; }
+  if(currentStaffList.some(s=>String(s.code)===String(code))){ showToast("Code staff sudah digunakan","error"); return; }
+  try{
+    await db.collection("staff").add({name,code,createdAt:Date.now(),active:true});
+    document.getElementById("new-staff-name").value="";
+    document.getElementById("new-staff-code").value="";
+    showToast("✅ Staff berjaya ditambah");
+  }catch(err){ showToast("Gagal tambah staff: "+err.message,"error"); }
+}
+
+async function deleteStaff(id){
+  const staff=currentStaffList.find(x=>x.id===id);
+  if(!staff) return;
+  if(!confirm(`Padam staff "${staff.name}"?`)) return;
+  try{
+    await db.collection("staff").doc(id).delete();
+    showToast("🗑️ Staff dipadam");
+  }catch(err){ showToast("Gagal padam staff","error"); }
+}
+
+function getSelectedStaff(){
+  const id=document.getElementById("clock-staff-select").value;
+  return currentStaffList.find(s=>s.id===id);
+}
+
+function validateStaff(){
+  const staff=getSelectedStaff();
+  const code=document.getElementById("clock-staff-code").value.trim();
+  if(!staff){ showToast("Sila pilih staff","error"); return null; }
+  if(String(staff.code)!==String(code)){ showToast("Staff code salah","error"); return null; }
+  return staff;
+}
+
+async function clockIn(){
+  const staff=validateStaff(); if(!staff) return;
+  const today=getTodayStr();
+  const active=currentStaffLogs.find(l=>l.staffId===staff.id&&l.date===today&&!l.clockOut);
+  if(active){ showToast("Staff ini sudah clock in","error"); return; }
+  try{
+    await db.collection("staff_logs").add({staffId:staff.id,staffName:staff.name,date:today,clockIn:Date.now(),clockOut:null,duration:0});
+    document.getElementById("clock-staff-code").value="";
+    showToast("🟢 Clock in berjaya");
+  }catch(err){ showToast("Clock in gagal: "+err.message,"error"); }
+}
+
+async function clockOut(){
+  const staff=validateStaff(); if(!staff) return;
+  const today=getTodayStr();
+  const active=currentStaffLogs.find(l=>l.staffId===staff.id&&l.date===today&&!l.clockOut);
+  if(!active){ showToast("Staff ini belum clock in","error"); return; }
+  const clockOutTime=Date.now();
+  const duration=clockOutTime-Number(active.clockIn);
+  try{
+    await db.collection("staff_logs").doc(active.id).update({clockOut:clockOutTime,duration});
+    document.getElementById("clock-staff-code").value="";
+    showToast("🔴 Clock out berjaya");
+  }catch(err){ showToast("Clock out gagal: "+err.message,"error"); }
+}
+
+function formatDuration(ms){
+  if(!ms||ms<0) return "0h 0m";
+  const minutes=Math.floor(ms/60000);
+  const hours=Math.floor(minutes/60);
+  return `${hours}h ${minutes%60}m`;
+}
+
+function renderActiveStaff(){
+  const container=document.getElementById("active-staff-container");
+  if(!container) return;
+  const today=getTodayStr();
+  const active=currentStaffLogs.filter(l=>l.date===today&&!l.clockOut);
+  if(!active.length){ container.innerHTML=`<p class="empty-text">Tiada staff sedang clock in.</p>`; return; }
+  container.innerHTML=active.map(log=>{
+    const elapsed=Date.now()-Number(log.clockIn);
+    return `<div class="staff-card">
+      <div class="staff-card-header">
+        <span class="staff-name">🟢 ${escapeHTML(log.staffName)}</span>
+        <span class="staff-code">${formatDuration(elapsed)}</span>
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:#777">
+        Clock in: ${new Date(log.clockIn).toLocaleTimeString("en-MY",{hour:"2-digit",minute:"2-digit"})}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderStaffList(){
+  const container=document.getElementById("staff-list-container");
+  if(!container) return;
+  if(!currentStaffList.length){ container.innerHTML=`<p class="empty-text">Tiada staff.</p>`; return; }
+  container.innerHTML=currentStaffList.map(s=>`
+    <div class="staff-card">
+      <div class="staff-card-header">
+        <div>
+          <div class="staff-name">${escapeHTML(s.name)}</div>
+          <div class="staff-code">Code: ${escapeHTML(s.code)}</div>
+        </div>
+        <button class="btn-red" onclick="deleteStaff('${escapeHTML(s.id)}')">Delete</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderStaffHistory(){
+  const container=document.getElementById("staff-history-container");
+  if(!container) return;
+  const cutoff=Date.now()-(30*24*60*60*1000);
+  const logs=currentStaffLogs.filter(l=>Number(l.clockIn||0)>=cutoff);
+  if(!logs.length){ container.innerHTML=`<p class="empty-text">Tiada rekod.</p>`; return; }
+  container.innerHTML=logs.map(log=>{
+    let duration=Number(log.duration||0);
+    if(!log.clockOut&&log.clockIn) duration=Date.now()-Number(log.clockIn);
+    return `<div class="staff-history-row">
+      <span>${escapeHTML(log.staffName||"-")}</span>
+      <span>${escapeHTML(log.date||"-")}</span>
+      <span>${log.clockIn?new Date(log.clockIn).toLocaleTimeString("en-MY",{hour:"2-digit",minute:"2-digit"}):"-"}</span>
+      <span>${log.clockOut?new Date(log.clockOut).toLocaleTimeString("en-MY",{hour:"2-digit",minute:"2-digit"}):"Active"}</span>
+      <strong>${formatDuration(duration)}</strong>
+    </div>`;
+  }).join("");
+}
+function changeTheme(theme) {
+  
+  const root = document.documentElement;
+  
+  
+  if (theme === "coffee") {
+    document.body.classList.remove("dark-mode");
+    
+    root.style.setProperty("--page-bg", "#f7f5f0");
+    root.style.setProperty("--card-bg", "#ffffff");
+    root.style.setProperty("--text", "#2c2c2c");
+    root.style.setProperty("--heading", "#3e2723");
+    root.style.setProperty("--button", "#3e2723");
+    root.style.setProperty("--title-color", "#3e2723");
+root.style.setProperty("--line-color", "#e0d9d0");
+    
+  }
+  
+  
+  if (theme === "dark") {
+    document.body.classList.add("dark-mode");
+    root.style.setProperty("--title-color", "#ffffff");
+root.style.setProperty("--line-color", "#444444");
+    
+    root.style.setProperty("--page-bg", "#121212");
+    root.style.setProperty("--card-bg", "#1e1e1e");
+    root.style.setProperty("--border", "#444");
+root.style.setProperty("--muted", "#aaa");
+    root.style.setProperty("--text", "#ffffff");
+    root.style.setProperty("--heading", "#ffffff");
+    root.style.setProperty("--button", "#1976d2");
+    
+    
+  }
+  
+  
+  if (theme === "matcha") {
+    document.body.classList.remove("dark-mode");
+    
+    root.style.setProperty("--page-bg", "#f1f8e9");
+    root.style.setProperty("--card-bg", "#ffffff");
+    root.style.setProperty("--text", "#263238");
+    root.style.setProperty("--heading", "#33691e");
+    root.style.setProperty("--button", "#558b2f");
+    root.style.setProperty("--title-color", "#33691e");
+root.style.setProperty("--line-color", "#c5e1a5");
+    
+  }
+  
+  
+  localStorage.setItem(
+    "nikopiTheme",
+    theme
+  );
+  
+}
+
+
+
+function loadTheme() {
+  
+  const saved =
+    localStorage.getItem("nikopiTheme");
+  
+  if (saved) {
+    changeTheme(saved);
+  }
+  
+}
+function init() {
+  
+  loadTheme();
+  document.getElementById("sales-date").textContent=
+    new Date().toLocaleDateString("en-MY",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+  currentAdminCategories=cloneData(DEFAULT_MENU);
+  renderAdminMenu();
+  loadMenuRealtime();
+  loadOrdersRealtime();
+  loadStaffRealtime();
+  loadStaffLogsRealtime();
+  loadShopStatusRealtime();
+  setTimeout(renderChart,500);
+  setInterval(() => {
+  if (document.getElementById("page-staff").classList.contains("active")) {
+    renderActiveStaff();
+  }
+}, 5000);
+}
+
+document.addEventListener("DOMContentLoaded",init);
+</script>
+</body>
+</html>

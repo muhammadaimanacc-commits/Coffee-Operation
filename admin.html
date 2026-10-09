@@ -1,0 +1,2835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NIKOPI Admin</title>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--brown:#3e2723;--brown2:#5d4037;--cream:#f7f5f0;--white:#fff;--border:#e0d9d0;--green:#2e7d32;--red:#d32f2f;--orange:#c2410c;--blue:#1976d2;--text:#2c2c2c;--muted:#777;--page-bg:#f7f5f0;--card-bg:#ffffff;--heading:#3e2723;--title-color:#3e2723;--line-color:#e0d9d0;--button:#3e2723;--shadow:0 4px 15px rgba(0,0,0,.05)}
+*{box-sizing:border-box}
+body{margin:0;padding:20px;background:var(--page-bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;min-height:100vh;transition:.3s ease}
+button,input,select,textarea{font-family:inherit}
+button{cursor:pointer}
+.container{width:100%;max-width:760px;margin:auto}
+.page{display:none;animation:fadeIn .3s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+h1,h2,h3{color:var(--title-color);transition:.3s;}
+.subtitle{text-align:center;color:var(--muted);font-size:13px;margin-top:-10px;margin-bottom:20px}
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:var(--shadow)}
+.section-title{margin:0 0 15px;padding-bottom:10px;border-bottom:2px solid var(--line-color);font-size:18px;color:var(--title-color);display:flex;align-items:center;gap:8px}
+.page-title{text-align:center;color:var(--brown);font-size:24px;font-weight:800;margin-bottom:20px;letter-spacing:-.5px}
+.back-btn{width:100%;border:0;background:var(--brown);color:#fff;padding:13px;border-radius:10px;font-weight:bold;margin-bottom:20px;transition:transform .15s}
+.back-btn:hover{transform:translateY(-1px)}
+.shop-status-card{border-radius:16px;padding:22px;margin-bottom:18px;color:#fff;background:linear-gradient(135deg,#2e7d32,#43a047);box-shadow:0 8px 22px rgba(46,125,50,.25);transition:all .4s ease;position:relative;overflow:hidden}
+.shop-status-card.closed{background:linear-gradient(135deg,#b71c1c,#d32f2f);box-shadow:0 8px 22px rgba(183,28,28,.25)}
+.shop-status-card::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at top right,rgba(255,255,255,.15),transparent 60%);pointer-events:none}
+.shop-status-header{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1}
+.shop-status-icon{font-size:42px;line-height:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.2))}
+.shop-status-text{font-size:14px;opacity:.9;font-weight:600;letter-spacing:.5px}
+.shop-status-label{font-size:26px;font-weight:900;margin-top:2px;letter-spacing:-.5px}
+.shop-status-sub{font-size:12px;opacity:.85;margin-top:8px;position:relative;z-index:1}
+.shop-toggle-btn{margin-top:16px;width:100%;border:2px solid rgba(255,255,255,.6);background:rgba(255,255,255,.15);color:#fff;padding:14px;border-radius:12px;font-weight:bold;font-size:14px;letter-spacing:.3px;transition:all .2s;backdrop-filter:blur(6px)}
+.shop-toggle-btn:hover{background:rgba(255,255,255,.28)}
+.shop-toggle-btn:active{transform:scale(.98)}
+.sales-box{background:linear-gradient(135deg,var(--brown),var(--brown2));color:#fff;padding:22px;border-radius:16px;margin-bottom:18px;box-shadow:0 8px 22px rgba(62,39,35,.25)}
+.sales-box h2{color:#d7ccc8;font-size:14px;margin:0 0 8px;text-align:center;letter-spacing:.5px;font-weight:600}
+.sales-amount{text-align:center;font-size:38px;font-weight:900;color:#81c784;margin:0;letter-spacing:-1px}
+.payment-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.payment-box{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:12px;text-align:center}
+.payment-box span{display:block;font-size:11px;color:#d7ccc8;letter-spacing:.5px}
+.payment-box strong{font-size:18px;color:#fff}
+.sales-date{text-align:center;font-size:11px;color:#d7ccc8;margin-top:12px}
+.nav-buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.nav-big-btn{border:0;border-radius:14px;padding:20px 12px;color:#fff;font-size:13px;font-weight:bold;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.nav-big-btn:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(0,0,0,.12)}
+.nav-big-btn:active{transform:scale(.98)}
+.nav-big-btn.menu{background:linear-gradient(135deg,#c2410c,#ea580c)}
+.nav-big-btn.sales{background:linear-gradient(135deg,#1565c0,#1976d2)}
+.nav-big-btn.staff{background:linear-gradient(135deg,#2e7d32,#43a047)}
+.nav-big-btn .icon{display:block;font-size:32px;margin-bottom:8px}
+.download-sales-btn{width:100%;border:0;background:var(--brown);color:#fff;padding:13px;border-radius:10px;font-weight:bold;transition:transform .15s}
+.download-sales-btn:hover{transform:translateY(-1px)}
+.add-new-btn{width:100%;border:0;background:linear-gradient(135deg,#c2410c,#ea580c);color:#fff;padding:14px;border-radius:12px;font-weight:bold;font-size:14px;margin-bottom:18px;box-shadow:0 4px 12px rgba(194,65,12,.25);transition:transform .15s}
+.add-new-btn:hover{transform:translateY(-2px)}
+.btn-green{border:0;background:var(--green);color:#fff;padding:9px 12px;border-radius:8px;font-weight:bold;font-size:12px}
+.btn-red{border:0;background:var(--red);color:#fff;padding:9px 12px;border-radius:8px;font-weight:bold;font-size:12px}
+.btn-blue{border:0;background:var(--blue);color:#fff;padding:9px 12px;border-radius:8px;font-weight:bold;font-size:12px}
+.btn-grey{border:0;background:#eee;color:#333;padding:9px 12px;border-radius:8px;font-weight:bold;font-size:12px}
+.btn-pdf{border:0;background:var(--brown);color:#fff;padding:7px 10px;border-radius:6px;font-size:11px;font-weight:bold}
+.category-heading{color:var(--brown2);font-size:15px;font-weight:bold;border-bottom:1px solid var(--border);padding:10px 0;margin-top:22px;letter-spacing:.3px;display:flex;justify-content:space-between;align-items:center}
+.combo-heading{color:var(--orange);border-color:#fdba74}
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.menu-item-card{border:1px solid var(--border);border-radius:12px;padding:12px;background:#fafafa;display:flex;flex-direction:column;gap:8px;transition:box-shadow .15s}
+.menu-item-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.menu-item-card.soldout{opacity:.55}
+.combo-card{border:2px solid #fdba74;background:#fff7ed}
+.menu-thumb{width:100%;aspect-ratio:1/.75;border-radius:8px;overflow:hidden;background:#f0ebe3;display:flex;align-items:center;justify-content:center}
+.menu-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.menu-thumb.no-img{font-size:40px;color:#bbb}
+.menu-name{font-size:13px;font-weight:bold;min-height:34px;line-height:1.25}
+.menu-price{color:#666;font-size:12px;font-weight:bold}
+.menu-actions{display:flex;gap:5px}
+.menu-actions button{flex:1;border:0;padding:8px 4px;border-radius:7px;color:#fff;font-size:10px;font-weight:bold}
+.stock-on{background:var(--green)}
+.stock-off{background:var(--red)}
+.edit-btn{background:var(--blue)}
+.variant-group{background:#fff;border:2px solid var(--border);border-radius:12px;padding:12px;margin:12px 0}
+.variant-title{display:flex;align-items:center;gap:5px;margin-bottom:10px}
+.variant-title-name{flex:1;font-size:13px;font-weight:bold}
+.variant-row{display:flex;align-items:center;gap:8px;background:#f9f7f4;border-radius:8px;padding:8px;margin-bottom:6px;font-size:12px}
+.variant-row.soldout{opacity:.5}
+.variant-name{flex:1}
+.order-card{background:#fff8e1;border:1px solid #ffe0b2;padding:15px;border-radius:12px;margin-bottom:12px}
+.order-header{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;border-bottom:1px solid #f0dfc0;padding-bottom:8px;margin-bottom:8px}
+.order-title{font-weight:bold;color:var(--brown);font-size:14px}
+.order-time{font-size:10px;color:#777;text-align:right}
+.order-info{font-size:12px;margin:4px 0}
+.status{display:inline-block;padding:4px 8px;border-radius:6px;font-size:10px;font-weight:bold}
+.status-pending{background:#fff3cd;color:#856404}
+.status-accepted{background:#cfe2ff;color:#084298}
+.item-line{background:#fff;border-left:3px solid var(--brown);padding:8px;margin:5px 0;border-radius:6px;font-size:12px}
+.item-options{color:#777;font-size:10px;margin-top:3px;line-height:1.5}
+.order-total{text-align:right;color:var(--green);font-weight:bold;margin-top:8px}
+.order-buttons{display:flex;gap:6px;margin-top:10px}
+.order-buttons button{flex:1}
+.history-card{background:#fdfbf7;border:1px solid var(--border);padding:12px;border-radius:10px;margin-bottom:10px}
+.history-header{display:flex;justify-content:space-between;gap:8px;font-weight:bold;font-size:12px;border-bottom:1px solid var(--border);padding-bottom:7px;margin-bottom:7px}
+.history-total{text-align:right;color:var(--green);font-weight:bold;border-top:1px dashed var(--border);padding-top:7px;margin-top:7px}
+.history-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:8px}
+.empty-text{text-align:center;color:#777;font-size:13px;padding:15px}
+.chart-toggle{display:flex;gap:7px;margin-bottom:15px}
+.chart-toggle button{flex:1;padding:10px 5px;border:2px solid var(--border);background:#fff;border-radius:10px;color:#555;font-weight:bold;font-size:11px;transition:all .15s}
+.chart-toggle button.active{background:var(--brown);color:#fff}
+.chart-total{text-align:center;color:var(--green);font-size:26px;font-weight:900;margin-bottom:5px}
+.chart-total small{display:block;color:#777;font-size:11px;font-weight:normal}
+.chart-wrapper{position:relative;height:330px}
+.statement-btn{width:100%;border:0;background:#fff;color:#1565c0;padding:14px;border-radius:12px;font-weight:bold;font-size:14px;cursor:pointer;transition:transform .15s;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.statement-btn:hover{transform:translateY(-2px)}
+.statement-btn:active{transform:scale(.98)}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:13px;font-weight:bold;color:var(--brown);margin-bottom:6px}
+.form-group input,.form-group select,.form-group textarea{width:100%;border:1px solid #ccc;border-radius:8px;padding:11px;font-size:14px;outline:none;transition:border-color .15s}
+.form-group textarea{min-height:80px;resize:vertical}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--brown2);box-shadow:0 0 0 3px rgba(93,64,55,.1)}
+.clock-buttons{display:flex;gap:8px}
+.clock-buttons button{flex:1;padding:13px;border:0;border-radius:10px;color:#fff;font-weight:bold}
+.clock-in{background:var(--green)}
+.clock-out{background:var(--orange)}
+.staff-card{border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;background:#fafafa}
+.staff-card-header{display:flex;justify-content:space-between;align-items:center}
+.staff-name{font-weight:bold;color:var(--brown)}
+.staff-code{color:#777;font-size:11px}
+.staff-history-row{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:11px}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;padding:20px;overflow-y:auto}
+.modal.show{display:flex;align-items:flex-start;justify-content:center}
+.modal-box{width:100%;max-width:560px;background:#fff;border-radius:16px;padding:22px;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-title{color:var(--brown);margin:0 0 20px;font-size:20px}
+.checkbox-grid{display:flex;flex-wrap:wrap;gap:7px}
+.checkbox-grid label{display:flex;align-items:center;gap:5px;background:#f5f2ed;border-radius:8px;padding:8px;font-size:12px;font-weight:normal;cursor:pointer}
+.checkbox-grid input{width:auto}
+.combo-row{display:flex;gap:5px;margin-bottom:6px}
+.combo-row input{flex:1}
+.combo-row button{width:35px;border:0;background:#eee;border-radius:6px;cursor:pointer}
+.add-row-btn{width:100%;border:1px dashed #aaa;background:#fafafa;padding:9px;border-radius:8px;margin-top:5px;cursor:pointer}
+.modal-actions{display:flex;gap:8px;margin-top:18px}
+.modal-actions button{flex:1;padding:12px;border:0;border-radius:8px;font-weight:bold}
+.cancel-btn{background:#eee}
+.save-btn{background:var(--green);color:#fff}
+.delete-btn{background:var(--red);color:#fff}
+.image-upload-area{border:2px dashed #ccc;border-radius:12px;padding:16px;text-align:center;background:#fafafa;cursor:pointer;transition:all .2s}
+.image-upload-area:hover{border-color:var(--brown2);background:#f5f2ed}
+.image-upload-area.has-image{padding:8px;border-style:solid;border-color:var(--green);background:#f0f9f1}
+.image-preview{width:100%;max-height:180px;object-fit:contain;border-radius:8px;display:block}
+.image-upload-hint{color:#888;font-size:12px;margin-top:8px}
+.image-upload-hint strong{color:var(--brown2)}
+.image-file-input{display:none}
+.image-url-input{margin-top:10px}
+.end-shift-btn{width:100%;background:#b71c1c;color:#fff;border:0;padding:14px;border-radius:10px;font-size:15px;font-weight:bold;transition:transform .15s}
+.end-shift-btn:hover{transform:translateY(-1px)}
+.reset-btn{width:100%;border:0;background:none;color:#888;text-decoration:underline;margin-top:10px;padding:8px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:#2e7d32;color:#fff;padding:14px 22px;border-radius:12px;font-weight:bold;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:99999;opacity:0;transition:all .35s cubic-bezier(.4,0,.2,1);max-width:90vw}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.error{background:#c62828}
+.toast.info{background:#1565c0}
+.theme-box{display:flex;gap:8px;justify-content:center;margin-bottom:15px;}
+.theme-box button{border:0;padding:10px 15px;border-radius:10px;font-weight:bold;cursor:pointer;background:var(--button);color:white;}
+.settlement-btn-row{display:flex;gap:8px;margin-top:12px}
+.settlement-btn-row button{flex:1}
+@media(max-width:600px){body{padding:12px}.menu-grid{grid-template-columns:1fr 1fr}.chart-wrapper{height:280px}.nav-big-btn{padding:18px 8px}.shop-status-label{font-size:22px}}
+.dark-mode .card,.dark-mode .order-card,.dark-mode .history-card,.dark-mode .modal-box,.dark-mode .staff-card{background:#1e1e1e!important;color:#fff!important;border-color:#444!important;}
+.dark-mode .section-title,.dark-mode .page-title,.dark-mode h1,.dark-mode h2,.dark-mode h3,.dark-mode .order-title,.dark-mode .staff-name{color:#fff!important;}
+.dark-mode .order-header,.dark-mode .history-header{border-color:#444!important;}
+.dark-mode .order-time,.dark-mode .staff-code{color:#ccc!important;}
+.dark-mode .order-info,.dark-mode .history-card div{color:#fff;}
+.dark-mode .item-line{background:#252525!important;color:#fff!important;border-left-color:#8d6e63!important;}
+.dark-mode .item-options{color:#ccc!important;}
+.dark-mode .order-total,.dark-mode .history-total{color:#81c784!important;}
+.dark-mode .empty-text{color:#bbb!important;}
+.dark-mode input,.dark-mode select,.dark-mode textarea{background:#252525!important;color:white!important;border-color:#555!important;}
+.dark-mode .btn-pdf{background:#5d4037!important;color:white!important;}
+.dark-mode .chart-toggle button{background:#252525;color:white;border-color:#555;}
+.dark-mode .chart-toggle button.active{background:#1976d2;color:white;}
+.dark-mode .download-sales-btn,.dark-mode .back-btn{color:white!important;}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<section id="page-home" class="page active">
+<h1 style="margin-top:0">☕ NIKOPI Admin</h1>
+<p class="subtitle">Stock Control · Sales Report · Staff Management</p>
+
+<div class="card">
+<h2 class="section-title">💳 Card Settlement</h2>
+<p style="font-size:12px;color:#777">Upload gambar settlement card machine. Gambar akan auto-masuk dalam Daily Sales Report PDF.</p>
+<input type="file" id="settlement-image" accept="image/*" capture="environment" style="display:none">
+<div id="settlement-status" style="font-size:12px;color:#2e7d32;font-weight:bold;margin-top:6px;display:none">✅ Gambar settlement sedia</div>
+<img id="settlement-preview" style="width:100%;margin-top:10px;border-radius:12px;display:none">
+<div class="settlement-btn-row">
+  <button class="statement-btn" id="settlement-upload-btn" onclick="document.getElementById('settlement-image').click()">📷 Pilih Gambar</button>
+  <button class="statement-btn" id="settlement-delete-btn" onclick="deleteSettlement()" style="background:#d32f2f;color:#fff;display:none">🗑️ Delete Gambar</button>
+</div>
+</div>
+
+<div class="theme-box">
+  <button onclick="changeTheme('coffee')">☕ Coffee</button>
+  <button onclick="changeTheme('dark')">🌙 Dark</button>
+</div>
+
+<div id="shop-status-card" class="shop-status-card">
+  <div class="shop-status-header">
+    <div>
+      <div class="shop-status-text">SHOP STATUS</div>
+      <div id="shop-status-label" class="shop-status-label">OPEN</div>
+    </div>
+    <div id="shop-status-icon" class="shop-status-icon">🟢</div>
+  </div>
+  <div id="shop-status-sub" class="shop-status-sub">Customer boleh buat order sekarang</div>
+  <button type="button" class="shop-toggle-btn" onclick="toggleShopStatus()">🔒 TUTUP KEDAI</button>
+</div>
+
+<div class="sales-box">
+  <h2>TODAY'S TOTAL SALES</h2>
+  <p class="sales-amount">RM <span id="total-sales">0.00</span></p>
+  <div class="payment-summary">
+    <div class="payment-box"><span>CASH</span><strong>RM <span id="cash-sales">0.00</span></strong></div>
+    <div class="payment-box"><span>QR</span><strong>RM <span id="qr-sales">0.00</span></strong></div>
+    <div class="payment-box"><span>CARD</span><strong>RM <span id="card-sales">0.00</span></strong></div>
+  </div>
+  <div class="sales-date" id="sales-date"></div>
+</div>
+
+<div class="card">
+  <button class="download-sales-btn" onclick="downloadTodaySalesPDF()">📄 Download Today's Sales Report PDF</button>
+  <button class="download-sales-btn" onclick="sendReportToWhatsApp()" style="margin-top:10px;background:#25D366">📲 Hantar Report ke Nik Aiman</button>
+</div>
+
+<div class="nav-buttons">
+  <button class="nav-big-btn menu" onclick="showPage('stock')"><span class="icon">📦</span>Stock / Menu</button>
+  <button class="nav-big-btn sales" onclick="showPage('sales')"><span class="icon">📊</span>Sales Report</button>
+</div>
+<div class="nav-buttons">
+  <button class="nav-big-btn staff" onclick="showPage('staff')" style="grid-column:1/-1"><span class="icon">👥</span>Staff Management</button>
+</div>
+
+<div class="card">
+  <h2 class="section-title">🔴 Live Orders</h2>
+  <div id="orders-container"><p class="empty-text">Loading orders...</p></div>
+</div>
+
+<div class="card">
+  <h2 class="section-title">📋 All Order History</h2>
+  <div id="sales-history-container"><p class="empty-text">Loading...</p></div>
+</div>
+
+<div class="card">
+  <h2 class="section-title">🔒 Shift Management</h2>
+  <p style="font-size:12px;color:#777">End Shift akan archive order hari ini (tidak dikira dalam sales).</p>
+  <button class="end-shift-btn" onclick="endShift()">🔒 END SHIFT</button>
+  <button class="reset-btn" onclick="resetTesting()">reset testing mode</button>
+</div>
+</section>
+
+<section id="page-stock" class="page">
+<button class="back-btn" onclick="showPage('home')">← Kembali ke Home</button>
+<div class="page-title">📦 Stock / Menu Management</div>
+<button class="add-new-btn" onclick="openAddItem()">➕ Tambah Menu Baru</button>
+<div id="admin-menu-container"><p class="empty-text">Loading menu...</p></div>
+</section>
+
+<section id="page-sales" class="page">
+<button class="back-btn" onclick="showPage('home')">← Kembali ke Home</button>
+<div class="page-title">📊 Sales Report</div>
+<div class="card">
+  <h2 class="section-title">📈 Business Overview</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div style="background:#3e2723;color:white;padding:18px;border-radius:14px;">
+      <div style="font-size:12px;color:#ddd">TODAY SALES</div>
+      <div style="font-size:28px;font-weight:900">RM <span id="dashboard-sales">0.00</span></div>
+    </div>
+    <div style="background:#1976d2;color:white;padding:18px;border-radius:14px;">
+      <div style="font-size:12px;color:#ddd">TOTAL ORDERS</div>
+      <div style="font-size:28px;font-weight:900"><span id="dashboard-orders">0</span></div>
+    </div>
+    <div style="background:#2e7d32;color:white;padding:18px;border-radius:14px;">
+      <div style="font-size:12px;color:#ddd">AVERAGE ORDER</div>
+      <div style="font-size:28px;font-weight:900">RM <span id="dashboard-average">0.00</span></div>
+    </div>
+    <div style="background:#c2410c;color:white;padding:18px;border-radius:14px;">
+      <div style="font-size:12px;color:#ddd">TOP PAYMENT</div>
+      <div style="font-size:18px;font-weight:900"><span id="dashboard-payment">-</span></div>
+    </div>
+  </div>
+</div>
+<div class="card">
+  <div class="chart-toggle">
+    <button id="btn-daily" class="active" onclick="switchChart('daily')">Daily</button>
+    <button id="btn-monthly" onclick="switchChart('monthly')">Monthly</button>
+    <button id="btn-hourly" onclick="switchChart('hourly')">Per Hour</button>
+  </div>
+  <div class="chart-total">
+    RM <span id="chart-total-value">0.00</span>
+    <small id="chart-total-label">Total 7 hari terakhir</small>
+  </div>
+  <div class="chart-wrapper"><canvas id="sales-chart"></canvas></div>
+</div>
+
+<div class="card">
+  <h2 class="section-title">📊 Monthly Business Statement</h2>
+  <p style="font-size:12px;color:#777;margin-top:-8px;margin-bottom:16px">Download laporan penuh sebulan untuk hantar kepada boss / accountant.</p>
+  <div class="form-group">
+    <label>Pilih Bulan</label>
+    <select id="statement-month"></select>
+  </div>
+  <button type="button" class="statement-btn" onclick="downloadMonthlyStatementPDF()">📥 Download Monthly Statement PDF</button>
+</div>
+</section>
+
+<section id="page-staff" class="page">
+<button class="back-btn" onclick="showPage('home')">← Kembali ke Home</button>
+<div class="page-title">👥 Staff Management</div>
+<div class="card">
+  <h2 class="section-title">🕐 Clock In / Clock Out</h2>
+  <div class="form-group"><label>Pilih Staff</label><select id="clock-staff-select"><option value="">-- Pilih Staff --</option></select></div>
+  <div class="form-group"><label>Staff Code</label><input type="password" id="clock-staff-code" inputmode="numeric" placeholder="Masukkan code staff"></div>
+  <div id="clock-staff-info" style="text-align:center;font-size:12px;margin-bottom:10px"></div>
+  <div class="clock-buttons">
+    <button class="clock-in" onclick="clockIn()">🟢 CLOCK IN</button>
+    <button class="clock-out" onclick="clockOut()">🔴 CLOCK OUT</button>
+  </div>
+</div>
+<div class="card">
+  <h2 class="section-title">🟢 Staff Aktif Hari Ini</h2>
+  <div id="active-staff-container">Loading...</div>
+</div>
+<div class="card">
+  <h2 class="section-title">➕ Tambah Staff</h2>
+  <div class="form-group"><label>Nama Staff</label><input id="new-staff-name" placeholder="Nama"></div>
+  <div class="form-group"><label>Staff Code</label><input id="new-staff-code" inputmode="numeric" maxlength="6" placeholder="Contoh: 1234"></div>
+  <button class="add-new-btn" style="background:#2e7d32;margin-bottom:0" onclick="addNewStaff()">💾 Simpan Staff</button>
+</div>
+<div class="card">
+  <h2 class="section-title">👥 Senarai Staff</h2>
+  <div id="staff-list-container">Loading...</div>
+</div>
+<div class="card">
+  <h2 class="section-title">📊 Rekod Kerja 30 Hari</h2>
+  <div id="staff-history-container">Loading...</div>
+</div>
+</section>
+
+</div>
+
+<div id="item-form-modal" class="modal">
+<div class="modal-box">
+<h2 id="form-modal-title" class="modal-title">Tambah Menu Baru</h2>
+<input type="hidden" id="form-item-id">
+<div class="form-group"><label>Nama Item *</label><input id="form-name" placeholder="Nama menu"></div>
+<div class="form-group">
+  <label>Kategori *</label>
+  <select id="form-category">
+    <option value="COMBO BEST VALUE">COMBO BEST VALUE</option>
+    <option value="COFFEE">COFFEE</option>
+    <option value="NON COFFEE">NON COFFEE</option>
+    <option value="MATCHA">MATCHA</option>
+    <option value="PASTA">PASTA</option>
+    <option value="SOFT COOKIES">SOFT COOKIES</option>
+    <option value="BITES">BITES</option>
+    <option value="ADD ON">ADD ON</option>
+  </select>
+</div>
+<div class="form-group"><label>Harga RM *</label><input type="number" id="form-price" step="0.01" min="0" placeholder="0.00"></div>
+<div class="form-group"><label>Description</label><textarea id="form-description" placeholder="Description menu"></textarea></div>
+<div class="form-group">
+  <label>Gambar Menu</label>
+  <div class="image-upload-area" id="image-upload-area" onclick="document.getElementById('form-image-file').click()">
+    <div id="image-upload-content">
+      <div style="font-size:38px;margin-bottom:6px">📷</div>
+      <div class="image-upload-hint"><strong>Klik untuk upload gambar</strong><br>dari device anda (JPG/PNG, max 2MB)</div>
+    </div>
+  </div>
+  <input type="file" id="form-image-file" class="image-file-input" accept="image/*" onchange="handleImageUpload(event)">
+  <input id="form-image" class="image-url-input" placeholder="Atau paste Image URL (https://...)" style="width:100%;border:1px solid #ccc;border-radius:8px;padding:11px;font-size:13px;outline:none">
+</div>
+<div class="form-group"><label>Emoji (fallback kalau takde gambar)</label><input id="form-emoji" maxlength="4" placeholder="☕"></div>
+<div class="form-group">
+  <label>Jenis Item</label>
+  <select id="form-type" onchange="onTypeChange()">
+    <option value="simple">Simple</option>
+    <option value="combo">Combo</option>
+  </select>
+</div>
+<div class="form-group">
+  <label>Customization</label>
+  <div class="checkbox-grid">
+    <label><input type="checkbox" id="form-sugar"> Gula</label>
+    <label><input type="checkbox" id="form-milk"> Susu</label>
+    <label><input type="checkbox" id="form-temperature"> Suhu</label>
+    <label><input type="checkbox" id="form-shot"> Extra Shot</label>
+    <label><input type="checkbox" id="form-syrup"> Extra Syrup</label>
+  </div>
+</div>
+<div id="combo-contents-group" class="form-group" style="display:none">
+  <label>Kandungan Combo</label>
+  <div id="combo-contents-list"></div>
+  <button type="button" class="add-row-btn" onclick="addComboContent()">+ Tambah Kandungan</button>
+</div>
+<div id="combo-choice-group" class="form-group" style="display:none">
+  <label>Combo Choice</label>
+  <input id="form-combo-choice-title" placeholder="Contoh: Pilih Pasta">
+  <div id="combo-choice-list" style="margin-top:8px"></div>
+  <button type="button" class="add-row-btn" onclick="addComboChoice()">+ Tambah Pilihan</button>
+</div>
+<div class="modal-actions">
+  <button class="cancel-btn" onclick="closeItemForm()">Batal</button>
+  <button id="form-delete-btn" class="delete-btn" onclick="deleteCurrentItem()" style="display:none">Padam</button>
+  <button class="save-btn" onclick="saveItem()">💾 Save</button>
+</div>
+</div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyA55AmYlP7nPaAXavrFsU5G4GnQtB2Bqc",
+  authDomain: "nikopi-operation.firebaseapp.com",
+  databaseURL: "https://nikopi-operation-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nikopi-operation",
+  storageBucket: "nikopi-operation.firebasestorage.app",
+  messagingSenderId: "922893888263",
+  appId: "1:922893888263:web:2c113a2db29960044e73a2",
+  measurementId: "G-WGEZB8BFW0"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const PASSWORD_MENU = "1111";
+const PASSWORD_SHIFT = "0000";
+const PASSWORD_RESET = "nikopistart";
+
+const SHOP_NAME = "NIKOPI";
+const SHOP_TAGLINE = "Coffee · Bites · Community";
+const SHOP_ADDRESS = "NIKOPI Cafe, Malaysia";
+const SHOP_EMAIL = "admin@nikopi.my";
+
+let currentAdminCategories = [];
+let allOrders = [];
+let allCompletedOrders = [];
+let salesChart = null;
+let currentChartMode = "daily";
+let editingItemId = null;
+let currentStaffList = [];
+let currentStaffLogs = [];
+let menuUnsubscribe = null;
+let orderUnsubscribe = null;
+let staffUnsubscribe = null;
+let staffLogUnsubscribe = null;
+let shopStatusUnsubscribe = null;
+let currentShopStatus = "open";
+let currentImageDataUrl = "";
+
+const DEFAULT_MENU = [
+  { category:"COMBO BEST VALUE", items:[
+    { id:"combo-1", name:"Kaya Toast Combo", price:17.90, available:true, customization:{temperature:true}, combo:true, comboContents:["Roti Kaya","Hard Boiled Egg","Cafe Latte (Hot / Ice)"] },
+    { id:"combo-2", name:"Ramen Ribena Combo", price:21.90, available:true, customization:{}, combo:true, comboContents:["Ramen","Sparkling Ribena"] },
+    { id:"combo-3", name:"Bagel Matcha Combo", price:27.90, available:true, customization:{}, combo:true, comboContents:["Bagel with Cream Cheese","Matcha Strawberry"] },
+    { id:"combo-4", name:"Couple Set", price:42.50, available:true, customization:{}, combo:true, comboContents:["Ice Latte","Matcha Latte"], comboChoice:{title:"Pilih Pasta", options:["Spaghetti Carbonara","Spaghetti Bolognese"]} },
+    { id:"combo-5", name:"Croissant Choc Combo", price:16.90, available:true, customization:{temperature:true}, combo:true, comboContents:["Mini Croissant","Chocolate (Hot / Ice)"] }
+  ]},
+  { category:"COFFEE", items:[
+    { id:"coffee-1", name:"Cinnamon Latte", price:15, available:true, customization:{sugar:false,milk:true,temperature:true,extraShot:true,extraSyrup:true} },
+    { id:"coffee-2", name:"Spanish Latte", price:15, available:true, customization:{sugar:true,milk:true,temperature:true,extraShot:true,extraSyrup:false} },
+    { id:"coffee-3", name:"Hazelnut Latte", price:15, available:true, customization:{sugar:false,milk:true,temperature:true,extraShot:true,extraSyrup:true} },
+    { id:"coffee-4", name:"Caramel Latte", price:15, available:true, customization:{sugar:false,milk:true,temperature:true,extraShot:true,extraSyrup:true} },
+    { id:"coffee-5", name:"Cafe Latte / Flat White", price:12, available:true, customization:{sugar:true,milk:true,temperature:true,extraShot:true,extraSyrup:false} },
+    { id:"coffee-6", name:"Cappuccino", price:12, available:true, customization:{sugar:true,milk:true,temperature:true,extraShot:true,extraSyrup:false} },
+    { id:"coffee-7", name:"Americano / Long Black", price:10, available:true, customization:{sugar:true,milk:false,temperature:true,extraShot:true,extraSyrup:false} },
+    { id:"coffee-8", name:"Sparkling Americano", price:12, available:true, customization:{sugar:false,milk:false,temperature:false,extraShot:true,extraSyrup:false} },
+    { id:"coffee-9", name:"Mocha", price:17, available:true, customization:{sugar:true,milk:true,temperature:true,extraShot:true,extraSyrup:false} },
+    { id:"coffee-10", name:"Espresso", price:5, available:true, customization:{sugar:false,milk:false,temperature:false,extraShot:false,extraSyrup:false} }
+  ]},
+  { category:"NON COFFEE", items:[
+    { id:"noncoffee-1", name:"Chocolate", price:12, available:true, customization:{sugar:true,milk:true,temperature:true} },
+    { id:"noncoffee-2", name:"Chocolate Hazelnut", price:14, available:true, customization:{sugar:false,milk:true,temperature:true,extraSyrup:true} },
+    { id:"noncoffee-3", name:"Sparkling Yuzu", price:14, available:true, customization:{} },
+    { id:"noncoffee-4", name:"Sparkling Ribena", price:10, available:true, customization:{} },
+    { id:"noncoffee-5", name:"Ribena", price:6, available:true, customization:{} },
+    { id:"noncoffee-6", name:"Belgium Choc With Apple Fiber", price:10, available:true, customization:{sugar:true,milk:true,temperature:true} }
+  ]},
+  { category:"MATCHA", items:[
+    { id:"matcha-1", name:"Matcha Latte", price:15, available:true, customization:{sugar:true,milk:true,temperature:true,extraShot:false,extraSyrup:false} },
+    { id:"matcha-2", name:"Matcha Strawberry", price:17, available:true, customization:{sugar:true,milk:true,temperature:true,extraShot:false,extraSyrup:false} }
+  ]},
+  { category:"PASTA", items:[
+    { id:"pasta-1", name:"Spaghetti Carbonara", price:13.00, available:true, customization:{} },
+    { id:"pasta-2", name:"Spaghetti Bolognese", price:13.00, available:true, customization:{} }
+  ]},
+  { category:"SOFT COOKIES", items:[
+    { id:"cookie-1", name:"Cookies", price:11.90, available:true, customization:{}, variants:[{name:"Classic Choc Chip",available:true},{name:"S'mores",available:true},{name:"Red Velvet Cheesecake",available:true}] },
+    { id:"cookie-4", name:"Add On Milk", price:3, available:true, customization:{} }
+  ]},
+  { category:"BITES", items:[
+    { id:"bites-1", name:"Bagel With Cream Cheese", price:12, available:true, customization:{}, variants:[{name:"Poppy seed",available:true},{name:"Sesame",available:true},{name:"Garlic",available:true},{name:"Plain",available:true}] },
+    { id:"bites-2", name:"Mini Croissant", price:6, available:true, customization:{} },
+    { id:"bites-3", name:"Koko Crunch With Milk", price:5, available:true, customization:{} },
+    { id:"bites-4", name:"Ramen", price:9, available:true, customization:{}, variants:[{name:"Carbonara",available:true},{name:"Quattro Cheese",available:true}] },
+    { id:"bites-5", name:"Kaya Toast With Hard Boiled Egg", price:7, available:true, customization:{} },
+    { id:"bites-6", name:"Kaya Toast", price:5.50, available:true, customization:{} },
+    { id:"bites-7", name:"Nutella Toast", price:5.50, available:true, customization:{} },
+    { id:"bites-8", name:"Maggie Cup", price:4.50, available:true, customization:{} },
+    { id:"bites-9", name:"Indo Mee", price:6, available:true, customization:{} },
+    { id:"bites-10", name:"Hard Boiled Egg", price:2, available:true, customization:{} },
+    { id:"bites-11", name:"Buttermilk Chicken", price:16.90, available:true, customization:{} }
+  ]},
+  { category:"ADD ON", items:[
+    { id:"addon-1", name:"Oatmilk", price:3, available:true, customization:{} },
+    { id:"addon-2", name:"Extra Shot", price:4, available:true, customization:{} },
+    { id:"addon-3", name:"Extra Syrup", price:2, available:true, customization:{} },
+    { id:"addon-4", name:"Ice Water", price:2, available:true, customization:{} }
+  ]}
+];
+
+const CATEGORY_ORDER = ["COMBO BEST VALUE","COFFEE","NON COFFEE","MATCHA","PASTA","SOFT COOKIES","BITES","ADD ON"];
+
+const WHATSAPP_PHONE = "60173825121";
+
+function cloneData(d){ return JSON.parse(JSON.stringify(d)); }
+function escapeHTML(v){ return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;"); }
+
+function showToast(msg,type="success"){
+  const t=document.getElementById("toast");
+  if(!t) return;
+  t.textContent=msg;
+  t.className="toast "+(type==="error"?"error":type==="info"?"info":"")+" show";
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.classList.remove("show"),2600);
+}
+
+function getOrderDate(order){
+  const fields=["timestamp","createdAt","completedAt"];
+  for(const f of fields){
+    const v=order?.[f]; if(!v) continue;
+    if(v&&typeof v.toDate==="function") return v.toDate();
+    if(typeof v==="number") return new Date(v);
+    if(typeof v==="string"){ const d=new Date(v); if(!isNaN(d.getTime())) return d; }
+  }
+  return null;
+}
+function isToday(d){ if(!d) return false; const n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate(); }
+function formatDate(d){ return d?d.toLocaleDateString("en-MY",{day:"2-digit",month:"2-digit",year:"numeric"}):"-"; }
+function formatDateLong(d){ return d?d.toLocaleDateString("en-MY",{day:"2-digit",month:"long",year:"numeric"}):"-"; }
+function formatDateTime(d){ return d?d.toLocaleString("en-MY",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"-"; }
+function formatTimeShort(ts){
+  if(!ts) return "—";
+  return new Date(ts).toLocaleTimeString("en-MY",{hour:"2-digit",minute:"2-digit"});
+}
+function formatDurationHM(minutes){
+  if(minutes < 0) minutes = 0;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if(h === 0) return `${m}m`;
+  if(m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+function getPaymentType(order){
+  const v=String(order?.paymentMethod||order?.payment||order?.method||"").toLowerCase();
+  if(v.includes("cash")||v.includes("tunai")||v.includes("counter")) return "Cash";
+  if(v.includes("qr")||v.includes("duitnow")||v.includes("online")) return "QR";
+  if(v.includes("card")) return "Card";
+  return v||"Other";
+}
+function getOrderTotal(order){
+  const vals=[order?.total,order?.grandTotal,order?.amount,order?.totalAmount];
+  for(const v of vals){ const n=Number(v); if(!isNaN(n)) return n; }
+  if(Array.isArray(order?.items)){
+    return order.items.reduce((s,i)=>{
+      const p=Number(i.price??i.unitPrice??0);
+      const q=Number(i.quantity??i.qty??1);
+      return s+p*q;
+    },0);
+  }
+  return 0;
+}
+function getOrderStatus(order){ return String(order?.status||"Pending"); }
+function isCompleted(order){
+  const s=getOrderStatus(order).toLowerCase();
+  return s==="selesai (completed)"||s==="completed"||s==="complete"||s==="selesai";
+}
+function getTodayStr(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+function showPage(page){
+  document.querySelectorAll(".page").forEach(el=>el.classList.remove("active"));
+  const target=document.getElementById("page-"+page);
+  if(target) target.classList.add("active");
+  window.scrollTo({top:0,behavior:"smooth"});
+  if(page==="sales") setTimeout(renderChart,100);
+  if(page==="staff"){ renderStaffSelect(); renderActiveStaff(); renderStaffList(); renderStaffHistory(); }
+}
+
+/* ============ SETTLEMENT ============ */
+function saveSettlement(){
+  const input = document.getElementById("settlement-image");
+  const file = input.files[0];
+  if(!file){ showToast("Pilih gambar settlement dulu", "error"); return; }
+  if(!file.type.startsWith("image/")){ showToast("Sila pilih fail gambar sahaja","error"); return; }
+  if(file.size > 1.5*1024*1024){ showToast("Gambar terlalu besar (max 1.5MB)","error"); return; }
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      localStorage.setItem("nikopiSettlement", e.target.result);
+      localStorage.setItem("nikopiSettlementDate", getTodayStr());
+      renderSettlementPreview();
+      showToast("✅ Settlement saved — akan masuk dalam PDF");
+    } catch(err){
+      showToast("Gagal simpan (storage penuh?)", "error");
+    }
+  };
+  reader.onerror = function(){ showToast("Gagal baca gambar", "error"); };
+  reader.readAsDataURL(file);
+  input.value = "";
+}
+
+function deleteSettlement(){
+  if(!confirm("Padam gambar settlement?")) return;
+  try {
+    localStorage.removeItem("nikopiSettlement");
+    localStorage.removeItem("nikopiSettlementDate");
+    renderSettlementPreview();
+    showToast("🗑️ Gambar settlement dipadam");
+  } catch(err){
+    showToast("Gagal padam", "error");
+  }
+}
+
+function renderSettlementPreview(){
+  const img = document.getElementById("settlement-preview");
+  const status = document.getElementById("settlement-status");
+  const deleteBtn = document.getElementById("settlement-delete-btn");
+  const uploadBtn = document.getElementById("settlement-upload-btn");
+  const input = document.getElementById("settlement-image");
+  if(!img) return;
+  
+  let saved = null;
+  let savedDate = null;
+  try {
+    saved = localStorage.getItem("nikopiSettlement");
+    savedDate = localStorage.getItem("nikopiSettlementDate");
+  } catch(e){}
+  
+  if(saved){
+    img.src = saved;
+    img.style.display = "block";
+    if(status){
+      status.style.display = "block";
+      const dateLabel = savedDate === getTodayStr() ? "hari ini" : (savedDate || "-");
+      status.textContent = `✅ Gambar settlement sedia (saved: ${dateLabel})`;
+    }
+    if(deleteBtn) deleteBtn.style.display = "block";
+    if(uploadBtn) uploadBtn.textContent = "🔄 Tukar Gambar";
+    if(input) input.style.display = "none";
+  } else {
+    img.style.display = "none";
+    img.src = "";
+    if(status) status.style.display = "none";
+    if(deleteBtn) deleteBtn.style.display = "none";
+    if(uploadBtn) uploadBtn.textContent = "📷 Pilih Gambar";
+    if(input) input.style.display = "block";
+  }
+}
+
+function loadSettlement(){ renderSettlementPreview(); }
+
+function getSettlementImage(){
+  try { return localStorage.getItem("nikopiSettlement"); }
+  catch(e){ return null; }
+}
+
+/* ============ STAFF ATTENDANCE ============ */
+function getStaffAttendanceToday(){
+  const today = getTodayStr();
+  const logs = currentStaffLogs.filter(l => l.date === today);
+  const grouped = {};
+  logs.forEach(log => {
+    const name = log.staffName || "Staff";
+    if(!grouped[name]){
+      grouped[name] = { staffName: name, sessions: [], totalMinutes: 0 };
+    }
+    let durationMs = Number(log.duration || 0);
+    if(!log.clockOut && log.clockIn) durationMs = Date.now() - Number(log.clockIn);
+    const minutes = Math.floor(durationMs / 60000);
+    grouped[name].sessions.push({
+      clockIn: log.clockIn,
+      clockOut: log.clockOut,
+      minutes: minutes,
+      isActive: !log.clockOut
+    });
+    grouped[name].totalMinutes += minutes;
+  });
+  return Object.values(grouped).map(g => {
+    const h = Math.floor(g.totalMinutes / 60);
+    const m = g.totalMinutes % 60;
+    return {
+      staffName: g.staffName,
+      sessions: g.sessions.sort((a,b) => (a.clockIn||0) - (b.clockIn||0)),
+      totalMinutes: g.totalMinutes,
+      totalDisplay: h > 0 ? `${h}h ${m}m` : `${m}m`,
+      hasActive: g.sessions.some(s => s.isActive)
+    };
+  }).sort((a,b) => a.staffName.localeCompare(b.staffName));
+}
+
+/* ============ STATEMENT DROPDOWN ============ */
+function initStatementDropdown(){
+  const sel = document.getElementById("statement-month");
+  if(!sel) return;
+  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const today = new Date();
+  let html = "";
+  for(let i=0;i<12;i++){
+    const d = new Date(today.getFullYear(), today.getMonth()-i, 1);
+    const value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+    const label = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+    html += `<option value="${value}"${i===0?" selected":""}>${label}</option>`;
+  }
+  sel.innerHTML = html;
+}
+
+/* ============ SHOP STATUS ============ */
+function loadShopStatusRealtime(){
+  if(shopStatusUnsubscribe) shopStatusUnsubscribe();
+  shopStatusUnsubscribe=db.collection("settings").doc("shop").onSnapshot(doc=>{
+    const data=doc.exists?doc.data():{};
+    currentShopStatus=data.status||"open";
+    renderShopStatus();
+  },err=>{ console.error("Shop status error:",err); });
+}
+
+function renderShopStatus(){
+  const card=document.getElementById("shop-status-card");
+  const label=document.getElementById("shop-status-label");
+  const icon=document.getElementById("shop-status-icon");
+  const sub=document.getElementById("shop-status-sub");
+  const btn=card?.querySelector(".shop-toggle-btn");
+  if(!card||!btn) return;
+  if(currentShopStatus==="closed"){
+    card.classList.add("closed");
+    label.textContent="CLOSED";
+    icon.textContent="🔴";
+    sub.textContent="Kedai sedang tutup. Customer tidak boleh order.";
+    btn.innerHTML="🔓 BUKA KEDAI";
+  }else{
+    card.classList.remove("closed");
+    label.textContent="OPEN";
+    icon.textContent="🟢";
+    sub.textContent="Customer boleh buat order sekarang";
+    btn.innerHTML="🔒 TUTUP KEDAI";
+  }
+}
+
+async function toggleShopStatus(){
+  const password=prompt("Masukkan password (0000):");
+  if(password!==PASSWORD_SHIFT){
+    if(password!==null) showToast("Password salah","error");
+    return;
+  }
+  const newStatus=currentShopStatus==="open"?"closed":"open";
+  const confirmMsg=newStatus==="closed"
+    ? "Tutup kedai? Customer tidak akan boleh order sehingga dibuka semula."
+    : "Buka kedai? Customer boleh mula order.";
+  if(!confirm(confirmMsg)) return;
+  try{
+    await db.collection("settings").doc("shop").set({status:newStatus,updatedAt:Date.now()},{merge:true});
+    showToast(newStatus==="closed"?"🔒 Kedai ditutup":"🔓 Kedai dibuka");
+  }catch(err){
+    console.error(err);
+    showToast("Gagal update status: "+err.message,"error");
+  }
+}
+
+/* ============ MENU ============ */
+function migrateMenu(firebaseCategories){
+  if(!Array.isArray(firebaseCategories)) return cloneData(DEFAULT_MENU);
+  const result=[];
+  for(const category of firebaseCategories){
+    const defaultCat=DEFAULT_MENU.find(x=>x.category===category.category);
+    const defaultItems=defaultCat?.items||[];
+    const items=Array.isArray(category.items)?category.items:[];
+    const migrated=items.map(item=>{
+      const defItem=defaultItems.find(x=>x.id===item.id);
+      const merged={...(defItem?cloneData(defItem):{}),...item};
+      merged.available=item.available!==undefined?item.available:true;
+      merged.customization={...(defItem?.customization||{}),...(item.customization||{})};
+      if(defItem?.variants&&!item.variants) merged.variants=cloneData(defItem.variants);
+      if(Array.isArray(item.variants)){
+        merged.variants=item.variants.map(v=>({...v,available:v.available!==false}));
+      }
+      return merged;
+    });
+    result.push({category:category.category,items:migrated});
+  }
+  for(const defCat of DEFAULT_MENU){
+    let existCat=result.find(x=>x.category===defCat.category);
+    if(!existCat){ result.push(cloneData(defCat)); continue; }
+    for(const defItem of defCat.items){
+      const exists=existCat.items.some(i=>i.id===defItem.id);
+      if(!exists) existCat.items.push(cloneData(defItem));
+    }
+  }
+  return result;
+}
+
+function loadMenuRealtime(){
+  if(menuUnsubscribe) menuUnsubscribe();
+  menuUnsubscribe=db.collection("settings").doc("menu").onSnapshot(async snapshot=>{
+    if(!snapshot.exists){
+      currentAdminCategories=cloneData(DEFAULT_MENU);
+      await saveMenuToFirebase();
+      return;
+    }
+    const data=snapshot.data()||{};
+    currentAdminCategories=migrateMenu(data.categories);
+    renderAdminMenu();
+  },err=>{
+    console.error("Menu listener error:",err);
+    const c=document.getElementById("admin-menu-container");
+    if(c) c.innerHTML=`<p class="empty-text">Gagal load menu.<br>${escapeHTML(err.message)}</p>`;
+  });
+}
+
+async function saveMenuToFirebase(){
+  try{
+    await db.collection("settings").doc("menu").set({categories:currentAdminCategories});
+  }catch(err){
+    console.error(err);
+    showToast("Gagal save menu: "+err.message,"error");
+    throw err;
+  }
+}
+
+function findItemById(id){
+  for(const cat of currentAdminCategories){
+    for(const item of cat.items||[]){
+      if(String(item.id)===String(id)) return item;
+    }
+  }
+  return null;
+}
+function findCategoryOfItem(id){
+  return currentAdminCategories.find(cat=>(cat.items||[]).some(i=>String(i.id)===String(id)));
+}
+
+function renderAdminMenu(){
+  const container=document.getElementById("admin-menu-container");
+  if(!container) return;
+  let html="";
+  const sortedCats=[
+    ...CATEGORY_ORDER.map(n=>currentAdminCategories.find(x=>x.category===n)).filter(Boolean),
+    ...currentAdminCategories.filter(c=>!CATEGORY_ORDER.includes(c.category))
+  ];
+  for(const category of sortedCats){
+    html+=`<div class="category-heading ${category.category==="COMBO BEST VALUE"?"combo-heading":""}">
+      <span>${escapeHTML(category.category)}</span>
+    </div>`;
+    const normalItems=(category.items||[]).filter(i=>!(Array.isArray(i.variants)&&i.variants.length));
+    const variantItems=(category.items||[]).filter(i=>Array.isArray(i.variants)&&i.variants.length);
+    if(normalItems.length){
+      html+=`<div class="menu-grid">${normalItems.map(buildSimpleCardHTML).join("")}</div>`;
+    }
+    for(const item of variantItems) html+=buildVariantGroupHTML(item);
+  }
+  if(!html) html=`<p class="empty-text">Tiada menu.</p>`;
+  container.innerHTML=html;
+}
+
+function buildThumbHTML(item){
+  if(item.image){
+    return `<div class="menu-thumb"><img src="${escapeHTML(item.image)}" alt="${escapeHTML(item.name)}" loading="lazy"></div>`;
+  }
+  return `<div class="menu-thumb no-img">${escapeHTML(item.emoji||"🍽️")}</div>`;
+}
+
+function buildSimpleCardHTML(item){
+  const available=item.available!==false;
+  return `<div class="menu-item-card ${available?"":"soldout"} ${item.combo?"combo-card":""}">
+    ${buildThumbHTML(item)}
+    <div class="menu-name">${escapeHTML(item.name)}</div>
+    <div class="menu-price">RM${Number(item.price||0).toFixed(2)}</div>
+    <div class="menu-actions">
+      <button class="${available?"stock-on":"stock-off"}" onclick="toggleStock('${escapeHTML(item.id)}')">
+        ${available?"Sold Out":"Available"}
+      </button>
+      <button class="edit-btn" onclick="openEditItem('${escapeHTML(item.id)}')">✏️</button>
+    </div>
+  </div>`;
+}
+
+function buildVariantGroupHTML(item){
+  const available=item.available!==false;
+  let html=`<div class="variant-group">
+    <div class="variant-title">
+      <span class="variant-title-name">${escapeHTML(item.name)} · RM${Number(item.price||0).toFixed(2)}</span>
+      <button class="${available?"btn-red":"btn-green"}" onclick="toggleStock('${escapeHTML(item.id)}')">
+        ${available?"Sold Out Semua":"Available Semua"}
+      </button>
+      <button class="btn-blue" onclick="openEditItem('${escapeHTML(item.id)}')">✏️</button>
+    </div>`;
+  item.variants.forEach((v,i)=>{
+    const vAvail=v.available!==false;
+    html+=`<div class="variant-row ${vAvail?"":"soldout"}">
+      <span class="variant-name">• ${escapeHTML(v.name)}</span>
+      <button class="${vAvail?"btn-red":"btn-green"}" onclick="toggleVariantStock('${escapeHTML(item.id)}',${i})">
+        ${vAvail?"Sold Out":"Available"}
+      </button>
+    </div>`;
+  });
+  html+=`</div>`;
+  return html;
+}
+
+async function toggleStock(id){
+  const item=findItemById(id);
+  if(!item) return;
+  item.available=item.available===false;
+  try{
+    await saveMenuToFirebase();
+    renderAdminMenu();
+    showToast(item.available?"✅ Item available":"⛔ Item sold out");
+  }catch(err){}
+}
+
+async function toggleVariantStock(itemId,variantIndex){
+  const item=findItemById(itemId);
+  if(!item||!Array.isArray(item.variants)||!item.variants[variantIndex]) return;
+  item.variants[variantIndex].available=item.variants[variantIndex].available===false;
+  try{
+    await saveMenuToFirebase();
+    renderAdminMenu();
+    showToast(item.variants[variantIndex].available?"✅ Variant available":"⛔ Variant sold out");
+  }catch(err){}
+}
+
+function handleImageUpload(event){
+  const file=event.target.files&&event.target.files[0];
+  if(!file) return;
+  if(!file.type.startsWith("image/")){ showToast("Sila pilih fail gambar sahaja","error"); return; }
+  if(file.size>2*1024*1024){ showToast("Gambar terlalu besar (max 2MB)","error"); return; }
+  const reader=new FileReader();
+  reader.onload=function(e){
+    currentImageDataUrl=e.target.result;
+    renderImagePreview(e.target.result);
+    const urlInput=document.getElementById("form-image");
+    if(urlInput) urlInput.value="";
+  };
+  reader.onerror=function(){ showToast("Gagal baca gambar","error"); };
+  reader.readAsDataURL(file);
+}
+
+function renderImagePreview(dataUrl){
+  const area=document.getElementById("image-upload-area");
+  const content=document.getElementById("image-upload-content");
+  if(!area||!content) return;
+  if(dataUrl){
+    area.classList.add("has-image");
+    content.innerHTML=`<img src="${dataUrl}" class="image-preview" alt="Preview"><div class="image-upload-hint" style="color:#2e7d32"><strong>✅ Gambar sedia</strong><br>Klik untuk tukar</div>`;
+  }else{
+    area.classList.remove("has-image");
+    content.innerHTML=`<div style="font-size:38px;margin-bottom:6px">📷</div><div class="image-upload-hint"><strong>Klik untuk upload gambar</strong><br>dari device anda (JPG/PNG, max 2MB)</div>`;
+  }
+}
+
+function resetImageUpload(){
+  currentImageDataUrl="";
+  renderImagePreview(null);
+  const fileInput=document.getElementById("form-image-file");
+  if(fileInput) fileInput.value="";
+}
+
+function resetItemForm(){
+  document.getElementById("form-item-id").value="";
+  document.getElementById("form-name").value="";
+  document.getElementById("form-price").value="";
+  document.getElementById("form-description").value="";
+  document.getElementById("form-image").value="";
+  document.getElementById("form-emoji").value="";
+  document.getElementById("form-type").value="simple";
+  document.getElementById("form-category").value="COFFEE";
+  ["form-sugar","form-milk","form-temperature","form-shot","form-syrup"].forEach(id=>{
+    document.getElementById(id).checked=false;
+  });
+  document.getElementById("combo-contents-list").innerHTML="";
+  document.getElementById("combo-choice-list").innerHTML="";
+  document.getElementById("form-combo-choice-title").value="";
+  resetImageUpload();
+}
+
+function openAddItem(){
+  const password=prompt("Masukkan password menu:");
+  if(password!==PASSWORD_MENU){ if(password!==null) showToast("Password salah","error"); return; }
+  editingItemId=null;
+  resetItemForm();
+  document.getElementById("form-modal-title").textContent="Tambah Menu Baru";
+  document.getElementById("form-delete-btn").style.display="none";
+  onTypeChange();
+  document.getElementById("item-form-modal").classList.add("show");
+}
+
+function openEditItem(id){
+  const password=prompt("Masukkan password menu:");
+  if(password!==PASSWORD_MENU){ if(password!==null) showToast("Password salah","error"); return; }
+  const item=findItemById(id);
+  if(!item) return;
+  editingItemId=id;
+  resetItemForm();
+  document.getElementById("form-item-id").value=id;
+  document.getElementById("form-name").value=item.name||"";
+  document.getElementById("form-price").value=item.price||"";
+  document.getElementById("form-description").value=item.description||"";
+  document.getElementById("form-image").value=item.image||"";
+  document.getElementById("form-emoji").value=item.emoji||"";
+  const cat=findCategoryOfItem(id);
+  if(cat) document.getElementById("form-category").value=cat.category;
+  document.getElementById("form-type").value=item.combo?"combo":"simple";
+  const c=item.customization||{};
+  document.getElementById("form-sugar").checked=!!c.sugar;
+  document.getElementById("form-milk").checked=!!c.milk;
+  document.getElementById("form-temperature").checked=!!c.temperature;
+  document.getElementById("form-shot").checked=!!c.extraShot;
+  document.getElementById("form-syrup").checked=!!c.extraSyrup;
+  if(item.image&&item.image.startsWith("data:")){
+    currentImageDataUrl=item.image;
+    renderImagePreview(item.image);
+  }
+  if(Array.isArray(item.comboContents)) item.comboContents.forEach(v=>addComboContent(v));
+  if(item.comboChoice){
+    document.getElementById("form-combo-choice-title").value=item.comboChoice.title||"";
+    (item.comboChoice.options||[]).forEach(v=>addComboChoice(v));
+  }
+  document.getElementById("form-modal-title").textContent="Edit Menu";
+  document.getElementById("form-delete-btn").style.display="block";
+  onTypeChange();
+  document.getElementById("item-form-modal").classList.add("show");
+}
+
+function closeItemForm(){
+  document.getElementById("item-form-modal").classList.remove("show");
+  editingItemId=null;
+  resetImageUpload();
+}
+
+function onTypeChange(){
+  const combo=document.getElementById("form-type").value==="combo";
+  document.getElementById("combo-contents-group").style.display=combo?"block":"none";
+  document.getElementById("combo-choice-group").style.display=combo?"block":"none";
+}
+
+function addComboContent(value=""){
+  const wrapper=document.getElementById("combo-contents-list");
+  const row=document.createElement("div");
+  row.className="combo-row";
+  row.innerHTML=`<input type="text" value="${escapeHTML(value)}" placeholder="Contoh: Roti Kaya"><button type="button" onclick="this.parentElement.remove()">×</button>`;
+  wrapper.appendChild(row);
+}
+function addComboChoice(value=""){
+  const wrapper=document.getElementById("combo-choice-list");
+  const row=document.createElement("div");
+  row.className="combo-row";
+  row.innerHTML=`<input type="text" value="${escapeHTML(value)}" placeholder="Contoh: Spaghetti Carbonara"><button type="button" onclick="this.parentElement.remove()">×</button>`;
+  wrapper.appendChild(row);
+}
+function getRowsValues(containerId){
+  return [...document.querySelectorAll(`#${containerId} input`)].map(i=>i.value.trim()).filter(Boolean);
+}
+
+async function saveItem() {
+  const name=document.getElementById("form-name").value.trim();
+  const price=Number(document.getElementById("form-price").value);
+  const category=document.getElementById("form-category").value;
+  if(!name){ showToast("Sila masukkan nama menu","error"); return; }
+  if(!price||price<0){ showToast("Sila masukkan harga yang betul","error"); return; }
+  const type=document.getElementById("form-type").value;
+  const customization={
+    sugar:document.getElementById("form-sugar").checked,
+    milk:document.getElementById("form-milk").checked,
+    temperature:document.getElementById("form-temperature").checked,
+    extraShot:document.getElementById("form-shot").checked,
+    extraSyrup:document.getElementById("form-syrup").checked
+  };
+  let imageValue="";
+  if(currentImageDataUrl) imageValue=currentImageDataUrl;
+  else imageValue=document.getElementById("form-image").value.trim();
+
+  let item;
+  if(editingItemId){
+    const old=findItemById(editingItemId);
+    if(!old) return;
+    item={...old, name, price, description:document.getElementById("form-description").value.trim(),
+      image:imageValue, emoji:document.getElementById("form-emoji").value.trim(),
+      customization, combo:type==="combo"};
+  }else{
+    item={ id:"item-"+Date.now(), name, price, available:true,
+      description:document.getElementById("form-description").value.trim(),
+      image:imageValue, emoji:document.getElementById("form-emoji").value.trim(),
+      customization, combo:type==="combo"};
+  }
+  if(type==="combo"){
+    item.comboContents=getRowsValues("combo-contents-list");
+    const choiceTitle=document.getElementById("form-combo-choice-title").value.trim();
+    const choices=getRowsValues("combo-choice-list");
+    if(choiceTitle&&choices.length){ item.comboChoice={title:choiceTitle,options:choices}; }
+    else{ delete item.comboChoice; }
+  }else{
+    delete item.comboContents;
+    delete item.comboChoice;
+  }
+  if(editingItemId){
+    for(const cat of currentAdminCategories){
+      cat.items=(cat.items||[]).filter(ex=>String(ex.id)!==String(editingItemId));
+    }
+  }
+  let targetCategory=currentAdminCategories.find(cat=>cat.category===category);
+  if(!targetCategory){
+    targetCategory={category:category,items:[]};
+    currentAdminCategories.push(targetCategory);
+  }
+  targetCategory.items.push(item);
+  const isEditing = !!editingItemId;
+
+  try {
+    await saveMenuToFirebase();
+    closeItemForm();
+    renderAdminMenu();
+    showToast(isEditing ? "✅ Menu dikemaskini" : "✅ Menu ditambah");
+  } catch (err) {}
+}
+
+async function deleteCurrentItem(){
+  if(!editingItemId) return;
+  const item=findItemById(editingItemId);
+  if(!item) return;
+  if(!confirm(`Padam "${item.name}"?`)) return;
+  for(const category of currentAdminCategories){
+    category.items=(category.items||[]).filter(ex=>String(ex.id)!==String(editingItemId));
+  }
+  try{
+    await saveMenuToFirebase();
+    closeItemForm();
+    renderAdminMenu();
+    showToast("🗑️ Menu dipadam");
+  }catch(err){}
+}
+
+/* ============ ORDERS ============ */
+function loadOrdersRealtime(){
+  if(orderUnsubscribe) orderUnsubscribe();
+  orderUnsubscribe=db.collection("orders").onSnapshot(snapshot=>{
+    allOrders=snapshot.docs
+      .map(doc=>({firebaseId:doc.id,...doc.data()}))
+      .filter(o=>o.archived!==true);
+
+    allOrders.sort((a,b)=>{
+      return (getOrderDate(b)?.getTime()||0) - (getOrderDate(a)?.getTime()||0);
+    });
+    allCompletedOrders=allOrders.filter(isCompleted);
+    renderLiveOrders();
+    renderSalesHistory();
+    calculateTodaySales();
+    if(document.getElementById("page-sales").classList.contains("active")) renderChart();
+  },err=>{
+    console.error("Orders listener:",err);
+    const c=document.getElementById("orders-container");
+    if(c) c.innerHTML=`<p class="empty-text">Gagal load orders.</p>`;
+  });
+}
+
+function buildItemLine(item, orderId, index) {
+  const qty = Number(item?.quantity ?? item?.qty ?? 1);
+  const name = item?.name || item?.productName || "Item";
+  const variant = item?.variant?.name || "";
+  let options = [];
+  if (item?.options && typeof item.options === "object") {
+    Object.entries(item.options).forEach(([k, v]) => {
+      if (v && typeof v === "object" && v.name) options.push(`${k}: ${v.name}`);
+      else if (v) options.push(`${k}: ${v}`);
+    });
+  }
+  if (item?.comboContents?.length) options.unshift(`Combo: ${item.comboContents.join(", ")}`);
+  if (variant) options.unshift(`Variant: ${variant}`);
+  const done = item.itemDone === true;
+  return `
+  <div class="item-line" style="${done?'opacity:.5;background:#e8f5e9':''}">
+    <strong>${done?"✅":"⏳"} ${qty} × ${escapeHTML(name)}</strong>
+    ${options.length?`<div class="item-options">${options.map(escapeHTML).join(" · ")}</div>`:""}
+    <button class="btn-green" style="width:100%;margin-top:6px" onclick="toggleItemDone('${orderId}',${index})">
+      ${done?"↩️ Undo":"✅ Done Item"}
+    </button>
+  </div>`;
+}
+async function checkAutoComplete(orderId) {
+  const snap = await db.collection("orders").doc(orderId).get();
+  if (!snap.exists) return;
+  const order = snap.data();
+  if (!Array.isArray(order.items)) return;
+  const allDone = order.items.every(item => item.itemDone === true);
+  if (allDone && !isCompleted(order)) {
+    await db.collection("orders").doc(orderId).update({
+      status: "Selesai (Completed)",
+      completedAt: Date.now()
+    });
+    showToast("✅ Semua item siap - Sale masuk");
+  }
+}
+async function toggleItemDone(orderId, index) {
+  const order = findOrder(orderId);
+  if (!order || !Array.isArray(order.items)) {
+    showToast("Order tidak jumpa", "error");
+    return;
+  }
+  const updatedItems = [...order.items];
+  updatedItems[index] = {
+    ...updatedItems[index],
+    itemDone: updatedItems[index].itemDone !== true
+  };
+  try {
+    await db.collection("orders").doc(orderId).update({ items: updatedItems });
+    await checkAutoComplete(orderId);
+    showToast(updatedItems[index].itemDone ? "✅ Item siap" : "↩️ Item dibuka semula");
+  } catch (err) {
+    console.error(err);
+    showToast("Gagal update item", "error");
+  }
+}
+async function completeAllItems(orderId) {
+  const order = findOrder(orderId);
+  if (!order || !Array.isArray(order.items)) return;
+  if (!confirm("Tandakan semua item order ini siap?")) return;
+  const updatedItems = order.items.map(item => ({ ...item, itemDone: true }));
+  try {
+    await db.collection("orders").doc(orderId).update({ items: updatedItems });
+    await checkAutoComplete(orderId);
+    showToast("✅ Semua item selesai");
+  } catch (err) {
+    showToast("Gagal update semua item", "error");
+    console.error(err);
+  }
+}
+function buildItemsBlock(order) {
+  if (!Array.isArray(order?.items)) return `<div class="item-line">No item details</div>`;
+  return order.items.map((item, index) => buildItemLine(item, order.firebaseId, index)).join("");
+}
+
+function renderLiveOrders(){
+  const container=document.getElementById("orders-container");
+  if(!container) return;
+  const live=allOrders.filter(o=>{
+    const s=getOrderStatus(o).toLowerCase();
+    return s==="pending"||s==="accepted";
+  });
+  if(!live.length){ container.innerHTML=`<p class="empty-text">Tiada live order sekarang.</p>`; return; }
+  container.innerHTML=live.map(buildLiveOrderCard).join("");
+}
+
+function buildLiveOrderCard(order){
+  const status=getOrderStatus(order);
+  const isPending=status.toLowerCase()==="pending";
+  const customer=order.customerName||order.name||order.customer||"Customer";
+  const table=order.table||order.tableNumber||"-";
+  const paymentMethod=getPaymentType(order);
+  const date=getOrderDate(order);
+  const diningMode=order.diningMode||"Dine In";
+  const diningBadge=diningMode==="Takeaway"
+    ? '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:bold">🥡 Takeaway</span>'
+    : '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:bold">🍽️ Dine In</span>';
+  return `<div class="order-card">
+    <div class="order-header">
+      <div>
+        <div class="order-title">🧾 ${escapeHTML(order.orderNumber||order.orderId||order.firebaseId)}</div>
+        <div class="order-info">👤 ${escapeHTML(customer)}</div>
+        <div class="order-info">🪑 Table: ${escapeHTML(String(table))}</div>
+        <div class="order-info">${diningBadge}</div>
+      </div>
+      <div class="order-time">
+        <span class="status ${isPending?"status-pending":"status-accepted"}">${escapeHTML(status)}</span>
+        <br><br>${formatDateTime(date)}
+      </div>
+    </div>
+    ${buildItemsBlock(order)}
+    <div class="order-total">RM${getOrderTotal(order).toFixed(2)} · ${escapeHTML(paymentMethod)}</div>
+    <div class="order-buttons">
+      ${isPending
+        ? `<button class="btn-blue" onclick="acceptOrder('${escapeHTML(order.firebaseId)}')">✅ Accept Order</button>`
+        : `<button class="btn-green" onclick="completeOrder('${escapeHTML(order.firebaseId)}')">✔️ Mark Completed</button>`}
+      <button class="btn-green" onclick="completeAllItems('${escapeHTML(order.firebaseId)}')">✅ All Item Done</button>
+      <button class="btn-pdf" onclick="downloadOrderReceiptPDF('${escapeHTML(order.firebaseId)}')">PDF</button>
+    </div>
+  </div>`;
+}
+
+async function acceptOrder(firebaseId){
+  try{
+    await db.collection("orders").doc(firebaseId).update({status:"Accepted",acceptedAt:Date.now()});
+    showToast("✅ Order accepted");
+  }catch(err){ showToast("Gagal accept order","error"); }
+}
+
+async function completeOrder(firebaseId) {
+  const order = findOrder(firebaseId);
+  if (!order) return;
+  const unfinished = order.items?.some(i => i.itemDone !== true);
+  if (unfinished) {
+    if (!confirm("Masih ada item belum Done.\nComplete semua juga?")) return;
+  }
+  const updatedItems = (order.items || []).map(item => ({
+    ...item,
+    itemDone: true,
+    doneAt: item.doneAt || Date.now()
+  }));
+  try {
+    await db.collection("orders").doc(firebaseId).update({
+      items: updatedItems,
+      status: "Selesai (Completed)",
+      completedAt: Date.now()
+    });
+    showToast("✅ Order completed");
+  } catch (err) {
+    showToast("Gagal complete order", "error");
+  }
+}
+
+function findOrder(id) {
+  return allOrders.find(o => o.firebaseId === id);
+}
+
+function calculateTodaySales(){
+  const orders = allCompletedOrders.filter(o => isToday(getOrderDate(o)));
+  let total = 0, cash = 0, qr = 0, card = 0;
+
+  orders.forEach(o => {
+    const amt = getOrderTotal(o);
+    total += amt;
+    const m = getPaymentType(o);
+    if (m === "Cash") cash += amt;
+    else if (m === "QR") qr += amt;
+    else if (m === "Card") card += amt;
+  });
+
+  const t = document.getElementById("total-sales");
+  if (t) t.textContent = total.toFixed(2);
+  const c = document.getElementById("cash-sales");
+  if (c) c.textContent = cash.toFixed(2);
+  const q = document.getElementById("qr-sales");
+  if (q) q.textContent = qr.toFixed(2);
+  const cd = document.getElementById("card-sales");
+  if (cd) cd.textContent = card.toFixed(2);
+
+  const d = document.getElementById("sales-date");
+  if (d) d.textContent = new Date().toLocaleDateString("en-MY", {
+    weekday: "long", day: "2-digit", month: "long", year: "numeric"
+  });
+
+  const dashSales = document.getElementById("dashboard-sales");
+  const dashOrders = document.getElementById("dashboard-orders");
+  const dashAverage = document.getElementById("dashboard-average");
+  const dashPayment = document.getElementById("dashboard-payment");
+
+  if (dashSales) dashSales.textContent = total.toFixed(2);
+  if (dashOrders) dashOrders.textContent = orders.length;
+  if (dashAverage) dashAverage.textContent = orders.length ? (total / orders.length).toFixed(2) : "0.00";
+
+  const payments = { Cash: cash, QR: qr, Card: card };
+  const topPayment = Object.keys(payments).sort((a, b) => payments[b] - payments[a])[0];
+  if (dashPayment) dashPayment.textContent = total > 0 ? topPayment : "-";
+}
+
+function renderSalesHistory(){
+  const container=document.getElementById("sales-history-container");
+  if(!container) return;
+  const history=[...allCompletedOrders].sort(
+    (a,b)=>(getOrderDate(b)?.getTime()||0)-(getOrderDate(a)?.getTime()||0)
+  );
+  if(!history.length){ container.innerHTML=`<p class="empty-text">Tiada completed order.</p>`; return; }
+  container.innerHTML=history.map(order=>{
+    const date=getOrderDate(order);
+    const diningMode=order.diningMode||"Dine In";
+    const diningBadge=diningMode==="Takeaway"
+      ? '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:bold">🥡 Takeaway</span>'
+      : '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:bold">🍽️ Dine In</span>';
+    return `<div class="history-card">
+      <div class="history-header">
+        <span>🧾 ${escapeHTML(order.orderNumber||order.orderId||order.firebaseId)}</span>
+        <span>${formatDateTime(date)}</span>
+      </div>
+      <div>👤 ${escapeHTML(order.customerName||order.name||"Customer")}</div>
+      <div>🪑 Table: ${escapeHTML(String(order.table||order.tableNumber||"-"))}</div>
+      <div>${diningBadge}</div>
+      <div>💳 ${escapeHTML(getPaymentType(order))}</div>
+      <div>${buildItemsBlock(order)}</div>
+      <div class="history-total">RM${getOrderTotal(order).toFixed(2)}</div>
+      <div class="history-actions">
+        <button class="btn-pdf" onclick="downloadOrderReceiptPDF('${escapeHTML(order.firebaseId)}')">📄 Receipt PDF</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function switchChart(mode){
+  currentChartMode=mode;
+  document.querySelectorAll(".chart-toggle button").forEach(b=>b.classList.remove("active"));
+  const b=document.getElementById("btn-"+mode); if(b) b.classList.add("active");
+  renderChart();
+}
+
+function renderChart(){
+  const canvas=document.getElementById("sales-chart"); if(!canvas) return;
+  let labels=[],values=[],total=0,labelText="";
+  if(currentChartMode==="daily"){
+    labelText="Total 7 hari terakhir";
+    for(let i=6;i>=0;i--){
+      const date=new Date(); date.setHours(0,0,0,0); date.setDate(date.getDate()-i);
+      labels.push(date.toLocaleDateString("en-MY",{day:"2-digit",month:"2-digit"}));
+      let amt=0;
+      allCompletedOrders.forEach(o=>{
+        const d=getOrderDate(o); if(!d) return;
+        if(d.getFullYear()===date.getFullYear()&&d.getMonth()===date.getMonth()&&d.getDate()===date.getDate()) amt+=getOrderTotal(o);
+      });
+      values.push(Number(amt.toFixed(2))); total+=amt;
+    }
+  }
+  if(currentChartMode==="monthly"){
+    labelText="Total 12 bulan terakhir";
+    for(let i=11;i>=0;i--){
+      const date=new Date(); date.setDate(1); date.setMonth(date.getMonth()-i);
+      labels.push(date.toLocaleDateString("en-MY",{month:"short",year:"numeric"}));
+      let amt=0;
+      allCompletedOrders.forEach(o=>{
+        const d=getOrderDate(o); if(!d) return;
+        if(d.getFullYear()===date.getFullYear()&&d.getMonth()===date.getMonth()) amt+=getOrderTotal(o);
+      });
+      values.push(Number(amt.toFixed(2))); total+=amt;
+    }
+  }
+  if(currentChartMode==="hourly"){
+    labelText="Today's sales by hour";
+    labels=Array.from({length:24},(_,i)=>`${String(i).padStart(2,"0")}:00`);
+    values=Array(24).fill(0);
+    allCompletedOrders.forEach(o=>{
+      const d=getOrderDate(o); if(!d||!isToday(d)) return;
+      values[d.getHours()]+=getOrderTotal(o);
+    });
+    total=values.reduce((a,b)=>a+b,0);
+  }
+  document.getElementById("chart-total-value").textContent=total.toFixed(2);
+  document.getElementById("chart-total-label").textContent=labelText;
+  if(salesChart) salesChart.destroy();
+  const barColor=getComputedStyle(document.documentElement).getPropertyValue("--brown2").trim() || "#5d4037";
+  const borderColor=getComputedStyle(document.documentElement).getPropertyValue("--brown").trim() || "#3e2723";
+  salesChart=new Chart(canvas.getContext("2d"),{
+    type:"bar",
+    data:{labels,datasets:[{label:"Sales RM",data:values,borderWidth:1,backgroundColor:barColor,borderColor:borderColor,borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}},plugins:{legend:{display:false}}}
+  });
+}
+
+/* ============ PDF HELPERS ============ */
+function downloadPDFFile(doc,filename){ doc.save(filename); }
+
+function drawLetterhead(doc, title, subtitle){
+  let y = 18;
+  doc.setDrawColor(62, 39, 35);
+  doc.setLineWidth(0.8);
+  doc.rect(10, 10, 190, 20);
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(18);
+  doc.setTextColor(62, 39, 35);
+  doc.text(SHOP_NAME, 15, y);
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(8);
+  doc.setTextColor(120, 120, 120);
+  doc.text(SHOP_TAGLINE, 15, y+5);
+  doc.setFontSize(8);
+  doc.text(SHOP_ADDRESS, 195, y, {align:"right"});
+  doc.text(SHOP_EMAIL, 195, y+4, {align:"right"});
+  doc.text("Printed: " + new Date().toLocaleString("en-MY"), 195, y+8, {align:"right"});
+  y = 38;
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(14);
+  doc.setTextColor(0,0,0);
+  doc.text(title, 105, y, {align:"center"});
+  y += 6;
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(10);
+  doc.setTextColor(80,80,80);
+  doc.text(subtitle, 105, y, {align:"center"});
+  y += 10;
+  doc.setDrawColor(200,200,200);
+  doc.setLineWidth(0.3);
+  doc.line(15, y, 195, y);
+  y += 6;
+  return y;
+}
+
+function drawFooter(doc){
+  const pages = doc.internal.getNumberOfPages();
+  for(let i=1;i<=pages;i++){
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(150,150,150);
+    doc.text(`${SHOP_NAME} · Generated on ${new Date().toLocaleString("en-MY")}`, 15, doc.internal.pageSize.getHeight()-10);
+    doc.text(`Page ${i} of ${pages}`, 195, doc.internal.pageSize.getHeight()-10, {align:"right"});
+  }
+}
+
+function downloadOrderReceiptPDF(firebaseId){
+  const order=findOrder(firebaseId);
+  if(!order){ showToast("Order tidak dijumpai","error"); return; }
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  let y = drawLetterhead(doc, "ORDER RECEIPT", "Official Customer Receipt");
+  doc.setTextColor(0,0,0);
+  doc.setFontSize(10);
+  doc.setFont("helvetica","normal");
+  const orderNumber=order.orderNumber||order.orderId||order.firebaseId;
+  const diningMode=order.diningMode||"Dine In";
+  doc.setFillColor(247, 245, 240);
+  doc.rect(15, y, 180, 26, "F");
+  y += 6;
+  doc.setFont("helvetica","bold"); doc.text(`Order No:`, 20, y);
+  doc.setFont("helvetica","normal"); doc.text(`${orderNumber}`, 50, y);
+  doc.setFont("helvetica","bold"); doc.text(`Date:`, 130, y);
+  doc.setFont("helvetica","normal"); doc.text(`${formatDateTime(getOrderDate(order))}`, 150, y);
+  y += 6;
+  doc.setFont("helvetica","bold"); doc.text(`Customer:`, 20, y);
+  doc.setFont("helvetica","normal"); doc.text(`${order.customerName||order.name||"Customer"}`, 50, y);
+  doc.setFont("helvetica","bold"); doc.text(`Table:`, 130, y);
+  doc.setFont("helvetica","normal"); doc.text(`${order.table||order.tableNumber||"-"}`, 150, y);
+  y += 6;
+  doc.setFont("helvetica","bold"); doc.text(`Type:`, 20, y);
+  doc.setFont("helvetica","normal"); doc.text(`${diningMode}`, 50, y);
+  doc.setFont("helvetica","bold"); doc.text(`Payment:`, 130, y);
+  doc.setFont("helvetica","normal"); doc.text(`${getPaymentType(order)}`, 150, y);
+  y += 14;
+  doc.setFillColor(62, 39, 35);
+  doc.rect(15, y, 180, 8, "F");
+  doc.setTextColor(255,255,255);
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(9);
+  doc.text("ITEM", 20, y+5.5);
+  doc.text("QTY", 130, y+5.5, {align:"right"});
+  doc.text("PRICE (RM)", 160, y+5.5, {align:"right"});
+  doc.text("TOTAL (RM)", 192, y+5.5, {align:"right"});
+  y += 10;
+  doc.setTextColor(0,0,0);
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(9);
+  const items = order.items || [];
+  let subtotalCalc = 0;
+  items.forEach((item) => {
+    if(y > 260){ doc.addPage(); y = 20; }
+    const qty = Number(item.quantity ?? item.qty ?? 1);
+    const name = item.name || item.productName || "Item";
+    const price = Number(item.unitPrice ?? item.price ?? 0);
+    const lineTotal = price * qty;
+    subtotalCalc += lineTotal;
+    const nameLines = doc.splitTextToSize(name, 105);
+    doc.text(nameLines, 20, y);
+    let yAfterName = y + (nameLines.length * 4);
+    doc.text(String(qty), 130, y, {align:"right"});
+    doc.text(price.toFixed(2), 160, y, {align:"right"});
+    doc.text(lineTotal.toFixed(2), 192, y, {align:"right"});
+    const opts = [];
+    if(item.comboContents && item.comboContents.length) opts.push("Combo: " + item.comboContents.join(", "));
+    if(item.variant && item.variant.name) opts.push((item.variantTitle||"Option") + ": " + item.variant.name);
+    if(item.options){
+      if(item.options.sugar && item.options.sugar.name) opts.push("Sugar: " + item.options.sugar.name);
+      if(item.options.milk && item.options.milk.name) opts.push("Milk: " + item.options.milk.name);
+      if(item.options.temperature && item.options.temperature.name) opts.push("Temp: " + item.options.temperature.name);
+      if(item.options.shot && item.options.shot.name && item.options.shot.name !== "No Extra Shot") opts.push("Extra Shot");
+      if(item.options.syrup && item.options.syrup.name && item.options.syrup.name !== "No Extra Syrup") opts.push("Extra Syrup");
+    }
+    if(opts.length){
+      doc.setFontSize(7.5);
+      doc.setTextColor(120,120,120);
+      const optLines = doc.splitTextToSize(opts.join(" · "), 105);
+      doc.text(optLines, 22, yAfterName + 2);
+      yAfterName += (optLines.length * 3.5);
+      doc.setFontSize(9);
+      doc.setTextColor(0,0,0);
+    }
+    y = yAfterName + 6;
+  });
+  doc.setDrawColor(200,200,200);
+  doc.line(15, y, 195, y);
+  y += 6;
+  const finalTotal = getOrderTotal(order);
+  const subtotal = Number(order.subtotal || subtotalCalc || finalTotal);
+  const discount = Number(order.discountAmount || 0);
+  const discountPct = Number(order.discountPercent || 0);
+  const serviceCharge = Number(order.serviceCharge || 0);
+  const sst = Number(order.sst || 0);
+  doc.setFontSize(10);
+  doc.setFont("helvetica","normal");
+  doc.text("Subtotal:", 130, y);
+  doc.text(`RM ${subtotal.toFixed(2)}`, 192, y, {align:"right"});
+  y += 6;
+  if(discount > 0){
+    doc.setTextColor(192, 57, 43);
+    doc.text(`Discount (${discountPct}%):`, 130, y);
+    doc.text(`- RM ${discount.toFixed(2)}`, 192, y, {align:"right"});
+    doc.setTextColor(0,0,0);
+    y += 6;
+  }
+  if(serviceCharge > 0){
+    doc.text("Service Charge:", 130, y);
+    doc.text(`RM ${serviceCharge.toFixed(2)}`, 192, y, {align:"right"});
+    y += 6;
+  }
+  if(sst > 0){
+    doc.text("SST:", 130, y);
+    doc.text(`RM ${sst.toFixed(2)}`, 192, y, {align:"right"});
+    y += 6;
+  }
+  doc.setFillColor(62, 39, 35);
+  doc.rect(125, y, 70, 10, "F");
+  doc.setTextColor(255,255,255);
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(11);
+  doc.text("TOTAL:", 130, y+6.5);
+  doc.text(`RM ${finalTotal.toFixed(2)}`, 192, y+6.5, {align:"right"});
+  y += 16;
+  if(order.paymentMethod === "Cash" && Number(order.cashGiven) > 0){
+    doc.setTextColor(0,0,0);
+    doc.setFont("helvetica","normal");
+    doc.setFontSize(9);
+    doc.text(`Cash Given: RM ${Number(order.cashGiven).toFixed(2)}`, 15, y);
+    doc.text(`Balance Returned: RM ${Number(order.cashBalance||0).toFixed(2)}`, 15, y+5);
+    y += 12;
+  }
+  if(order.specialRequest){
+    doc.setFontSize(9);
+    doc.setFont("helvetica","italic");
+    doc.setTextColor(150,150,150);
+    doc.text("Special Request: " + order.specialRequest, 15, y);
+    y += 10;
+  }
+  doc.setFontSize(10);
+  doc.setFont("helvetica","italic");
+  doc.setTextColor(62, 39, 35);
+  doc.text("Thank you for choosing NIKOPI ☕", 105, y+6, {align:"center"});
+  drawFooter(doc);
+  downloadPDFFile(doc,`NIKOPI-Receipt-${orderNumber}.pdf`);
+}
+
+/* ============ DAILY SALES REPORT ============ */
+function downloadTodaySalesPDF(){
+  const orders=allCompletedOrders
+    .filter(o=>isToday(getOrderDate(o)))
+    .sort((a,b)=>(getOrderDate(a)?.getTime()||0)-(getOrderDate(b)?.getTime()||0));
+  
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  const today=new Date();
+  
+  let y = drawLetterhead(doc, "DAILY SALES REPORT", `Business Date: ${formatDateLong(today)}`);
+  doc.setTextColor(0,0,0);
+  
+  /* Kira statistik */
+  let total=0,cash=0,qr=0,card=0;
+  const orderCount=orders.length;
+  orders.forEach(o=>{
+    const amt=getOrderTotal(o); total+=amt;
+    const m=getPaymentType(o);
+    if(m==="Cash") cash+=amt;
+    else if(m==="QR") qr+=amt;
+    else if(m==="Card") card+=amt;
+  });
+  const avgOrder = orderCount > 0 ? total/orderCount : 0;
+  
+  /* SECTION 1: EXECUTIVE SUMMARY */
+  doc.setFillColor(247, 245, 240);
+  doc.rect(15, y, 180, 40, "F");
+  y += 7;
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(11);
+  doc.text("EXECUTIVE SUMMARY", 20, y);
+  y += 8;
+  doc.setFontSize(10);
+  doc.setFont("helvetica","normal");
+  doc.text("Total Orders:", 20, y);
+  doc.setFont("helvetica","bold");
+  doc.text(`${orderCount}`, 75, y);
+  doc.setFont("helvetica","normal");
+  doc.text("Total Sales:", 110, y);
+  doc.setFont("helvetica","bold");
+  doc.setTextColor(46, 125, 50);
+  doc.text(`RM ${total.toFixed(2)}`, 165, y);
+  doc.setTextColor(0,0,0);
+  y += 7;
+  doc.setFont("helvetica","normal");
+  doc.text("Average per Order:", 20, y);
+  doc.setFont("helvetica","bold");
+  doc.text(`RM ${avgOrder.toFixed(2)}`, 75, y);
+  y += 11;
+  
+  /* SECTION 2: PAYMENT BREAKDOWN */
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(10);
+  doc.text("PAYMENT BREAKDOWN", 20, y);
+  y += 7;
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(9);
+  const cashPct = total>0 ? ((cash/total)*100).toFixed(1) : "0.0";
+  const qrPct = total>0 ? ((qr/total)*100).toFixed(1) : "0.0";
+  const cardPct = total>0 ? ((card/total)*100).toFixed(1) : "0.0";
+  doc.text("Cash:", 20, y); doc.text(`RM ${cash.toFixed(2)}`, 70, y); doc.text(`(${cashPct}%)`, 120, y); y+=5.5;
+  doc.text("QR / DuitNow:", 20, y); doc.text(`RM ${qr.toFixed(2)}`, 70, y); doc.text(`(${qrPct}%)`, 120, y); y+=5.5;
+  doc.text("Card:", 20, y); doc.text(`RM ${card.toFixed(2)}`, 70, y); doc.text(`(${cardPct}%)`, 120, y); y+=12;
+  
+  /* SECTION 3: HOURLY BREAKDOWN */
+  const hourly = Array(24).fill(0);
+  const orderCountHourly = Array(24).fill(0);
+  orders.forEach(o => {
+    const d = getOrderDate(o);
+    if(d){
+      hourly[d.getHours()] += getOrderTotal(o);
+      orderCountHourly[d.getHours()]++;
+    }
+  });
+  const hasHourly = hourly.some(v => v > 0);
+  
+  if(hasHourly){
+    if(y > 210){ doc.addPage(); y = 20; }
+    doc.setFillColor(25, 118, 210);
+    doc.rect(15, y, 180, 8, "F");
+    doc.setTextColor(255,255,255);
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(9);
+    doc.text("HOURLY SALES BREAKDOWN", 20, y+5.5);
+    y += 11;
+    doc.setTextColor(0,0,0);
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(9);
+    doc.text("TIME", 20, y);
+    doc.text("ORDERS", 100, y, {align:"right"});
+    doc.text("SALES (RM)", 192, y, {align:"right"});
+    y += 5;
+    doc.setDrawColor(200,200,200);
+    doc.line(15, y, 195, y);
+    y += 4;
+    doc.setFont("helvetica","normal");
+    doc.setFontSize(9);
+    let peakHour = 0, peakVal = 0;
+    hourly.forEach((amt, h) => { if(amt > peakVal){ peakVal = amt; peakHour = h; } });
+    hourly.forEach((amt, h) => {
+      if(amt === 0) return;
+      if(y > 265){ doc.addPage(); y = 20; }
+      const hourLabel = `${String(h).padStart(2,"0")}:00 - ${String(h).padStart(2,"0")}:59`;
+      const isPeak = h === peakHour;
+      if(isPeak){
+        doc.setFillColor(255, 247, 237);
+        doc.rect(15, y-3.5, 180, 6, "F");
+        doc.setFont("helvetica","bold");
+        doc.setTextColor(194, 65, 12);
+      }
+      doc.text(hourLabel + (isPeak ? " (PEAK)" : ""), 20, y);
+      doc.text(String(orderCountHourly[h]), 100, y, {align:"right"});
+      doc.text(amt.toFixed(2), 192, y, {align:"right"});
+      if(isPeak){ doc.setFont("helvetica","normal"); doc.setTextColor(0,0,0); }
+      y += 5;
+    });
+    y += 6;
+  }
+  
+  /* SECTION 4: TOP 10 ITEMS */
+  const itemCounts = {};
+  orders.forEach(o => {
+    (o.items || []).forEach(item => {
+      const name = item.name || "Item";
+      const qty = Number(item.quantity || item.qty || 1);
+      const revenue = Number(item.unitPrice ?? item.price ?? 0) * qty;
+      if(!itemCounts[name]) itemCounts[name] = { qty: 0, revenue: 0 };
+      itemCounts[name].qty += qty;
+      itemCounts[name].revenue += revenue;
+    });
+  });
+  const topItems = Object.entries(itemCounts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,10);
+  
+  if(topItems.length){
+    if(y > 220){ doc.addPage(); y = 20; }
+    doc.setFillColor(62, 39, 35);
+    doc.rect(15, y, 180, 8, "F");
+    doc.setTextColor(255,255,255);
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(9);
+    doc.text("TOP 10 SELLING ITEMS", 20, y+5.5);
+    y += 11;
+    doc.setTextColor(0,0,0);
+    doc.setFontSize(9);
+    doc.text("#", 20, y);
+    doc.text("ITEM", 30, y);
+    doc.text("QTY", 145, y, {align:"right"});
+    doc.text("REVENUE (RM)", 192, y, {align:"right"});
+    y += 5;
+    doc.setDrawColor(200,200,200);
+    doc.line(15, y, 195, y);
+    y += 4;
+    doc.setFont("helvetica","normal");
+    topItems.forEach((entry, i) => {
+      if(y > 265){ doc.addPage(); y = 20; }
+      const [name, data] = entry;
+      doc.text(`${i+1}`, 20, y);
+      const nameLines = doc.splitTextToSize(name, 110);
+      doc.text(nameLines, 30, y);
+      doc.text(String(data.qty), 145, y, {align:"right"});
+      doc.text(data.revenue.toFixed(2), 192, y, {align:"right"});
+      y += (nameLines.length * 4) + 1.5;
+    });
+    y += 8;
+  }
+  
+  /* SECTION 5: SALES PER STAFF */
+  const staffSales = {};
+  orders.forEach(o => {
+    const cashier = o.cashierName || o.staffName || o.cashier || null;
+    if(!cashier) return;
+    if(!staffSales[cashier]) staffSales[cashier] = { orders: 0, sales: 0 };
+    staffSales[cashier].orders += 1;
+    staffSales[cashier].sales += getOrderTotal(o);
+  });
+  const staffSalesArr = Object.entries(staffSales).sort((a,b)=>b[1].sales-a[1].sales);
+  
+  if(staffSalesArr.length > 0){
+    if(y > 220){ doc.addPage(); y = 20; }
+    doc.setFillColor(25, 118, 210);
+    doc.rect(15, y, 180, 8, "F");
+    doc.setTextColor(255,255,255);
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(9);
+    doc.text("SALES BY STAFF", 20, y+5.5);
+    y += 11;
+    doc.setTextColor(0,0,0);
+    doc.setFontSize(9);
+    doc.text("STAFF NAME", 20, y);
+    doc.text("ORDERS", 130, y, {align:"right"});
+    doc.text("SALES (RM)", 192, y, {align:"right"});
+    y += 5;
+    doc.setDrawColor(200,200,200);
+    doc.line(15, y, 195, y);
+    y += 4;
+    doc.setFont("helvetica","normal");
+    let staffTotalOrders = 0, staffTotalSales = 0;
+    staffSalesArr.forEach(([name, data]) => {
+      if(y > 265){ doc.addPage(); y = 20; }
+      doc.text(name, 20, y);
+      doc.text(String(data.orders), 130, y, {align:"right"});
+      doc.text(data.sales.toFixed(2), 192, y, {align:"right"});
+      staffTotalOrders += data.orders;
+      staffTotalSales += data.sales;
+      y += 5;
+    });
+    doc.setDrawColor(62,39,35);
+    doc.line(15, y, 195, y);
+    y += 4;
+    doc.setFont("helvetica","bold");
+    doc.text("TOTAL", 20, y);
+    doc.text(String(staffTotalOrders), 130, y, {align:"right"});
+    doc.text(staffTotalSales.toFixed(2), 192, y, {align:"right"});
+    y += 10;
+  }
+  
+  /* SECTION 6: ALL TRANSACTIONS */
+  if(y > 200){ doc.addPage(); y = 20; }
+  doc.setFillColor(62, 39, 35);
+  doc.rect(15, y, 180, 8, "F");
+  doc.setTextColor(255,255,255);
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(9);
+  doc.text("ALL TRANSACTIONS", 20, y+5.5);
+  y += 11;
+  doc.setTextColor(0,0,0);
+  doc.setFontSize(8.5);
+  doc.text("TIME", 20, y);
+  doc.text("ORDER NO", 42, y);
+  doc.text("CUSTOMER", 78, y);
+  doc.text("STAFF", 120, y);
+  doc.text("TYPE", 148, y);
+  doc.text("PAYMENT", 165, y);
+  doc.text("AMOUNT (RM)", 192, y, {align:"right"});
+  y += 5;
+  doc.setDrawColor(200,200,200);
+  doc.line(15, y, 195, y);
+  y += 4;
+  doc.setFont("helvetica","normal");
+  if(orders.length === 0){
+    doc.setTextColor(150,150,150);
+    doc.text("No transactions today.", 105, y+2, {align:"center"});
+    doc.setTextColor(0,0,0);
+    y += 8;
+  } else {
+    orders.forEach(o => {
+      if(y > 270){
+        doc.addPage();
+        y = 20;
+        doc.setFont("helvetica","bold");
+        doc.setFontSize(8.5);
+        doc.setFillColor(62, 39, 35);
+        doc.rect(15, y, 180, 7, "F");
+        doc.setTextColor(255,255,255);
+        doc.text("TIME", 20, y+4.5);
+        doc.text("ORDER NO", 42, y+4.5);
+        doc.text("CUSTOMER", 78, y+4.5);
+        doc.text("STAFF", 120, y+4.5);
+        doc.text("TYPE", 148, y+4.5);
+        doc.text("PAYMENT", 165, y+4.5);
+        doc.text("AMOUNT (RM)", 192, y+4.5, {align:"right"});
+        y += 10;
+        doc.setTextColor(0,0,0);
+        doc.setFont("helvetica","normal");
+        doc.setFontSize(8.5);
+      }
+      const date = getOrderDate(o);
+      const time = date ? date.toLocaleTimeString("en-MY",{hour:"2-digit",minute:"2-digit"}) : "-";
+      const num = String(o.orderNumber || o.orderId || o.firebaseId).slice(0,10);
+      const cust = String(o.customerName || "Customer").slice(0, 15);
+      const cashier = String(o.cashierName || o.staffName || "—").slice(0, 12);
+      const type = (o.diningMode === "Takeaway") ? "Takeaway" : "Dine In";
+      const pay = getPaymentType(o);
+      doc.text(time, 20, y);
+      doc.text(num, 42, y);
+      doc.text(cust, 78, y);
+      doc.text(cashier, 120, y);
+      doc.text(type, 148, y);
+      doc.text(pay, 165, y);
+      doc.text(getOrderTotal(o).toFixed(2), 192, y, {align:"right"});
+      y += 4.5;
+    });
+  }
+  
+  if(y > 260){ doc.addPage(); y = 20; }
+  y += 3;
+  doc.setDrawColor(62,39,35);
+  doc.setLineWidth(0.5);
+  doc.line(15, y, 195, y);
+  doc.setFillColor(247, 245, 240);
+  doc.rect(110, y+3, 85, 11, "F");
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(11);
+  doc.text("GRAND TOTAL:", 115, y+10);
+  doc.setTextColor(46, 125, 50);
+  doc.text(`RM ${total.toFixed(2)}`, 192, y+10, {align:"right"});
+  doc.setTextColor(0,0,0);
+  y += 18;
+  
+  /* SECTION 7: STAFF ATTENDANCE */
+  const staffToday = getStaffAttendanceToday();
+  
+  if(y > 200){ doc.addPage(); y = 20; }
+  doc.setFillColor(46, 125, 50);
+  doc.rect(15, y, 180, 8, "F");
+  doc.setTextColor(255,255,255);
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(9);
+  doc.text("STAFF ATTENDANCE — CLOCK IN / CLOCK OUT", 20, y+5.5);
+  y += 11;
+  doc.setTextColor(0,0,0);
+  
+  if(staffToday.length === 0){
+    doc.setFont("helvetica","italic");
+    doc.setFontSize(9);
+    doc.setTextColor(150,150,150);
+    doc.text("No staff clocked in today.", 105, y+2, {align:"center"});
+    doc.setTextColor(0,0,0);
+    y += 8;
+  } else {
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(9);
+    doc.text("STAFF NAME", 20, y);
+    doc.text("CLOCK IN", 110, y, {align:"right"});
+    doc.text("CLOCK OUT", 152, y, {align:"right"});
+    doc.text("DURATION", 192, y, {align:"right"});
+    y += 5;
+    doc.setDrawColor(200,200,200);
+    doc.line(15, y, 195, y);
+    y += 4;
+    let grandMinutes = 0;
+    staffToday.forEach(staff => {
+      if(y > 260){
+        doc.addPage();
+        y = 20;
+        doc.setFont("helvetica","bold");
+        doc.setFontSize(9);
+        doc.setFillColor(46, 125, 50);
+        doc.rect(15, y, 180, 8, "F");
+        doc.setTextColor(255,255,255);
+        doc.text("STAFF ATTENDANCE (cont.)", 20, y+5.5);
+        y += 11;
+        doc.setTextColor(0,0,0);
+        doc.text("STAFF NAME", 20, y);
+        doc.text("CLOCK IN", 110, y, {align:"right"});
+        doc.text("CLOCK OUT", 152, y, {align:"right"});
+        doc.text("DURATION", 192, y, {align:"right"});
+        y += 5;
+        doc.setDrawColor(200,200,200);
+        doc.line(15, y, 195, y);
+        y += 4;
+        doc.setFont("helvetica","normal");
+      }
+      doc.setFont("helvetica","bold");
+      doc.setFontSize(9);
+      doc.text(staff.staffName, 20, y);
+      y += 5;
+      doc.setFont("helvetica","normal");
+      doc.setFontSize(8.5);
+      if(staff.sessions.length === 1){
+        const s = staff.sessions[0];
+        const inTime = formatTimeShort(s.clockIn);
+        const outTime = s.isActive ? "Active" : formatTimeShort(s.clockOut);
+        doc.text(inTime, 110, y-5, {align:"right"});
+        if(s.isActive){
+          doc.setTextColor(217, 119, 6);
+          doc.setFont("helvetica","bold");
+          doc.text("Still working", 152, y-5, {align:"right"});
+          doc.setTextColor(0,0,0);
+          doc.setFont("helvetica","normal");
+        } else {
+          doc.text(outTime, 152, y-5, {align:"right"});
+        }
+        doc.setFont("helvetica","bold");
+        doc.text(staff.totalDisplay, 192, y-5, {align:"right"});
+        doc.setFont("helvetica","normal");
+        grandMinutes += staff.totalMinutes;
+      } else {
+        staff.sessions.forEach((s, idx) => {
+          const inTime = formatTimeShort(s.clockIn);
+          const outTime = s.isActive ? "Active" : formatTimeShort(s.clockOut);
+          const durText = formatDurationHM(s.minutes);
+          doc.setTextColor(100,100,100);
+          doc.setFontSize(8);
+          doc.text(`Session ${idx+1}`, 25, y);
+          doc.setTextColor(0,0,0);
+          doc.setFontSize(8.5);
+          doc.text(inTime, 110, y, {align:"right"});
+          if(s.isActive){
+            doc.setTextColor(217, 119, 6);
+            doc.setFont("helvetica","bold");
+            doc.text("Still working", 152, y, {align:"right"});
+            doc.setTextColor(0,0,0);
+            doc.setFont("helvetica","normal");
+          } else {
+            doc.text(outTime, 152, y, {align:"right"});
+          }
+          doc.text(durText, 192, y, {align:"right"});
+          y += 4.5;
+          grandMinutes += s.minutes;
+        });
+        doc.setFont("helvetica","italic");
+        doc.setFontSize(8.5);
+        doc.setTextColor(60,60,60);
+        doc.text("Total:", 25, y);
+        doc.setFont("helvetica","bold");
+        doc.text(staff.totalDisplay, 192, y, {align:"right"});
+        doc.setTextColor(0,0,0);
+        doc.setFont("helvetica","normal");
+        y += 2;
+      }
+      doc.setDrawColor(230,230,230);
+      doc.setLineWidth(0.2);
+      doc.line(15, y, 195, y);
+      y += 5;
+    });
+    doc.setDrawColor(46, 125, 50);
+    doc.setLineWidth(0.5);
+    doc.line(15, y, 195, y);
+    y += 3;
+    doc.setFillColor(240, 249, 241);
+    doc.rect(15, y, 180, 12, "F");
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(10);
+    doc.setTextColor(46, 125, 50);
+    doc.text("TOTAL MAN-HOURS:", 20, y+8);
+    doc.text(formatDurationHM(grandMinutes), 192, y+8, {align:"right"});
+    doc.setTextColor(0,0,0);
+    y += 16;
+    
+    if(grandMinutes > 0 && total > 0){
+      const salesPerHour = total / (grandMinutes / 60);
+      doc.setFillColor(255, 247, 237);
+      doc.rect(15, y, 180, 14, "F");
+      doc.setFont("helvetica","normal");
+      doc.setFontSize(9);
+      doc.text("Sales per Man-Hour:", 20, y+9);
+      doc.setFont("helvetica","bold");
+      doc.setTextColor(194, 65, 12);
+      doc.text(`RM ${salesPerHour.toFixed(2)}/hour`, 192, y+9, {align:"right"});
+      doc.setTextColor(0,0,0);
+      y += 18;
+    }
+  }
+  
+  /* SECTION 8: SETTLEMENT IMAGE */
+  const settlementImg = getSettlementImage();
+  if(settlementImg){
+    doc.addPage();
+    y = drawLetterhead(doc, "CARD SETTLEMENT", "Bukti settlement card machine");
+    
+    try {
+      let format = "JPEG";
+      if(settlementImg.indexOf("image/png") !== -1) format = "PNG";
+      else if(settlementImg.indexOf("image/webp") !== -1) format = "WEBP";
+      
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const marginX = 20;
+      const maxW = pageWidth - (marginX * 2);
+      const maxH = pageHeight - y - 30;
+      
+      doc.addImage(settlementImg, format, marginX, y, maxW, maxH, undefined, "FAST");
+      
+      doc.setFontSize(8);
+      doc.setTextColor(150,150,150);
+      doc.setFont("helvetica","italic");
+      doc.text("Settlement image captured from card machine", 105, pageHeight - 15, {align:"center"});
+    } catch(err){
+      console.error("Settlement image error:", err);
+      doc.setFont("helvetica","italic");
+      doc.setFontSize(10);
+      doc.setTextColor(200,50,50);
+      doc.text("Gagal masukkan gambar settlement dalam PDF", 105, y+10, {align:"center"});
+    }
+  }
+  
+  drawFooter(doc);
+  downloadPDFFile(doc, `NIKOPI-Daily-Sales-${formatDate(today).replaceAll("/","-")}.pdf`);
+  showToast("✅ Daily report downloaded");
+}
+
+/* ============ WHATSAPP ============ */
+function sendReportToWhatsApp(){
+  const todayOrders = allCompletedOrders.filter(o => isToday(getOrderDate(o)));
+  let total = 0, cash = 0, qr = 0, card = 0;
+  todayOrders.forEach(o => {
+    const amt = getOrderTotal(o);
+    total += amt;
+    const m = getPaymentType(o);
+    if(m === "Cash") cash += amt;
+    else if(m === "QR") qr += amt;
+    else if(m === "Card") card += amt;
+  });
+  
+  const today = new Date().toLocaleDateString("en-MY", {day:"2-digit",month:"long",year:"numeric"});
+  const staffToday = getStaffAttendanceToday();
+  let staffLines = "";
+  if(staffToday.length){
+    staffLines = "\n👥 *STAFF ON DUTY*\n";
+    staffToday.forEach(s => {
+      staffLines += `• ${s.staffName}: ${s.totalDisplay}\n`;
+    });
+  }
+  
+  const msg = 
+    `📊 *NIKOPI DAILY SALES REPORT*\n` +
+    `📅 ${today}\n\n` +
+    `💰 *Total Sales:* RM ${total.toFixed(2)}\n` +
+    `🧾 *Orders:* ${todayOrders.length}\n\n` +
+    `💳 *Payment Breakdown*\n` +
+    `• Cash: RM ${cash.toFixed(2)}\n` +
+    `• QR: RM ${qr.toFixed(2)}\n` +
+    `• Card: RM ${card.toFixed(2)}\n` +
+    staffLines +
+    `\n\n📎 PDF report attached (download from admin dashboard).\n\n` +
+    `Thank you,\nNIKOPI Admin System`;
+  
+  const url = "https://wa.me/" + WHATSAPP_PHONE + "?text=" + encodeURIComponent(msg);
+  window.open(url, "_blank");
+  showToast("📲 WhatsApp dibuka — attach PDF report");
+}
+
+/* ============ MONTHLY STATEMENT ============ */
+function downloadMonthlyStatementPDF(){
+  const sel = document.getElementById("statement-month");
+  if(!sel || !sel.value){ showToast("Sila pilih bulan", "error"); return; }
+  const [yearStr, monthStr] = sel.value.split("-");
+  const year = Number(yearStr);
+  const month = Number(monthStr) - 1;
+  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const monthLabel = `${monthNames[month]} ${year}`;
+  const monthPrefix = `${year}-${String(month+1).padStart(2,"0")}`;
+  
+  const monthOrders = allCompletedOrders.filter(o => {
+    const d = getOrderDate(o);
+    if(!d) return false;
+    return d.getFullYear() === year && d.getMonth() === month;
+  });
+  
+  if(!monthOrders.length){
+    if(!confirm(`Tiada order untuk ${monthLabel}.\n\nNak download statement kosong?`)) return;
+  }
+  monthOrders.sort((a,b)=>(getOrderDate(a)?.getTime()||0)-(getOrderDate(b)?.getTime()||0));
+  
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  
+  /* COVER */
+  doc.setFillColor(62, 39, 35);
+  doc.rect(0, 0, 210, 297, "F");
+  doc.setTextColor(255,255,255);
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(34);
+  doc.text(SHOP_NAME, 105, 80, {align:"center"});
+  doc.setFontSize(12);
+  doc.setFont("helvetica","normal");
+  doc.text(SHOP_TAGLINE, 105, 92, {align:"center"});
+  doc.setDrawColor(255,255,255);
+  doc.setLineWidth(0.5);
+  doc.line(60, 105, 150, 105);
+  doc.setFontSize(24);
+  doc.setFont("helvetica","bold");
+  doc.text("MONTHLY BUSINESS", 105, 140, {align:"center"});
+  doc.text("STATEMENT", 105, 152, {align:"center"});
+  doc.setFontSize(16);
+  doc.setFont("helvetica","normal");
+  doc.text(monthLabel, 105, 175, {align:"center"});
+  doc.setFontSize(10);
+  doc.setTextColor(200,200,200);
+  doc.text(SHOP_ADDRESS, 105, 250, {align:"center"});
+  doc.text(SHOP_EMAIL, 105, 257, {align:"center"});
+  doc.text("Generated: " + new Date().toLocaleString("en-MY"), 105, 270, {align:"center"});
+  
+  /* SUMMARY */
+  doc.addPage();
+  let y = drawLetterhead(doc, "MONTHLY SUMMARY", `Period: ${monthLabel}`);
+  doc.setTextColor(0,0,0);
+  
+  let total=0,cash=0,qr=0,card=0;
+  const orderCount = monthOrders.length;
+  monthOrders.forEach(o=>{
+    const amt=getOrderTotal(o); total+=amt;
+    const m=getPaymentType(o);
+    if(m==="Cash") cash+=amt;
+    else if(m==="QR") qr+=amt;
+    else if(m==="Card") card+=amt;
+  });
+  const avgOrder = orderCount > 0 ? total/orderCount : 0;
+  const daysWithOrders = new Set();
+  monthOrders.forEach(o => {
+    const d = getOrderDate(o);
+    if(d) daysWithOrders.add(d.getDate());
+  });
+  const activeDays = daysWithOrders.size;
+  const avgPerDay = activeDays > 0 ? total/activeDays : 0;
+  
+  doc.setFillColor(247, 245, 240);
+  doc.rect(15, y, 180, 60, "F");
+  y += 8;
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(12);
+  doc.text("FINANCIAL OVERVIEW", 20, y);
+  y += 9;
+  doc.setFontSize(10);
+  doc.setFont("helvetica","normal");
+  doc.text("Total Sales Revenue:", 20, y);
+  doc.setFont("helvetica","bold");
+  doc.setTextColor(46, 125, 50);
+  doc.text(`RM ${total.toFixed(2)}`, 100, y);
+  doc.setTextColor(0,0,0);
+  y += 7;
+  doc.setFont("helvetica","normal");
+  doc.text("Total Completed Orders:", 20, y);
+  doc.setFont("helvetica","bold");
+  doc.text(`${orderCount}`, 100, y);
+  y += 7;
+  doc.setFont("helvetica","normal");
+  doc.text("Average Order Value:", 20, y);
+  doc.setFont("helvetica","bold");
+  doc.text(`RM ${avgOrder.toFixed(2)}`, 100, y);
+  y += 7;
+  doc.setFont("helvetica","normal");
+  doc.text("Active Business Days:", 20, y);
+  doc.setFont("helvetica","bold");
+  doc.text(`${activeDays} days`, 100, y);
+  y += 7;
+  doc.setFont("helvetica","normal");
+  doc.text("Average Daily Sales:", 20, y);
+  doc.setFont("helvetica","bold");
+  doc.text(`RM ${avgPerDay.toFixed(2)}`, 100, y);
+  y += 12;
+  
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(11);
+  doc.text("PAYMENT METHOD BREAKDOWN", 20, y);
+  y += 7;
+  doc.setFontSize(10);
+  doc.setFont("helvetica","normal");
+  const cashPct = total>0 ? ((cash/total)*100).toFixed(1) : "0.0";
+  const qrPct = total>0 ? ((qr/total)*100).toFixed(1) : "0.0";
+  const cardPct = total>0 ? ((card/total)*100).toFixed(1) : "0.0";
+  doc.text("Cash:", 20, y); doc.text(`RM ${cash.toFixed(2)}`, 100, y); doc.text(`(${cashPct}%)`, 145, y); y+=6;
+  doc.text("QR / DuitNow:", 20, y); doc.text(`RM ${qr.toFixed(2)}`, 100, y); doc.text(`(${qrPct}%)`, 145, y); y+=6;
+  doc.text("Card:", 20, y); doc.text(`RM ${card.toFixed(2)}`, 100, y); doc.text(`(${cardPct}%)`, 145, y); y+=15;
+  
+  /* TOP 15 */
+  const itemCounts = {};
+  monthOrders.forEach(o => {
+    (o.items || []).forEach(item => {
+      const name = item.name || "Item";
+      const qty = Number(item.quantity || item.qty || 1);
+      const revenue = Number(item.unitPrice ?? item.price ?? 0) * qty;
+      if(!itemCounts[name]) itemCounts[name] = { qty: 0, revenue: 0 };
+      itemCounts[name].qty += qty;
+      itemCounts[name].revenue += revenue;
+    });
+  });
+  const topItems = Object.entries(itemCounts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,15);
+  
+  if(topItems.length){
+    if(y > 200){ doc.addPage(); y = 20; }
+    doc.setFillColor(62, 39, 35);
+    doc.rect(15, y, 180, 8, "F");
+    doc.setTextColor(255,255,255);
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(10);
+    doc.text("TOP 15 SELLING ITEMS", 20, y+5.5);
+    y += 12;
+    doc.setTextColor(0,0,0);
+    doc.setFontSize(9);
+    doc.text("RANK", 20, y);
+    doc.text("ITEM", 35, y);
+    doc.text("QTY SOLD", 130, y, {align:"right"});
+    doc.text("REVENUE (RM)", 192, y, {align:"right"});
+    y += 5;
+    doc.setDrawColor(200,200,200);
+    doc.line(15, y, 195, y);
+    y += 4;
+    doc.setFont("helvetica","normal");
+    topItems.forEach((entry, i) => {
+      if(y > 265){ doc.addPage(); y = 20; }
+      const [name, data] = entry;
+      doc.text(`${i+1}`, 20, y);
+      const nameLines = doc.splitTextToSize(name, 90);
+      doc.text(nameLines, 35, y);
+      doc.text(String(data.qty), 130, y, {align:"right"});
+      doc.text(data.revenue.toFixed(2), 192, y, {align:"right"});
+      y += (nameLines.length * 4) + 2;
+    });
+  }
+  
+  /* ALL TRANSACTIONS */
+  doc.addPage();
+  y = drawLetterhead(doc, "ALL TRANSACTIONS", `${monthLabel} · ${orderCount} orders`);
+  doc.setTextColor(0,0,0);
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(8.5);
+  doc.setFillColor(62, 39, 35);
+  doc.rect(15, y, 180, 7, "F");
+  doc.setTextColor(255,255,255);
+  doc.text("DATE", 20, y+4.5);
+  doc.text("TIME", 45, y+4.5);
+  doc.text("ORDER NO", 65, y+4.5);
+  doc.text("CUSTOMER", 100, y+4.5);
+  doc.text("TYPE", 135, y+4.5);
+  doc.text("PAYMENT", 158, y+4.5);
+  doc.text("AMOUNT (RM)", 192, y+4.5, {align:"right"});
+  y += 10;
+  doc.setTextColor(0,0,0);
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(8);
+  
+  monthOrders.forEach(o => {
+    if(y > 275){
+      doc.addPage();
+      y = 20;
+      doc.setFont("helvetica","bold");
+      doc.setFontSize(8.5);
+      doc.setFillColor(62, 39, 35);
+      doc.rect(15, y, 180, 7, "F");
+      doc.setTextColor(255,255,255);
+      doc.text("DATE", 20, y+4.5);
+      doc.text("TIME", 45, y+4.5);
+      doc.text("ORDER NO", 65, y+4.5);
+      doc.text("CUSTOMER", 100, y+4.5);
+      doc.text("TYPE", 135, y+4.5);
+      doc.text("PAYMENT", 158, y+4.5);
+      doc.text("AMOUNT (RM)", 192, y+4.5, {align:"right"});
+      y += 10;
+      doc.setTextColor(0,0,0);
+      doc.setFont("helvetica","normal");
+      doc.setFontSize(8);
+    }
+    const date = getOrderDate(o);
+    const dateStr = date ? date.toLocaleDateString("en-MY",{day:"2-digit",month:"2-digit"}) : "-";
+    const timeStr = date ? date.toLocaleTimeString("en-MY",{hour:"2-digit",minute:"2-digit"}) : "-";
+    const num = String(o.orderNumber || o.orderId || o.firebaseId).slice(0,8);
+    const cust = String(o.customerName || "Customer").slice(0, 18);
+    const type = (o.diningMode === "Takeaway") ? "Takeaway" : "Dine In";
+    const pay = getPaymentType(o);
+    doc.text(dateStr, 20, y);
+    doc.text(timeStr, 45, y);
+    doc.text(num, 65, y);
+    doc.text(cust, 100, y);
+    doc.text(type, 135, y);
+    doc.text(pay, 158, y);
+    doc.text(getOrderTotal(o).toFixed(2), 192, y, {align:"right"});
+    y += 4.5;
+  });
+  
+  if(y > 260){ doc.addPage(); y = 20; }
+  y += 3;
+  doc.setDrawColor(62,39,35);
+  doc.setLineWidth(0.5);
+  doc.line(15, y, 195, y);
+  doc.setFillColor(247, 245, 240);
+  doc.rect(110, y+3, 85, 12, "F");
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(12);
+  doc.text("GRAND TOTAL:", 115, y+11);
+  doc.setTextColor(46, 125, 50);
+  doc.text(`RM ${total.toFixed(2)}`, 192, y+11, {align:"right"});
+  doc.setTextColor(0,0,0);
+  y += 20;
+  
+  /* STAFF MONTHLY */
+  const monthLogs = currentStaffLogs.filter(l => String(l.date||"").startsWith(monthPrefix));
+  if(monthLogs.length > 0){
+    doc.addPage();
+    y = drawLetterhead(doc, "STAFF ATTENDANCE REPORT", `${monthLabel} · ${monthLogs.length} shifts`);
+    doc.setTextColor(0,0,0);
+    const grouped = {};
+    monthLogs.forEach(log => {
+      const name = log.staffName || "Staff";
+      if(!grouped[name]){
+        grouped[name] = { staffName: name, totalMinutes: 0, days: new Set() };
+      }
+      let durMs = Number(log.duration || 0);
+      if(!log.clockOut && log.clockIn) durMs = Date.now() - Number(log.clockIn);
+      grouped[name].totalMinutes += Math.floor(durMs / 60000);
+      if(log.date) grouped[name].days.add(log.date);
+    });
+    const staffSummary = Object.values(grouped)
+      .map(g => ({
+        name: g.staffName,
+        days: g.days.size,
+        totalMinutes: g.totalMinutes,
+        avgPerDay: g.days.size > 0 ? Math.round(g.totalMinutes / g.days.size) : 0
+      }))
+      .sort((a,b) => b.totalMinutes - a.totalMinutes);
+    
+    doc.setFillColor(46, 125, 50);
+    doc.rect(15, y, 180, 8, "F");
+    doc.setTextColor(255,255,255);
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(10);
+    doc.text("STAFF WORK SUMMARY", 20, y+5.5);
+    y += 12;
+    doc.setTextColor(0,0,0);
+    doc.setFontSize(9);
+    doc.text("STAFF NAME", 20, y);
+    doc.text("DAYS", 100, y, {align:"right"});
+    doc.text("TOTAL HOURS", 145, y, {align:"right"});
+    doc.text("AVG/DAY", 192, y, {align:"right"});
+    y += 5;
+    doc.setDrawColor(200,200,200);
+    doc.line(15, y, 195, y);
+    y += 4;
+    doc.setFont("helvetica","normal");
+    let grandMinutes = 0;
+    staffSummary.forEach(s => {
+      if(y > 265){ doc.addPage(); y = 20; }
+      doc.text(s.name, 20, y);
+      doc.text(String(s.days), 100, y, {align:"right"});
+      doc.text(formatDurationHM(s.totalMinutes), 145, y, {align:"right"});
+      doc.text(formatDurationHM(s.avgPerDay), 192, y, {align:"right"});
+      grandMinutes += s.totalMinutes;
+      y += 5;
+    });
+    doc.setDrawColor(62,39,35);
+    doc.line(15, y+1, 195, y+1);
+    y += 4;
+    doc.setFillColor(240, 249, 241);
+    doc.rect(15, y, 180, 12, "F");
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(11);
+    doc.setTextColor(46, 125, 50);
+    doc.text("TOTAL MAN-HOURS:", 20, y+8);
+    doc.text(formatDurationHM(grandMinutes), 192, y+8, {align:"right"});
+    doc.setTextColor(0,0,0);
+    y += 20;
+    
+    /* DAILY LOGS */
+    if(y > 220){ doc.addPage(); y = 20; }
+    doc.setFillColor(62, 39, 35);
+    doc.rect(15, y, 180, 8, "F");
+    doc.setTextColor(255,255,255);
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(9);
+    doc.text("DAILY CLOCK IN/OUT RECORDS", 20, y+5.5);
+    y += 10;
+    doc.setTextColor(0,0,0);
+    doc.setFontSize(8.5);
+    doc.text("DATE", 20, y);
+    doc.text("STAFF", 50, y);
+    doc.text("CLOCK IN", 115, y, {align:"right"});
+    doc.text("CLOCK OUT", 155, y, {align:"right"});
+    doc.text("DURATION", 192, y, {align:"right"});
+    y += 5;
+    doc.setDrawColor(200,200,200);
+    doc.line(15, y, 195, y);
+    y += 4;
+    doc.setFont("helvetica","normal");
+    doc.setFontSize(8);
+    const sortedLogs = monthLogs.sort((a,b) => String(a.date).localeCompare(String(b.date)));
+    sortedLogs.forEach(log => {
+      if(y > 275){
+        doc.addPage();
+        y = 20;
+        doc.setFont("helvetica","bold");
+        doc.setFontSize(8.5);
+        doc.setFillColor(62, 39, 35);
+        doc.rect(15, y, 180, 7, "F");
+        doc.setTextColor(255,255,255);
+        doc.text("DATE", 20, y+4.5);
+        doc.text("STAFF", 50, y+4.5);
+        doc.text("CLOCK IN", 115, y+4.5, {align:"right"});
+        doc.text("CLOCK OUT", 155, y+4.5, {align:"right"});
+        doc.text("DURATION", 192, y+4.5, {align:"right"});
+        y += 10;
+        doc.setTextColor(0,0,0);
+        doc.setFont("helvetica","normal");
+        doc.setFontSize(8);
+      }
+      let durMs = Number(log.duration || 0);
+      if(!log.clockOut && log.clockIn) durMs = Date.now() - Number(log.clockIn);
+      const mins = Math.floor(durMs / 60000);
+      doc.text(String(log.date || "-"), 20, y);
+      doc.text(String(log.staffName || "-").slice(0, 25), 50, y);
+      doc.text(formatTimeShort(log.clockIn), 115, y, {align:"right"});
+      doc.text(log.clockOut ? formatTimeShort(log.clockOut) : "Active", 155, y, {align:"right"});
+      doc.text(formatDurationHM(mins), 192, y, {align:"right"});
+      y += 4.5;
+    });
+  }
+  
+  drawFooter(doc);
+  const cleanMonth = monthLabel.replace(/[^a-zA-Z0-9]/g,"-");
+  downloadPDFFile(doc, `NIKOPI-Statement-${cleanMonth}.pdf`);
+  showToast(`✅ Statement ${monthLabel} downloaded`);
+}
+
+/* ============ SHIFT ============ */
+async function commitDeletes(refs){
+  const chunkSize=450;
+  for(let i=0;i<refs.length;i+=chunkSize){
+    const chunk=refs.slice(i,i+chunkSize);
+    const batch=db.batch();
+    chunk.forEach(r=>batch.delete(db.collection("orders").doc(r.id)));
+    await batch.commit();
+  }
+}
+
+async function endShift() {
+  const password = prompt("Masukkan password END SHIFT:");
+  if (password !== PASSWORD_SHIFT) {
+    if (password !== null) showToast("Password salah", "error");
+    return;
+  }
+  const todayOrders = allOrders.filter(o => isToday(getOrderDate(o)));
+  if (!todayOrders.length) { showToast("Tiada order hari ini", "info"); return; }
+  if (!confirm(`End shift dan archive ${todayOrders.length} order hari ini?`)) return;
+  try {
+    const batch = db.batch();
+    todayOrders.forEach(order => {
+      batch.update(db.collection("orders").doc(order.firebaseId), {
+        archived: true,
+        shiftDate: getTodayStr(),
+        archivedAt: Date.now()
+      });
+    });
+    await batch.commit();
+    showToast("✅ Shift berjaya ditamatkan");
+  } catch (err) {
+    showToast("Gagal end shift: " + err.message, "error");
+  }
+}
+
+async function resetTesting(){
+  const password=prompt("Masukkan password reset:");
+  if(password!==PASSWORD_RESET){ if(password!==null) showToast("Password salah","error"); return; }
+  if(!confirm("Reset semua order?")) return;
+  try{
+    const refs=allOrders.map(o=>({id:o.firebaseId}));
+    await commitDeletes(refs);
+    showToast("✅ Testing data telah reset");
+  }catch(err){ showToast("Reset gagal: "+err.message,"error"); }
+}
+
+/* ============ STAFF ============ */
+function loadStaffRealtime(){
+  if(staffUnsubscribe) staffUnsubscribe();
+  staffUnsubscribe=db.collection("staff").onSnapshot(snapshot=>{
+    currentStaffList=snapshot.docs.map(doc=>({id:doc.id,...doc.data()}));
+    renderStaffSelect(); renderStaffList(); renderActiveStaff();
+  },err=>console.error(err));
+}
+
+function loadStaffLogsRealtime(){
+  if(staffLogUnsubscribe) staffLogUnsubscribe();
+  staffLogUnsubscribe=db.collection("staff_logs").onSnapshot(snapshot=>{
+    currentStaffLogs=snapshot.docs.map(doc=>({id:doc.id,...doc.data()}));
+    currentStaffLogs.sort((a,b)=>Number(b.clockIn||b.timestamp||0)-Number(a.clockIn||a.timestamp||0));
+    renderActiveStaff(); renderStaffHistory();
+  },err=>console.error(err));
+}
+
+function renderStaffSelect(){
+  const select=document.getElementById("clock-staff-select");
+  if(!select) return;
+  const current=select.value;
+  select.innerHTML=`<option value="">-- Pilih Staff --</option>`;
+  currentStaffList.forEach(s=>{
+    const opt=document.createElement("option");
+    opt.value=s.id; opt.textContent=s.name||s.staffName||s.id;
+    select.appendChild(opt);
+  });
+  if(current&&currentStaffList.some(s=>s.id===current)) select.value=current;
+}
+
+async function addNewStaff(){
+  const name=document.getElementById("new-staff-name").value.trim();
+  const code=document.getElementById("new-staff-code").value.trim();
+  if(!name){ showToast("Masukkan nama staff","error"); return; }
+  if(!code){ showToast("Masukkan code staff","error"); return; }
+  if(currentStaffList.some(s=>String(s.code)===String(code))){ showToast("Code staff sudah digunakan","error"); return; }
+  try{
+    await db.collection("staff").add({name,code,createdAt:Date.now(),active:true});
+    document.getElementById("new-staff-name").value="";
+    document.getElementById("new-staff-code").value="";
+    showToast("✅ Staff berjaya ditambah");
+  }catch(err){ showToast("Gagal tambah staff: "+err.message,"error"); }
+}
+
+async function deleteStaff(id){
+  const staff=currentStaffList.find(x=>x.id===id);
+  if(!staff) return;
+  if(!confirm(`Padam staff "${staff.name}"?`)) return;
+  try{
+    await db.collection("staff").doc(id).delete();
+    showToast("🗑️ Staff dipadam");
+  }catch(err){ showToast("Gagal padam staff","error"); }
+}
+
+function getSelectedStaff(){
+  const id=document.getElementById("clock-staff-select").value;
+  return currentStaffList.find(s=>s.id===id);
+}
+
+function validateStaff(){
+  const staff=getSelectedStaff();
+  const code=document.getElementById("clock-staff-code").value.trim();
+  if(!staff){ showToast("Sila pilih staff","error"); return null; }
+  if(String(staff.code)!==String(code)){ showToast("Staff code salah","error"); return null; }
+  return staff;
+}
+
+async function clockIn(){
+  const staff=validateStaff(); if(!staff) return;
+  const today=getTodayStr();
+  const active=currentStaffLogs.find(l=>l.staffId===staff.id&&l.date===today&&!l.clockOut);
+  if(active){ showToast("Staff ini sudah clock in","error"); return; }
+  try{
+    await db.collection("staff_logs").add({staffId:staff.id,staffName:staff.name,date:today,clockIn:Date.now(),clockOut:null,duration:0});
+    document.getElementById("clock-staff-code").value="";
+    showToast("🟢 Clock in berjaya");
+  }catch(err){ showToast("Clock in gagal: "+err.message,"error"); }
+}
+
+async function clockOut(){
+  const staff=validateStaff(); if(!staff) return;
+  const today=getTodayStr();
+  const active=currentStaffLogs.find(l=>l.staffId===staff.id&&l.date===today&&!l.clockOut);
+  if(!active){ showToast("Staff ini belum clock in","error"); return; }
+  const clockOutTime=Date.now();
+  const duration=clockOutTime-Number(active.clockIn);
+  try{
+    await db.collection("staff_logs").doc(active.id).update({clockOut:clockOutTime,duration});
+    document.getElementById("clock-staff-code").value="";
+    showToast("🔴 Clock out berjaya");
+  }catch(err){ showToast("Clock out gagal: "+err.message,"error"); }
+}
+
+function formatDuration(ms){
+  if(!ms||ms<0) return "0h 0m";
+  const minutes=Math.floor(ms/60000);
+  const hours=Math.floor(minutes/60);
+  return `${hours}h ${minutes%60}m`;
+}
+
+function renderActiveStaff(){
+  const container=document.getElementById("active-staff-container");
+  if(!container) return;
+  const today=getTodayStr();
+  const active=currentStaffLogs.filter(l=>l.date===today&&!l.clockOut);
+  if(!active.length){ container.innerHTML=`<p class="empty-text">Tiada staff sedang clock in.</p>`; return; }
+  container.innerHTML=active.map(log=>{
+    const elapsed=Date.now()-Number(log.clockIn);
+    return `<div class="staff-card">
+      <div class="staff-card-header">
+        <span class="staff-name">🟢 ${escapeHTML(log.staffName)}</span>
+        <span class="staff-code">${formatDuration(elapsed)}</span>
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:#777">
+        Clock in: ${new Date(log.clockIn).toLocaleTimeString("en-MY",{hour:"2-digit",minute:"2-digit"})}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderStaffList(){
+  const container=document.getElementById("staff-list-container");
+  if(!container) return;
+  if(!currentStaffList.length){ container.innerHTML=`<p class="empty-text">Tiada staff.</p>`; return; }
+  container.innerHTML=currentStaffList.map(s=>`
+    <div class="staff-card">
+      <div class="staff-card-header">
+        <div>
+          <div class="staff-name">${escapeHTML(s.name)}</div>
+          <div class="staff-code">Code: ${escapeHTML(s.code)}</div>
+        </div>
+        <button class="btn-red" onclick="deleteStaff('${escapeHTML(s.id)}')">Delete</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderStaffHistory(){
+  const container=document.getElementById("staff-history-container");
+  if(!container) return;
+  const cutoff=Date.now()-(30*24*60*60*1000);
+  const logs=currentStaffLogs.filter(l=>Number(l.clockIn||0)>=cutoff);
+  if(!logs.length){ container.innerHTML=`<p class="empty-text">Tiada rekod.</p>`; return; }
+  container.innerHTML=logs.map(log=>{
+    let duration=Number(log.duration||0);
+    if(!log.clockOut&&log.clockIn) duration=Date.now()-Number(log.clockIn);
+    return `<div class="staff-history-row">
+      <span>${escapeHTML(log.staffName||"-")}</span>
+      <span>${escapeHTML(log.date||"-")}</span>
+      <span>${log.clockIn?new Date(log.clockIn).toLocaleTimeString("en-MY",{hour:"2-digit",minute:"2-digit"}):"-"}</span>
+      <span>${log.clockOut?new Date(log.clockOut).toLocaleTimeString("en-MY",{hour:"2-digit",minute:"2-digit"}):"Active"}</span>
+      <strong>${formatDuration(duration)}</strong>
+    </div>`;
+  }).join("");
+}
+
+/* ============ THEME ============ */
+function changeTheme(theme) {
+  const root = document.documentElement;
+  if (theme === "coffee") {
+    document.body.classList.remove("dark-mode");
+    root.style.setProperty("--page-bg", "#f7f5f0");
+    root.style.setProperty("--card-bg", "#ffffff");
+    root.style.setProperty("--text", "#2c2c2c");
+    root.style.setProperty("--heading", "#3e2723");
+    root.style.setProperty("--button", "#3e2723");
+    root.style.setProperty("--title-color", "#3e2723");
+    root.style.setProperty("--line-color", "#e0d9d0");
+    root.style.setProperty("--border", "#e0d9d0");
+    root.style.setProperty("--brown", "#3e2723");
+    root.style.setProperty("--brown2", "#5d4037");
+  }
+  if (theme === "dark") {
+    document.body.classList.add("dark-mode");
+    root.style.setProperty("--title-color", "#ffffff");
+    root.style.setProperty("--line-color", "#444444");
+    root.style.setProperty("--page-bg", "#121212");
+    root.style.setProperty("--card-bg", "#1e1e1e");
+    root.style.setProperty("--border", "#444");
+    root.style.setProperty("--muted", "#aaa");
+    root.style.setProperty("--text", "#ffffff");
+    root.style.setProperty("--heading", "#ffffff");
+    root.style.setProperty("--button", "#1976d2");
+    root.style.setProperty("--brown", "#5d4037");
+    root.style.setProperty("--brown2", "#8d6e63");
+  }
+  try { localStorage.setItem("nikopiTheme", theme); } catch(e){}
+  if (typeof renderChart === "function") setTimeout(renderChart, 50);
+}
+
+function loadTheme() {
+  try {
+    const saved = localStorage.getItem("nikopiTheme");
+    if (saved) changeTheme(saved);
+  } catch(e){}
+}
+
+/* ============ INIT ============ */
+function init() {
+  loadSettlement();
+  loadTheme();
+  
+  const salesDateEl = document.getElementById("sales-date");
+  if(salesDateEl){
+    salesDateEl.textContent = new Date().toLocaleDateString("en-MY",{
+      weekday:"long",day:"2-digit",month:"long",year:"numeric"
+    });
+  }
+  
+  /* Auto-save settlement bila pilih gambar */
+  const settlementInput = document.getElementById("settlement-image");
+  if(settlementInput){
+    settlementInput.addEventListener("change", function(e){
+      if(e.target.files && e.target.files[0]){
+        saveSettlement();
+      }
+    });
+  }
+  
+  initStatementDropdown();
+  currentAdminCategories=cloneData(DEFAULT_MENU);
+  renderAdminMenu();
+  loadMenuRealtime();
+  loadOrdersRealtime();
+  loadStaffRealtime();
+  loadStaffLogsRealtime();
+  loadShopStatusRealtime();
+  
+  setTimeout(renderChart,500);
+  
+  setInterval(() => {
+    const staffPage = document.getElementById("page-staff");
+    if (staffPage && staffPage.classList.contains("active")) {
+      renderActiveStaff();
+    }
+  }, 5000);
+}
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
